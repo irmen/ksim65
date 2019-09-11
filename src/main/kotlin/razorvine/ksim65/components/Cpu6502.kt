@@ -1,4 +1,4 @@
-package net.razorvine.ksim65.components
+package razorvine.ksim65.components
 
 // TODO: implement the illegal opcodes, see http://www.ffd2.com/fridge/docs/6502-NMOS.extra.opcodes
 // TODO: add the optional additional cycles to certain instructions and addressing modes

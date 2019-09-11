@@ -1,5 +1,5 @@
-import net.razorvine.ksim65.components.*
 import org.junit.jupiter.api.TestInstance
+import razorvine.ksim65.components.*
 import kotlin.test.*
 
 /*

@@ -1,10 +1,10 @@
-package net.razorvine.ksim65
+package razorvine.ksim65.c64
 
 import java.io.CharConversionException
 
 object Petscii {
 
-    // decoding:  from Petscii/Screencodes (0-255) to unicode
+    // decoding:  from Commodore-64 Petscii/Screencodes (0-255) to unicode
     // character tables used from https://github.com/dj51d/cbmcodecs
 
     private val decodingPetsciiLowercase = arrayOf(

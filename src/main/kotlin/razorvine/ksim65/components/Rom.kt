@@ -1,4 +1,4 @@
-package net.razorvine.ksim65.components
+package razorvine.ksim65.components
 
 class Rom(startAddress: Address, endAddress: Address, data: Array<UByte>? = null) : MemoryComponent(startAddress, endAddress) {
     private val memory =

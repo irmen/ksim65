@@ -1,5 +1,5 @@
-import net.razorvine.ksim65.components.Cpu6502
-import net.razorvine.ksim65.components.Ram
+import razorvine.ksim65.components.Cpu6502
+import razorvine.ksim65.components.Ram
 import java.io.File
 import kotlin.test.*
 

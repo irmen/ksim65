@@ -1,6 +1,6 @@
-import net.razorvine.ksim65.components.Bus
-import net.razorvine.ksim65.components.Cpu6502
-import net.razorvine.ksim65.components.Ram
+import razorvine.ksim65.components.Bus
+import razorvine.ksim65.components.Cpu6502
+import razorvine.ksim65.components.Ram
 import kotlin.test.*
 import kotlin.system.measureNanoTime
 import kotlin.test.assertEquals

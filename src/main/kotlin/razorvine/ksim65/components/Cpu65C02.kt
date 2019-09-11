@@ -1,4 +1,4 @@
-package net.razorvine.ksim65.components
+package razorvine.ksim65.components
 
 class Cpu65C02(stopOnBrk: Boolean) : Cpu6502(stopOnBrk) {
 

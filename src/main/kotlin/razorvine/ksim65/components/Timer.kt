@@ -1,4 +1,4 @@
-package net.razorvine.ksim65.components
+package razorvine.ksim65.components
 
 /**
  * A programmable timer. Causes an IRQ or NMI at specified 24-bits intervals.

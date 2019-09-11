@@ -1,9 +1,9 @@
-package net.razorvine.ksim65
+package razorvine.ksim65
 
-import net.razorvine.ksim65.components.*
-import net.razorvine.ksim65.components.Cpu6502.Companion.IRQ_vector
-import net.razorvine.ksim65.components.Cpu6502.Companion.NMI_vector
-import net.razorvine.ksim65.components.Cpu6502.Companion.RESET_vector
+import razorvine.ksim65.components.*
+import razorvine.ksim65.components.Cpu6502.Companion.IRQ_vector
+import razorvine.ksim65.components.Cpu6502.Companion.NMI_vector
+import razorvine.ksim65.components.Cpu6502.Companion.RESET_vector
 
 
 fun main(args: Array<String>) {

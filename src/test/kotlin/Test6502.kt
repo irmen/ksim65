@@ -1,4 +1,4 @@
-import net.razorvine.ksim65.components.Cpu6502
+import razorvine.ksim65.components.Cpu6502
 import org.junit.jupiter.api.TestInstance
 import kotlin.test.*
 
@@ -276,7 +276,7 @@ class Test6502 : TestCommon6502() {
         writeMem(memory, 0, listOf(0x6c, 0xff, 0x00))
         mpu.step()
         assertEquals(0x6c00, mpu.PC)
-        assertEquals((5+Cpu6502.resetCycles).toLong(), mpu.totalCycles)
+        assertEquals((5+ Cpu6502.resetCycles).toLong(), mpu.totalCycles)
     }
 
     // ORA Indexed, Indirect (Y)

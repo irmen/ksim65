@@ -1,4 +1,4 @@
-import net.razorvine.ksim65.components.Cpu65C02
+import razorvine.ksim65.components.Cpu65C02
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.TestInstance
 import kotlin.test.*

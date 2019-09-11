@@ -1,4 +1,4 @@
-package net.razorvine.ksim65.components
+package razorvine.ksim65.components
 
 import java.time.LocalDate
 import java.time.LocalTime

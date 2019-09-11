@@ -1,7 +1,7 @@
-import net.razorvine.ksim65.Petscii
-import net.razorvine.ksim65.components.Address
-import net.razorvine.ksim65.components.Cpu6502
-import net.razorvine.ksim65.components.Ram
+import razorvine.ksim65.c64.Petscii
+import razorvine.ksim65.components.Address
+import razorvine.ksim65.components.Cpu6502
+import razorvine.ksim65.components.Ram
 
 
 class C64KernalStubs(private val ram: Ram) {

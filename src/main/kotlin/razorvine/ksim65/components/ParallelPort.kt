@@ -1,6 +1,6 @@
-package net.razorvine.ksim65.components
+package razorvine.ksim65.components
 
-import net.razorvine.ksim65.Petscii
+import razorvine.ksim65.c64.Petscii
 
 /**
  * A parallel output device (basically, prints bytes as characters to the screen)
