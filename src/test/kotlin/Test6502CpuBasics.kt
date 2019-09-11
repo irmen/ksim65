@@ -88,9 +88,9 @@ class Test6502CpuBasics {
             val actualA = ram[0x00fd]
             val predictedF = ram[0x00fe]
             val actualF = ram[0x00ff]
-            println("BCD TEST: FAIL!! code=${Cpu6502.hexB(code)} value1=${Cpu6502.hexB(v1)} value2=${Cpu6502.hexB(v2)}")
-            println("  predictedA=${Cpu6502.hexB(predictedA)}")
-            println("  actualA=${Cpu6502.hexB(actualA)}")
+            println("BCD TEST: FAIL!! code=${cpu.hexB(code)} value1=${cpu.hexB(v1)} value2=${cpu.hexB(v2)}")
+            println("  predictedA=${cpu.hexB(predictedA)}")
+            println("  actualA=${cpu.hexB(actualA)}")
             println("  predictedF=${predictedF.toString(2).padStart(8,'0')}")
             println("  actualF=${actualF.toString(2).padStart(8,'0')}")
             fail("BCD test failed")

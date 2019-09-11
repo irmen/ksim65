@@ -16,27 +16,6 @@ open class Cpu6502(private val stopOnBrk: Boolean) : BusComponent() {
         const val RESET_vector = 0xfffc
         const val IRQ_vector = 0xfffe
         const val resetCycles = 8
-
-        fun hexW(number: Address, allowSingleByte: Boolean = false): String {
-            val msb = number ushr 8
-            val lsb = number and 0xff
-            return if (msb == 0 && allowSingleByte)
-                hexB(lsb)
-            else
-                hexB(msb) + hexB(
-                    lsb
-                )
-        }
-
-        private const val hexdigits = "0123456789abcdef"
-
-        fun hexB(number: Short): String = hexB(number.toInt())
-
-        fun hexB(number: Int): String {
-            val loNibble = number and 15
-            val hiNibble = number ushr 4
-            return hexdigits[hiNibble].toString() + hexdigits[loNibble]
-        }
     }
 
     enum class AddrMode {
@@ -113,7 +92,7 @@ open class Cpu6502(private val stopOnBrk: Boolean) : BusComponent() {
     private lateinit var currentInstruction: Instruction
 
     // has an interrupt been requested?
-    private var pendingInterrupt: Pair<Boolean, BusComponent>? = null
+    protected var pendingInterrupt: Pair<Boolean, BusComponent>? = null
 
     // data byte from the instruction (only set when addr.mode is Accumulator, Immediate or Implied)
     private var fetchedData: Int = 0
@@ -125,6 +104,26 @@ open class Cpu6502(private val stopOnBrk: Boolean) : BusComponent() {
 
     fun breakpoint(address: Address, action: (cpu: Cpu6502, pc: Address) -> Unit) {
         breakpoints[address] = action
+    }
+
+    internal fun hexW(number: Address, allowSingleByte: Boolean = false): String {
+        val msb = number ushr 8
+        val lsb = number and 0xff
+        return if (msb == 0 && allowSingleByte)
+            hexB(lsb)
+        else
+            hexB(msb) + hexB(
+                lsb
+            )
+    }
+
+    internal fun hexB(number: Short): String = hexB(number.toInt())
+
+    internal fun hexB(number: Int): String {
+        val hexdigits = "0123456789abcdef"
+        val loNibble = number and 15
+        val hiNibble = number ushr 4
+        return hexdigits[hiNibble].toString() + hexdigits[loNibble]
     }
 
     fun disassemble(component: MemoryComponent, from: Address, to: Address) =
@@ -357,12 +356,12 @@ open class Cpu6502(private val stopOnBrk: Boolean) : BusComponent() {
         pushStack(status.asByte().toInt())
     }
 
-    private fun pushStack(data: Int) {
+    protected fun pushStack(data: Int) {
         write(SP or 0x0100, data)
         SP = (SP - 1) and 0xff
     }
 
-    private fun popStack(): Int {
+    protected fun popStack(): Int {
         SP = (SP + 1) and 0xff
         return read(SP or 0x0100)
     }
@@ -374,7 +373,7 @@ open class Cpu6502(private val stopOnBrk: Boolean) : BusComponent() {
     }
 
     private fun read(address: Address): Int = bus.read(address).toInt()
-    private fun readWord(address: Address): Int = bus.read(address).toInt() or (bus.read(address + 1).toInt() shl 8)
+    protected fun readWord(address: Address): Int = bus.read(address).toInt() or (bus.read(address + 1).toInt() shl 8)
     private fun write(address: Address, data: Int) = bus.write(address, data.toShort())
 
     // opcodes table from  http://www.oxyron.de/html/opcodes02.html
@@ -711,7 +710,7 @@ open class Cpu6502(private val stopOnBrk: Boolean) : BusComponent() {
         }
     }
 
-    private fun dispatchOpcode(opcode: Int) {
+    protected open fun dispatchOpcode(opcode: Int) {
         when (opcode) {
             0x00 -> iBrk()
             0x01 -> iOra()
@@ -976,7 +975,7 @@ open class Cpu6502(private val stopOnBrk: Boolean) : BusComponent() {
 
     // official instructions
 
-    private fun iAdc() {
+    protected fun iAdc() {
         val operand = getFetched()
         if (Status.D) {
             // BCD add
@@ -1008,13 +1007,13 @@ open class Cpu6502(private val stopOnBrk: Boolean) : BusComponent() {
         }
     }
 
-    private fun iAnd() {
+    protected fun iAnd() {
         A = A and getFetched()
         Status.Z = A == 0
         Status.N = (A and 0b10000000) != 0
     }
 
-    private fun iAsl() {
+    protected fun iAsl() {
         if (currentInstruction.mode == AddrMode.Acc) {
             Status.C = (A and 0b10000000) != 0
             A = (A shl 1) and 0xff
@@ -1030,38 +1029,38 @@ open class Cpu6502(private val stopOnBrk: Boolean) : BusComponent() {
         }
     }
 
-    private fun iBcc() {
+    protected fun iBcc() {
         if (!Status.C) PC = fetchedAddress
     }
 
-    private fun iBcs() {
+    protected fun iBcs() {
         if (Status.C) PC = fetchedAddress
     }
 
-    private fun iBeq() {
+    protected fun iBeq() {
         if (Status.Z) PC = fetchedAddress
     }
 
-    private fun iBit() {
+    protected fun iBit() {
         val operand = getFetched()
         Status.Z = (A and operand) == 0
         Status.V = (operand and 0b01000000) != 0
         Status.N = (operand and 0b10000000) != 0
     }
 
-    private fun iBmi() {
+    protected fun iBmi() {
         if (Status.N) PC = fetchedAddress
     }
 
-    private fun iBne() {
+    protected fun iBne() {
         if (!Status.Z) PC = fetchedAddress
     }
 
-    private fun iBpl() {
+    protected fun iBpl() {
         if (!Status.N) PC = fetchedAddress
     }
 
-    private fun iBrk() {
+    protected fun iBrk() {
         // handle BRK ('software interrupt') or a real hardware IRQ
         val interrupt = pendingInterrupt
         val nmi = interrupt?.first == true
@@ -1079,123 +1078,123 @@ open class Cpu6502(private val stopOnBrk: Boolean) : BusComponent() {
         pendingInterrupt = null
     }
 
-    private fun iBvc() {
+    protected fun iBvc() {
         if (!Status.V) PC = fetchedAddress
     }
 
-    private fun iBvs() {
+    protected fun iBvs() {
         if (Status.V) PC = fetchedAddress
     }
 
-    private fun iClc() {
+    protected fun iClc() {
         Status.C = false
     }
 
-    private fun iCld() {
+    protected fun iCld() {
         Status.D = false
     }
 
-    private fun iCli() {
+    protected fun iCli() {
         Status.I = false
     }
 
-    private fun iClv() {
+    protected fun iClv() {
         Status.V = false
     }
 
-    private fun iCmp() {
+    protected fun iCmp() {
         val fetched = getFetched()
         Status.C = A >= fetched
         Status.Z = A == fetched
         Status.N = ((A - fetched) and 0b10000000) != 0
     }
 
-    private fun iCpx() {
+    protected fun iCpx() {
         val fetched = getFetched()
         Status.C = X >= fetched
         Status.Z = X == fetched
         Status.N = ((X - fetched) and 0b10000000) != 0
     }
 
-    private fun iCpy() {
+    protected fun iCpy() {
         val fetched = getFetched()
         Status.C = Y >= fetched
         Status.Z = Y == fetched
         Status.N = ((Y - fetched) and 0b10000000) != 0
     }
 
-    private fun iDec() {
+    protected fun iDec() {
         val data = (read(fetchedAddress) - 1) and 0xff
         write(fetchedAddress, data)
         Status.Z = data == 0
         Status.N = (data and 0b10000000) != 0
     }
 
-    private fun iDex() {
+    protected fun iDex() {
         X = (X - 1) and 0xff
         Status.Z = X == 0
         Status.N = (X and 0b10000000) != 0
     }
 
-    private fun iDey() {
+    protected fun iDey() {
         Y = (Y - 1) and 0xff
         Status.Z = Y == 0
         Status.N = (Y and 0b10000000) != 0
     }
 
-    private fun iEor() {
+    protected fun iEor() {
         A = A xor getFetched()
         Status.Z = A == 0
         Status.N = (A and 0b10000000) != 0
     }
 
-    private fun iInc() {
+    protected fun iInc() {
         val data = (read(fetchedAddress) + 1) and 0xff
         write(fetchedAddress, data)
         Status.Z = data == 0
         Status.N = (data and 0b10000000) != 0
     }
 
-    private fun iInx() {
+    protected fun iInx() {
         X = (X + 1) and 0xff
         Status.Z = X == 0
         Status.N = (X and 0b10000000) != 0
     }
 
-    private fun iIny() {
+    protected fun iIny() {
         Y = (Y + 1) and 0xff
         Status.Z = Y == 0
         Status.N = (Y and 0b10000000) != 0
     }
 
-    private fun iJmp() {
+    protected fun iJmp() {
         PC = fetchedAddress
     }
 
-    private fun iJsr() {
+    protected fun iJsr() {
         pushStackAddr(PC - 1)
         PC = fetchedAddress
     }
 
-    private fun iLda() {
+    protected fun iLda() {
         A = getFetched()
         Status.Z = A == 0
         Status.N = (A and 0b10000000) != 0
     }
 
-    private fun iLdx() {
+    protected fun iLdx() {
         X = getFetched()
         Status.Z = X == 0
         Status.N = (X and 0b10000000) != 0
     }
 
-    private fun iLdy() {
+    protected fun iLdy() {
         Y = getFetched()
         Status.Z = Y == 0
         Status.N = (Y and 0b10000000) != 0
     }
 
-    private fun iLsr() {
+    protected fun iLsr() {
         if (currentInstruction.mode == AddrMode.Acc) {
             Status.C = (A and 1) == 1
             A = A ushr 1
@@ -1211,37 +1210,37 @@ open class Cpu6502(private val stopOnBrk: Boolean) : BusComponent() {
         }
     }
 
-    private fun iNop() {}
+    protected fun iNop() {}
 
-    private fun iOra() {
+    protected fun iOra() {
         A = A or getFetched()
         Status.Z = A == 0
         Status.N = (A and 0b10000000) != 0
     }
 
-    private fun iPha() {
+    protected fun iPha() {
         pushStack(A)
     }
 
-    private fun iPhp() {
+    protected fun iPhp() {
         val origBreakflag = Status.B
         Status.B = true
         pushStack(Status)
         Status.B = origBreakflag
     }
 
-    private fun iPla() {
+    protected fun iPla() {
         A = popStack()
         Status.Z = A == 0
         Status.N = (A and 0b10000000) != 0
     }
 
-    private fun iPlp() {
+    protected fun iPlp() {
         Status.fromByte(popStack())
         Status.B = true  // break is always 1 except when pushing on stack
     }
 
-    private fun iRol() {
+    protected fun iRol() {
         val oldCarry = Status.C
         if (currentInstruction.mode == AddrMode.Acc) {
             Status.C = (A and 0b10000000) != 0
@@ -1258,7 +1257,7 @@ open class Cpu6502(private val stopOnBrk: Boolean) : BusComponent() {
         }
     }
 
-    private fun iRor() {
+    protected fun iRor() {
         val oldCarry = Status.C
         if (currentInstruction.mode == AddrMode.Acc) {
             Status.C = (A and 1) == 1
@@ -1275,18 +1274,18 @@ open class Cpu6502(private val stopOnBrk: Boolean) : BusComponent() {
         }
     }
 
-    private fun iRti() {
+    protected fun iRti() {
         Status.fromByte(popStack())
         Status.B = true  // break is always 1 except when pushing on stack
         PC = popStackAddr()
     }
 
-    private fun iRts() {
+    protected fun iRts() {
         PC = popStackAddr()
         PC = (PC + 1) and 0xffff
     }
 
-    private fun iSbc() {
+    protected fun iSbc() {
         val operand = getFetched()
         val tmp = (A - operand - if (Status.C) 0 else 1) and 0xffff
         Status.V = (A xor operand) and (A xor tmp) and 0b10000000 != 0
@@ -1313,65 +1312,65 @@ open class Cpu6502(private val stopOnBrk: Boolean) : BusComponent() {
         Status.N = (tmp and 0b10000000) != 0
     }
 
-    private fun iSec() {
+    protected fun iSec() {
         Status.C = true
     }
 
-    private fun iSed() {
+    protected fun iSed() {
         Status.D = true
     }
 
-    private fun iSei() {
+    protected fun iSei() {
         Status.I = true
     }
 
-    private fun iSta() {
+    protected fun iSta() {
         write(fetchedAddress, A)
     }
 
-    private fun iStx() {
+    protected fun iStx() {
         write(fetchedAddress, X)
     }
 
-    private fun iSty() {
+    protected fun iSty() {
         write(fetchedAddress, Y)
     }
 
-    private fun iTax() {
+    protected fun iTax() {
         X = A
         Status.Z = X == 0
         Status.N = (X and 0b10000000) != 0
     }
 
-    private fun iTay() {
+    protected fun iTay() {
         Y = A
         Status.Z = Y == 0
         Status.N = (Y and 0b10000000) != 0
     }
 
-    private fun iTsx() {
+    protected fun iTsx() {
         X = SP
         Status.Z = X == 0
         Status.N = (X and 0b10000000) != 0
     }
 
-    private fun iTxa() {
+    protected fun iTxa() {
         A = X
         Status.Z = A == 0
         Status.N = (A and 0b10000000) != 0
     }
 
-    private fun iTxs() {
+    protected fun iTxs() {
         SP = X
     }
 
-    private fun iTya() {
+    protected fun iTya() {
         A = Y
         Status.Z = A == 0
         Status.N = (A and 0b10000000) != 0
     }
 
-    // unofficial/illegal instructions
+    // unofficial/illegal 6502 instructions
 
     private fun iAhx() {
         TODO("ahx - ('illegal' instruction)")
