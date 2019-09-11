@@ -42,11 +42,11 @@ class Test6502CpuBasics {
         cpu.PC = 0x1000
 
         // warmup
-        while(cpu.totalCycles<1000000)
+        while(cpu.totalCycles<5000000)
             cpu.clock()
 
         // timing
-        val cycles = 50000000
+        val cycles = 100000000
         val duration = measureNanoTime {
             while (cpu.totalCycles < cycles)
                 cpu.clock()
