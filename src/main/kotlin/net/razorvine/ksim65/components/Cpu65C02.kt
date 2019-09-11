@@ -1,6 +1,6 @@
 package net.razorvine.ksim65.components
 
-class Cpu65C02(stopOnBrk: Boolean): Cpu6502(stopOnBrk) {
+class Cpu65C02(stopOnBrk: Boolean) : Cpu6502(stopOnBrk) {
 
 
     val waiting: Boolean = false

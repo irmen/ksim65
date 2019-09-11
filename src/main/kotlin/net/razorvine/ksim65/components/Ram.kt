@@ -2,18 +2,18 @@ package net.razorvine.ksim65.components
 
 import java.io.File
 
-class Ram(startAddress: Address, endAddress: Address): MemoryComponent(startAddress, endAddress) {
-    private val memory = ShortArray(endAddress-startAddress+1)
+class Ram(startAddress: Address, endAddress: Address) : MemoryComponent(startAddress, endAddress) {
+    private val memory = ShortArray(endAddress - startAddress + 1)
 
-    override operator fun get(address: Address): UByte = memory[address-startAddress]
+    override operator fun get(address: Address): UByte = memory[address - startAddress]
 
     override operator fun set(address: Address, data: UByte) {
-        memory[address-startAddress] = data
+        memory[address - startAddress] = data
     }
 
     override fun cloneContents(): Array<UByte> = memory.toTypedArray()
 
-    override fun clock() { }
+    override fun clock() {}
 
     override fun reset() {
         // contents of RAM doesn't change on a reset
@@ -31,11 +31,11 @@ class Ram(startAddress: Address, endAddress: Address): MemoryComponent(startAddr
         val bytes = File(filename).readBytes()
         val address = (bytes[0].toInt() or (bytes[1].toInt() shl 8)) and 65535
         bytes.drop(2).forEachIndexed { index, byte ->
-            memory[address+index] =
-                    if(byte>=0)
-                        byte.toShort()
-                    else
-                        (256+byte).toShort()
+            memory[address + index] =
+                if (byte >= 0)
+                    byte.toShort()
+                else
+                    (256 + byte).toShort()
         }
     }
 
@@ -45,11 +45,11 @@ class Ram(startAddress: Address, endAddress: Address): MemoryComponent(startAddr
     fun load(filename: String, address: Address) {
         val bytes = File(filename).readBytes()
         bytes.forEachIndexed { index, byte ->
-            memory[address+index] =
-                    if(byte>=0)
-                        byte.toShort()
-                    else
-                        (256+byte).toShort()
+            memory[address + index] =
+                if (byte >= 0)
+                    byte.toShort()
+                else
+                    (256 + byte).toShort()
         }
     }
 }

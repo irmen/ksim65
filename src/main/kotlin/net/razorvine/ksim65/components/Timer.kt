@@ -14,7 +14,7 @@ class Timer(startAddress: Address, endAddress: Address, val cpu: Cpu6502) : MemM
     private var nmi = false
     private var enabled = false
         set(value) {
-            if(value && !field) {
+            if (value && !field) {
                 // timer is set to enabled (was disabled) - reset the counter
                 counter = 0
             }

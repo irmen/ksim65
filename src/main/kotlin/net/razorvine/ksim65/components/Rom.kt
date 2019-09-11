@@ -2,10 +2,10 @@ package net.razorvine.ksim65.components
 
 class Rom(startAddress: Address, endAddress: Address, data: Array<UByte>? = null) : MemoryComponent(startAddress, endAddress) {
     private val memory =
-            if (data == null)
-                ShortArray(endAddress - startAddress - 1)
-            else
-                ShortArray(data.size) { index -> data[index] }
+        if (data == null)
+            ShortArray(endAddress - startAddress - 1)
+        else
+            ShortArray(data.size) { index -> data[index] }
 
     init {
         if (data != null)

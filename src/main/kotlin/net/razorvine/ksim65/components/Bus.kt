@@ -27,7 +27,7 @@ class Bus {
 
     fun read(address: Address): UByte {
         memComponents.forEach {
-            if(address>=it.startAddress && address<=it.endAddress)
+            if (address >= it.startAddress && address <= it.endAddress)
                 return it[address]
         }
         return 0xff
@@ -35,7 +35,7 @@ class Bus {
 
     fun write(address: Address, data: UByte) {
         memComponents.forEach {
-            if(address>=it.startAddress && address<=it.endAddress)
+            if (address >= it.startAddress && address <= it.endAddress)
                 it[address] = data
         }
     }

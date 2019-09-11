@@ -55,20 +55,26 @@ open class Cpu6502(private val stopOnBrk: Boolean) : BusComponent() {
         IzY
     }
 
-    class Instruction(val opcode: UByte, val mnemonic: String, val mode: AddrMode, val cycles: Int, val execute: () -> Unit) {
+    class Instruction(
+        val opcode: UByte,
+        val mnemonic: String,
+        val mode: AddrMode,
+        val cycles: Int,
+        val execute: () -> Unit
+    ) {
         override fun toString(): String {
             return "[${hexB(opcode)}: $mnemonic $mode]"
         }
     }
 
     class StatusRegister(
-            var C: Boolean = false,
-            var Z: Boolean = false,
-            var I: Boolean = false,
-            var D: Boolean = false,
-            var B: Boolean = false,
-            var V: Boolean = false,
-            var N: Boolean = false
+        var C: Boolean = false,
+        var Z: Boolean = false,
+        var I: Boolean = false,
+        var D: Boolean = false,
+        var B: Boolean = false,
+        var V: Boolean = false,
+        var N: Boolean = false
     ) {
         fun asByte(): UByte {
             return (0b00100000 or
@@ -126,19 +132,19 @@ open class Cpu6502(private val stopOnBrk: Boolean) : BusComponent() {
     private var fetchedAddress: Address = 0
 
     private val addressingModes = mapOf<AddrMode, () -> Unit>(
-            AddrMode.Imp to ::amImp,
-            AddrMode.Acc to ::amAcc,
-            AddrMode.Imm to ::amImm,
-            AddrMode.Zp to ::amZp,
-            AddrMode.ZpX to ::amZpx,
-            AddrMode.ZpY to ::amZpy,
-            AddrMode.Rel to ::amRel,
-            AddrMode.Abs to ::amAbs,
-            AddrMode.AbsX to ::amAbsx,
-            AddrMode.AbsY to ::amAbsy,
-            AddrMode.Ind to ::amInd,
-            AddrMode.IzX to ::amIzx,
-            AddrMode.IzY to ::amIzy
+        AddrMode.Imp to ::amImp,
+        AddrMode.Acc to ::amAcc,
+        AddrMode.Imm to ::amImm,
+        AddrMode.Zp to ::amZp,
+        AddrMode.ZpX to ::amZpx,
+        AddrMode.ZpY to ::amZpy,
+        AddrMode.Rel to ::amRel,
+        AddrMode.Abs to ::amAbs,
+        AddrMode.AbsX to ::amAbsx,
+        AddrMode.AbsY to ::amAbsy,
+        AddrMode.Ind to ::amInd,
+        AddrMode.IzX to ::amIzx,
+        AddrMode.IzY to ::amIzy
     )
 
     private val breakpoints = mutableMapOf<Address, (cpu: Cpu6502, pc: Address) -> Unit>()
@@ -148,7 +154,7 @@ open class Cpu6502(private val stopOnBrk: Boolean) : BusComponent() {
     }
 
     fun disassemble(component: MemoryComponent, from: Address, to: Address) =
-            disassemble(component.cloneContents(), component.startAddress, from, to)
+        disassemble(component.cloneContents(), component.startAddress, from, to)
 
     fun disassemble(memory: Array<UByte>, baseAddress: Address, from: Address, to: Address): List<String> {
         var address = from - baseAddress
@@ -198,10 +204,10 @@ open class Cpu6502(private val stopOnBrk: Boolean) : BusComponent() {
                 AddrMode.Rel -> {
                     val rel = memory[address++]
                     val target =
-                            if (rel <= 0x7f)
-                                address + rel
-                            else
-                                address - (256 - rel)
+                        if (rel <= 0x7f)
+                            address + rel
+                        else
+                            address - (256 - rel)
                     line += "${hexB(rel)} $spacing2 ${opcode.mnemonic}  \$${hexW(
                         target,
                         true
@@ -338,19 +344,20 @@ open class Cpu6502(private val stopOnBrk: Boolean) : BusComponent() {
     }
 
     fun printState() {
-        println("cycle:$totalCycles - pc=${hexW(PC)} " +
-                "A=${hexB(A)} " +
-                "X=${hexB(X)} " +
-                "Y=${hexB(Y)} " +
-                "SP=${hexB(SP)} " +
-                " n=" + (if (Status.N) "1" else "0") +
-                " v=" + (if (Status.V) "1" else "0") +
-                " b=" + (if (Status.B) "1" else "0") +
-                " d=" + (if (Status.D) "1" else "0") +
-                " i=" + (if (Status.I) "1" else "0") +
-                " z=" + (if (Status.Z) "1" else "0") +
-                " c=" + (if (Status.C) "1" else "0") +
-                "  icycles=$instrCycles  instr=${hexB(currentOpcode)}:${currentInstruction.mnemonic}"
+        println(
+            "cycle:$totalCycles - pc=${hexW(PC)} " +
+                    "A=${hexB(A)} " +
+                    "X=${hexB(X)} " +
+                    "Y=${hexB(Y)} " +
+                    "SP=${hexB(SP)} " +
+                    " n=" + (if (Status.N) "1" else "0") +
+                    " v=" + (if (Status.V) "1" else "0") +
+                    " b=" + (if (Status.B) "1" else "0") +
+                    " d=" + (if (Status.D) "1" else "0") +
+                    " i=" + (if (Status.I) "1" else "0") +
+                    " z=" + (if (Status.Z) "1" else "0") +
+                    " c=" + (if (Status.C) "1" else "0") +
+                    "  icycles=$instrCycles  instr=${hexB(currentOpcode)}:${currentInstruction.mnemonic}"
         )
     }
 
@@ -440,13 +447,13 @@ open class Cpu6502(private val stopOnBrk: Boolean) : BusComponent() {
     }
 
     private fun getFetched() =
-            if (currentInstruction.mode == AddrMode.Imm ||
-                    currentInstruction.mode == AddrMode.Acc ||
-                    currentInstruction.mode == AddrMode.Imp
-            )
-                fetchedData
-            else
-                read(fetchedAddress)
+        if (currentInstruction.mode == AddrMode.Imm ||
+            currentInstruction.mode == AddrMode.Acc ||
+            currentInstruction.mode == AddrMode.Imp
+        )
+            fetchedData
+        else
+            read(fetchedAddress)
 
     private fun readPc(): Int = bus.read(PC++).toInt()
 
@@ -738,7 +745,7 @@ open class Cpu6502(private val stopOnBrk: Boolean) : BusComponent() {
         Instruction(0xfc, "nop", AddrMode.AbsX, 4, ::iNop),
         Instruction(0xfd, "sbc", AddrMode.AbsX, 4, ::iSbc),
         Instruction(0xfe, "inc", AddrMode.AbsX, 7, ::iInc),
-        Instruction(0xff, "isc", AddrMode.AbsX, 7, ::iIsc )
+        Instruction(0xff, "isc", AddrMode.AbsX, 7, ::iIsc)
     ).toTypedArray()
 
 
