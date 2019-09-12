@@ -3,10 +3,14 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     // Apply the Kotlin JVM plugin to add support for Kotlin on the JVM.
-    id("org.jetbrains.kotlin.jvm").version("1.3.50")
-    id("com.gradle.build-scan").version("2.4.2")
-    id("org.jetbrains.dokka").version("0.9.18")
+    id("org.jetbrains.kotlin.jvm") version "1.3.50"
+    id("com.gradle.build-scan") version "2.4.2"
+    id("org.jetbrains.dokka") version "0.9.18"
 }
+
+
+version = rootProject.file("src/main/resources/version.txt").readText().trim()
+base.archivesBaseName = "ksim65"
 
 repositories {
     // Use jcenter for resolving dependencies.
