@@ -2,12 +2,15 @@ package razorvine.ksim65.components
 
 // TODO: implement the illegal opcodes, see http://www.ffd2.com/fridge/docs/6502-NMOS.extra.opcodes
 // TODO: add the optional additional cycles to certain instructions and addressing modes
+// TODO: add 6510 behavior mode (is there even a difference to be simulated here?)
 
-
+/**
+ * 6502 cpu simulation (the NMOS version) including the 'illegal' opcodes.
+ */
 open class Cpu6502(private val stopOnBrk: Boolean) : BusComponent() {
     var tracing: Boolean = false
     var totalCycles: Long = 0
-        private set
+        protected set
 
     class InstructionError(msg: String) : RuntimeException(msg)
 
@@ -23,6 +26,7 @@ open class Cpu6502(private val stopOnBrk: Boolean) : BusComponent() {
         Acc,
         Imm,
         Zp,
+        Zpr,        // special addressing mode used by the 65C02
         ZpX,
         ZpY,
         Rel,
@@ -31,7 +35,8 @@ open class Cpu6502(private val stopOnBrk: Boolean) : BusComponent() {
         AbsY,
         Ind,
         IzX,
-        IzY
+        IzY,
+        Izp         // special addressing mode used by the 65C02
     }
 
     class Instruction(val mnemonic: String, val mode: AddrMode, val cycles: Int)
@@ -89,7 +94,7 @@ open class Cpu6502(private val stopOnBrk: Boolean) : BusComponent() {
     var PC: Address = 0
     val Status = StatusRegister()
     var currentOpcode: Int = 0
-    private lateinit var currentInstruction: Instruction
+    protected lateinit var currentInstruction: Instruction
 
     // has an interrupt been requested?
     protected var pendingInterrupt: Pair<Boolean, BusComponent>? = null
@@ -98,7 +103,7 @@ open class Cpu6502(private val stopOnBrk: Boolean) : BusComponent() {
     private var fetchedData: Int = 0
 
     // all other addressing modes yield a fetched memory address
-    private var fetchedAddress: Address = 0
+    protected var fetchedAddress: Address = 0
 
     private val breakpoints = mutableMapOf<Address, (cpu: Cpu6502, pc: Address) -> Unit>()
 
@@ -161,6 +166,14 @@ open class Cpu6502(private val stopOnBrk: Boolean) : BusComponent() {
                     line += "${hexB(zpAddr)} $spacing2 ${opcode.mnemonic}  \$${hexB(
                         zpAddr
                     )}"
+                }
+                AddrMode.Zpr -> {
+                    // addressing mode used by the 65C02 only
+                    TODO("ZPR addressing mode")
+                }
+                AddrMode.Izp -> {
+                    // addressing mode used by the 65C02 only
+                    TODO("ZPI addressing mode")
                 }
                 AddrMode.ZpX -> {
                     val zpAddr = memory[address++]
@@ -300,7 +313,7 @@ open class Cpu6502(private val stopOnBrk: Boolean) : BusComponent() {
         totalCycles++
     }
 
-    fun step() {
+    open fun step() {
         // step a whole instruction
         while (instrCycles > 0) clock()        // remaining instruction subcycles from the previous instruction
         clock()   // the actual instruction execution cycle
@@ -343,16 +356,16 @@ open class Cpu6502(private val stopOnBrk: Boolean) : BusComponent() {
         else
             read(fetchedAddress)
 
-    private fun readPc(): Int = bus.read(PC++).toInt()
+    protected fun readPc(): Int = bus.read(PC++).toInt()
 
-    private fun pushStackAddr(address: Address) {
+    protected fun pushStackAddr(address: Address) {
         val lo = address and 0xff
         val hi = (address ushr 8)
         pushStack(hi)
         pushStack(lo)
     }
 
-    private fun pushStack(status: StatusRegister) {
+    protected fun pushStack(status: StatusRegister) {
         pushStack(status.asByte().toInt())
     }
 
@@ -372,271 +385,273 @@ open class Cpu6502(private val stopOnBrk: Boolean) : BusComponent() {
         return lo or (hi shl 8)
     }
 
-    private fun read(address: Address): Int = bus.read(address).toInt()
+    protected fun read(address: Address): Int = bus.read(address).toInt()
     protected fun readWord(address: Address): Int = bus.read(address).toInt() or (bus.read(address + 1).toInt() shl 8)
-    private fun write(address: Address, data: Int) = bus.write(address, data.toShort())
+    protected fun write(address: Address, data: Int) = bus.write(address, data.toShort())
 
     // opcodes table from  http://www.oxyron.de/html/opcodes02.html
-    private val instructions = listOf(
-        Instruction("brk", AddrMode.Imp, 7),
-        Instruction("ora", AddrMode.IzX, 6),
-        Instruction("???", AddrMode.Imp, 0),
-        Instruction("slo", AddrMode.IzX, 8),
-        Instruction("nop", AddrMode.Zp, 3),
-        Instruction("ora", AddrMode.Zp, 3),
-        Instruction("asl", AddrMode.Zp, 5),
-        Instruction("slo", AddrMode.Zp, 5),
-        Instruction("php", AddrMode.Imp, 3),
-        Instruction("ora", AddrMode.Imm, 2),
-        Instruction("asl", AddrMode.Acc, 2),
-        Instruction("anc", AddrMode.Imm, 2),
-        Instruction("nop", AddrMode.Abs, 4),
-        Instruction("ora", AddrMode.Abs, 4),
-        Instruction("asl", AddrMode.Abs, 6),
-        Instruction("slo", AddrMode.Abs, 6),
-        Instruction("bpl", AddrMode.Rel, 2),
-        Instruction("ora", AddrMode.IzY, 5),
-        Instruction("???", AddrMode.Imp, 0),
-        Instruction("slo", AddrMode.IzY, 6),
-        Instruction("nop", AddrMode.ZpX, 4),
-        Instruction("ora", AddrMode.ZpX, 4),
-        Instruction("asl", AddrMode.ZpX, 6),
-        Instruction("slo", AddrMode.ZpX, 6),
-        Instruction("clc", AddrMode.Imp, 2),
-        Instruction("ora", AddrMode.AbsY, 4),
-        Instruction("nop", AddrMode.Imp, 2),
-        Instruction("slo", AddrMode.AbsY, 7),
-        Instruction("nop", AddrMode.AbsX, 4),
-        Instruction("ora", AddrMode.AbsX, 4),
-        Instruction("asl", AddrMode.AbsX, 7),
-        Instruction("slo", AddrMode.AbsX, 7),
-        Instruction("jsr", AddrMode.Abs, 6),
-        Instruction("and", AddrMode.IzX, 6),
-        Instruction("???", AddrMode.Imp, 0),
-        Instruction("rla", AddrMode.IzX, 8),
-        Instruction("bit", AddrMode.Zp, 3),
-        Instruction("and", AddrMode.Zp, 3),
-        Instruction("rol", AddrMode.Zp, 5),
-        Instruction("rla", AddrMode.Zp, 5),
-        Instruction("plp", AddrMode.Imp, 4),
-        Instruction("and", AddrMode.Imm, 2),
-        Instruction("rol", AddrMode.Acc, 2),
-        Instruction("anc", AddrMode.Imm, 2),
-        Instruction("bit", AddrMode.Abs, 4),
-        Instruction("and", AddrMode.Abs, 4),
-        Instruction("rol", AddrMode.Abs, 6),
-        Instruction("rla", AddrMode.Abs, 6),
-        Instruction("bmi", AddrMode.Rel, 2),
-        Instruction("and", AddrMode.IzY, 5),
-        Instruction("???", AddrMode.Imp, 0),
-        Instruction("rla", AddrMode.IzY, 8),
-        Instruction("nop", AddrMode.ZpX, 4),
-        Instruction("and", AddrMode.ZpX, 4),
-        Instruction("rol", AddrMode.ZpX, 6),
-        Instruction("rla", AddrMode.ZpX, 6),
-        Instruction("sec", AddrMode.Imp, 2),
-        Instruction("and", AddrMode.AbsY, 4),
-        Instruction("nop", AddrMode.Imp, 2),
-        Instruction("rla", AddrMode.AbsY, 7),
-        Instruction("nop", AddrMode.AbsX, 4),
-        Instruction("and", AddrMode.AbsX, 4),
-        Instruction("rol", AddrMode.AbsX, 7),
-        Instruction("rla", AddrMode.AbsX, 7),
-        Instruction("rti", AddrMode.Imp, 6),
-        Instruction("eor", AddrMode.IzX, 6),
-        Instruction("???", AddrMode.Imp, 0),
-        Instruction("sre", AddrMode.IzX, 8),
-        Instruction("nop", AddrMode.Zp, 3),
-        Instruction("eor", AddrMode.Zp, 3),
-        Instruction("lsr", AddrMode.Zp, 5),
-        Instruction("sre", AddrMode.Zp, 5),
-        Instruction("pha", AddrMode.Imp, 3),
-        Instruction("eor", AddrMode.Imm, 2),
-        Instruction("lsr", AddrMode.Acc, 2),
-        Instruction("alr", AddrMode.Imm, 2),
-        Instruction("jmp", AddrMode.Abs, 3),
-        Instruction("eor", AddrMode.Abs, 4),
-        Instruction("lsr", AddrMode.Abs, 6),
-        Instruction("sre", AddrMode.Abs, 6),
-        Instruction("bvc", AddrMode.Rel, 2),
-        Instruction("eor", AddrMode.IzY, 5),
-        Instruction("???", AddrMode.Imp, 0),
-        Instruction("sre", AddrMode.IzY, 8),
-        Instruction("nop", AddrMode.ZpX, 4),
-        Instruction("eor", AddrMode.ZpX, 4),
-        Instruction("lsr", AddrMode.ZpX, 6),
-        Instruction("sre", AddrMode.ZpX, 6),
-        Instruction("cli", AddrMode.Imp, 2),
-        Instruction("eor", AddrMode.AbsY, 4),
-        Instruction("nop", AddrMode.Imp, 2),
-        Instruction("sre", AddrMode.AbsY, 7),
-        Instruction("nop", AddrMode.AbsX, 4),
-        Instruction("eor", AddrMode.AbsX, 4),
-        Instruction("lsr", AddrMode.AbsX, 7),
-        Instruction("sre", AddrMode.AbsX, 7),
-        Instruction("rts", AddrMode.Imp, 6),
-        Instruction("adc", AddrMode.IzX, 6),
-        Instruction("???", AddrMode.Imp, 0),
-        Instruction("rra", AddrMode.IzX, 8),
-        Instruction("nop", AddrMode.Zp, 3),
-        Instruction("adc", AddrMode.Zp, 3),
-        Instruction("ror", AddrMode.Zp, 5),
-        Instruction("rra", AddrMode.Zp, 5),
-        Instruction("pla", AddrMode.Imp, 4),
-        Instruction("adc", AddrMode.Imm, 2),
-        Instruction("ror", AddrMode.Acc, 2),
-        Instruction("arr", AddrMode.Imm, 2),
-        Instruction("jmp", AddrMode.Ind, 5),
-        Instruction("adc", AddrMode.Abs, 4),
-        Instruction("ror", AddrMode.Abs, 6),
-        Instruction("rra", AddrMode.Abs, 6),
-        Instruction("bvs", AddrMode.Rel, 2),
-        Instruction("adc", AddrMode.IzY, 5),
-        Instruction("???", AddrMode.Imp, 0),
-        Instruction("rra", AddrMode.IzY, 8),
-        Instruction("nop", AddrMode.ZpX, 4),
-        Instruction("adc", AddrMode.ZpX, 4),
-        Instruction("ror", AddrMode.ZpX, 6),
-        Instruction("rra", AddrMode.ZpX, 6),
-        Instruction("sei", AddrMode.Imp, 2),
-        Instruction("adc", AddrMode.AbsY, 4),
-        Instruction("nop", AddrMode.Imp, 2),
-        Instruction("rra", AddrMode.AbsY, 7),
-        Instruction("nop", AddrMode.AbsX, 4),
-        Instruction("adc", AddrMode.AbsX, 4),
-        Instruction("ror", AddrMode.AbsX, 7),
-        Instruction("rra", AddrMode.AbsX, 7),
-        Instruction("nop", AddrMode.Imm, 2),
-        Instruction("sta", AddrMode.IzX, 6),
-        Instruction("nop", AddrMode.Imm, 2),
-        Instruction("sax", AddrMode.IzX, 6),
-        Instruction("sty", AddrMode.Zp, 3),
-        Instruction("sta", AddrMode.Zp, 3),
-        Instruction("stx", AddrMode.Zp, 3),
-        Instruction("sax", AddrMode.Zp, 3),
-        Instruction("dey", AddrMode.Imp, 2),
-        Instruction("nop", AddrMode.Imm, 2),
-        Instruction("txa", AddrMode.Imp, 2),
-        Instruction("xaa", AddrMode.Imm, 2),
-        Instruction("sty", AddrMode.Abs, 4),
-        Instruction("sta", AddrMode.Abs, 4),
-        Instruction("stx", AddrMode.Abs, 4),
-        Instruction("sax", AddrMode.Abs, 4),
-        Instruction("bcc", AddrMode.Rel, 2),
-        Instruction("sta", AddrMode.IzY, 6),
-        Instruction("???", AddrMode.Imp, 0),
-        Instruction("ahx", AddrMode.IzY, 6),
-        Instruction("sty", AddrMode.ZpX, 4),
-        Instruction("sta", AddrMode.ZpX, 4),
-        Instruction("stx", AddrMode.ZpY, 4),
-        Instruction("sax", AddrMode.ZpY, 4),
-        Instruction("tya", AddrMode.Imp, 2),
-        Instruction("sta", AddrMode.AbsY, 5),
-        Instruction("txs", AddrMode.Imp, 2),
-        Instruction("tas", AddrMode.AbsY, 5),
-        Instruction("shy", AddrMode.AbsX, 5),
-        Instruction("sta", AddrMode.AbsX, 5),
-        Instruction("shx", AddrMode.AbsY, 5),
-        Instruction("ahx", AddrMode.AbsY, 5),
-        Instruction("ldy", AddrMode.Imm, 2),
-        Instruction("lda", AddrMode.IzX, 6),
-        Instruction("ldx", AddrMode.Imm, 2),
-        Instruction("lax", AddrMode.IzX, 6),
-        Instruction("ldy", AddrMode.Zp, 3),
-        Instruction("lda", AddrMode.Zp, 3),
-        Instruction("ldx", AddrMode.Zp, 3),
-        Instruction("lax", AddrMode.Zp, 3),
-        Instruction("tay", AddrMode.Imp, 2),
-        Instruction("lda", AddrMode.Imm, 2),
-        Instruction("tax", AddrMode.Imp, 2),
-        Instruction("lax", AddrMode.Imm, 2),
-        Instruction("ldy", AddrMode.Abs, 4),
-        Instruction("lda", AddrMode.Abs, 4),
-        Instruction("ldx", AddrMode.Abs, 4),
-        Instruction("lax", AddrMode.Abs, 4),
-        Instruction("bcs", AddrMode.Rel, 2),
-        Instruction("lda", AddrMode.IzY, 5),
-        Instruction("???", AddrMode.Imp, 0),
-        Instruction("lax", AddrMode.IzY, 5),
-        Instruction("ldy", AddrMode.ZpX, 4),
-        Instruction("lda", AddrMode.ZpX, 4),
-        Instruction("ldx", AddrMode.ZpY, 4),
-        Instruction("lax", AddrMode.ZpY, 4),
-        Instruction("clv", AddrMode.Imp, 2),
-        Instruction("lda", AddrMode.AbsY, 4),
-        Instruction("tsx", AddrMode.Imp, 2),
-        Instruction("las", AddrMode.AbsY, 4),
-        Instruction("ldy", AddrMode.AbsX, 4),
-        Instruction("lda", AddrMode.AbsX, 4),
-        Instruction("ldx", AddrMode.AbsY, 4),
-        Instruction("lax", AddrMode.AbsY, 4),
-        Instruction("cpy", AddrMode.Imm, 2),
-        Instruction("cmp", AddrMode.IzX, 6),
-        Instruction("nop", AddrMode.Imm, 2),
-        Instruction("dcp", AddrMode.IzX, 8),
-        Instruction("cpy", AddrMode.Zp, 3),
-        Instruction("cmp", AddrMode.Zp, 3),
-        Instruction("dec", AddrMode.Zp, 5),
-        Instruction("dcp", AddrMode.Zp, 5),
-        Instruction("iny", AddrMode.Imp, 2),
-        Instruction("cmp", AddrMode.Imm, 2),
-        Instruction("dex", AddrMode.Imp, 2),
-        Instruction("axs", AddrMode.Imm, 2),
-        Instruction("cpy", AddrMode.Abs, 4),
-        Instruction("cmp", AddrMode.Abs, 4),
-        Instruction("dec", AddrMode.Abs, 6),
-        Instruction("dcp", AddrMode.Abs, 6),
-        Instruction("bne", AddrMode.Rel, 2),
-        Instruction("cmp", AddrMode.IzY, 5),
-        Instruction("???", AddrMode.Imp, 0),
-        Instruction("dcp", AddrMode.IzY, 8),
-        Instruction("nop", AddrMode.ZpX, 4),
-        Instruction("cmp", AddrMode.ZpX, 4),
-        Instruction("dec", AddrMode.ZpX, 6),
-        Instruction("dcp", AddrMode.ZpX, 6),
-        Instruction("cld", AddrMode.Imp, 2),
-        Instruction("cmp", AddrMode.AbsY, 4),
-        Instruction("nop", AddrMode.Imp, 2),
-        Instruction("dcp", AddrMode.AbsY, 7),
-        Instruction("nop", AddrMode.AbsX, 4),
-        Instruction("cmp", AddrMode.AbsX, 4),
-        Instruction("dec", AddrMode.AbsX, 7),
-        Instruction("dcp", AddrMode.AbsX, 7),
-        Instruction("cpx", AddrMode.Imm, 2),
-        Instruction("sbc", AddrMode.IzX, 6),
-        Instruction("nop", AddrMode.Imm, 2),
-        Instruction("isc", AddrMode.IzX, 8),
-        Instruction("cpx", AddrMode.Zp, 3),
-        Instruction("sbc", AddrMode.Zp, 3),
-        Instruction("inc", AddrMode.Zp, 5),
-        Instruction("isc", AddrMode.Zp, 5),
-        Instruction("inx", AddrMode.Imp, 2),
-        Instruction("sbc", AddrMode.Imm, 2),
-        Instruction("nop", AddrMode.Imp, 2),
-        Instruction("sbc", AddrMode.Imm, 2),
-        Instruction("cpx", AddrMode.Abs, 4),
-        Instruction("sbc", AddrMode.Abs, 4),
-        Instruction("inc", AddrMode.Abs, 6),
-        Instruction("isc", AddrMode.Abs, 6),
-        Instruction("beq", AddrMode.Rel, 2),
-        Instruction("sbc", AddrMode.IzY, 5),
-        Instruction("???", AddrMode.Imp, 0),
-        Instruction("isc", AddrMode.IzY, 8),
-        Instruction("nop", AddrMode.ZpX, 4),
-        Instruction("sbc", AddrMode.ZpX, 4),
-        Instruction("inc", AddrMode.ZpX, 6),
-        Instruction("isc", AddrMode.ZpX, 6),
-        Instruction("sed", AddrMode.Imp, 2),
-        Instruction("sbc", AddrMode.AbsY, 4),
-        Instruction("nop", AddrMode.Imp, 2),
-        Instruction("isc", AddrMode.AbsY, 7),
-        Instruction("nop", AddrMode.AbsX, 4),
-        Instruction("sbc", AddrMode.AbsX, 4),
-        Instruction("inc", AddrMode.AbsX, 7),
-        Instruction("isc", AddrMode.AbsX, 7)
-    ).toTypedArray()
+    protected open val instructions: Array<Instruction> by lazy {
+        listOf(
+            /* 00 */  Instruction("brk", AddrMode.Imp, 7),
+            /* 01 */  Instruction("ora", AddrMode.IzX, 6),
+            /* 02 */  Instruction("???", AddrMode.Imp, 2),
+            /* 03 */  Instruction("slo", AddrMode.IzX, 8),
+            /* 04 */  Instruction("nop", AddrMode.Zp, 3),
+            /* 05 */  Instruction("ora", AddrMode.Zp, 3),
+            /* 06 */  Instruction("asl", AddrMode.Zp, 5),
+            /* 07 */  Instruction("slo", AddrMode.Zp, 5),
+            /* 08 */  Instruction("php", AddrMode.Imp, 3),
+            /* 09 */  Instruction("ora", AddrMode.Imm, 2),
+            /* 0a */  Instruction("asl", AddrMode.Acc, 2),
+            /* 0b */  Instruction("anc", AddrMode.Imm, 2),
+            /* 0c */  Instruction("nop", AddrMode.Abs, 4),
+            /* 0d */  Instruction("ora", AddrMode.Abs, 4),
+            /* 0e */  Instruction("asl", AddrMode.Abs, 6),
+            /* 0f */  Instruction("slo", AddrMode.Abs, 6),
+            /* 10 */  Instruction("bpl", AddrMode.Rel, 2),
+            /* 11 */  Instruction("ora", AddrMode.IzY, 5),
+            /* 12 */  Instruction("???", AddrMode.Imp, 2),
+            /* 13 */  Instruction("slo", AddrMode.IzY, 8),
+            /* 14 */  Instruction("nop", AddrMode.ZpX, 4),
+            /* 15 */  Instruction("ora", AddrMode.ZpX, 4),
+            /* 16 */  Instruction("asl", AddrMode.ZpX, 6),
+            /* 17 */  Instruction("slo", AddrMode.ZpX, 6),
+            /* 18 */  Instruction("clc", AddrMode.Imp, 2),
+            /* 19 */  Instruction("ora", AddrMode.AbsY, 4),
+            /* 1a */  Instruction("nop", AddrMode.Imp, 2),
+            /* 1b */  Instruction("slo", AddrMode.AbsY, 7),
+            /* 1c */  Instruction("nop", AddrMode.AbsX, 4),
+            /* 1d */  Instruction("ora", AddrMode.AbsX, 4),
+            /* 1e */  Instruction("asl", AddrMode.AbsX, 7),
+            /* 1f */  Instruction("slo", AddrMode.AbsX, 7),
+            /* 20 */  Instruction("jsr", AddrMode.Abs, 6),
+            /* 21 */  Instruction("and", AddrMode.IzX, 6),
+            /* 22 */  Instruction("???", AddrMode.Imp, 2),
+            /* 23 */  Instruction("rla", AddrMode.IzX, 8),
+            /* 24 */  Instruction("bit", AddrMode.Zp, 3),
+            /* 25 */  Instruction("and", AddrMode.Zp, 3),
+            /* 26 */  Instruction("rol", AddrMode.Zp, 5),
+            /* 27 */  Instruction("rla", AddrMode.Zp, 5),
+            /* 28 */  Instruction("plp", AddrMode.Imp, 4),
+            /* 29 */  Instruction("and", AddrMode.Imm, 2),
+            /* 2a */  Instruction("rol", AddrMode.Acc, 2),
+            /* 2b */  Instruction("anc", AddrMode.Imm, 2),
+            /* 2c */  Instruction("bit", AddrMode.Abs, 4),
+            /* 2d */  Instruction("and", AddrMode.Abs, 4),
+            /* 2e */  Instruction("rol", AddrMode.Abs, 6),
+            /* 2f */  Instruction("rla", AddrMode.Abs, 6),
+            /* 30 */  Instruction("bmi", AddrMode.Rel, 2),
+            /* 31 */  Instruction("and", AddrMode.IzY, 5),
+            /* 32 */  Instruction("???", AddrMode.Imp, 2),
+            /* 33 */  Instruction("rla", AddrMode.IzY, 8),
+            /* 34 */  Instruction("nop", AddrMode.ZpX, 4),
+            /* 35 */  Instruction("and", AddrMode.ZpX, 4),
+            /* 36 */  Instruction("rol", AddrMode.ZpX, 6),
+            /* 37 */  Instruction("rla", AddrMode.ZpX, 6),
+            /* 38 */  Instruction("sec", AddrMode.Imp, 2),
+            /* 39 */  Instruction("and", AddrMode.AbsY, 4),
+            /* 3a */  Instruction("nop", AddrMode.Imp, 2),
+            /* 3b */  Instruction("rla", AddrMode.AbsY, 7),
+            /* 3c */  Instruction("nop", AddrMode.AbsX, 4),
+            /* 3d */  Instruction("and", AddrMode.AbsX, 4),
+            /* 3e */  Instruction("rol", AddrMode.AbsX, 7),
+            /* 3f */  Instruction("rla", AddrMode.AbsX, 7),
+            /* 40 */  Instruction("rti", AddrMode.Imp, 6),
+            /* 41 */  Instruction("eor", AddrMode.IzX, 6),
+            /* 42 */  Instruction("???", AddrMode.Imp, 2),
+            /* 43 */  Instruction("sre", AddrMode.IzX, 8),
+            /* 44 */  Instruction("nop", AddrMode.Zp, 3),
+            /* 45 */  Instruction("eor", AddrMode.Zp, 3),
+            /* 46 */  Instruction("lsr", AddrMode.Zp, 5),
+            /* 47 */  Instruction("sre", AddrMode.Zp, 5),
+            /* 48 */  Instruction("pha", AddrMode.Imp, 3),
+            /* 49 */  Instruction("eor", AddrMode.Imm, 2),
+            /* 4a */  Instruction("lsr", AddrMode.Acc, 2),
+            /* 4b */  Instruction("alr", AddrMode.Imm, 2),
+            /* 4c */  Instruction("jmp", AddrMode.Abs, 3),
+            /* 4d */  Instruction("eor", AddrMode.Abs, 4),
+            /* 4e */  Instruction("lsr", AddrMode.Abs, 6),
+            /* 4f */  Instruction("sre", AddrMode.Abs, 6),
+            /* 50 */  Instruction("bvc", AddrMode.Rel, 2),
+            /* 51 */  Instruction("eor", AddrMode.IzY, 5),
+            /* 52 */  Instruction("???", AddrMode.Imp, 2),
+            /* 53 */  Instruction("sre", AddrMode.IzY, 8),
+            /* 54 */  Instruction("nop", AddrMode.ZpX, 4),
+            /* 55 */  Instruction("eor", AddrMode.ZpX, 4),
+            /* 56 */  Instruction("lsr", AddrMode.ZpX, 6),
+            /* 57 */  Instruction("sre", AddrMode.ZpX, 6),
+            /* 58 */  Instruction("cli", AddrMode.Imp, 2),
+            /* 59 */  Instruction("eor", AddrMode.AbsY, 4),
+            /* 5a */  Instruction("nop", AddrMode.Imp, 2),
+            /* 5b */  Instruction("sre", AddrMode.AbsY, 7),
+            /* 5c */  Instruction("nop", AddrMode.AbsX, 4),
+            /* 5d */  Instruction("eor", AddrMode.AbsX, 4),
+            /* 5e */  Instruction("lsr", AddrMode.AbsX, 7),
+            /* 5f */  Instruction("sre", AddrMode.AbsX, 7),
+            /* 60 */  Instruction("rts", AddrMode.Imp, 6),
+            /* 61 */  Instruction("adc", AddrMode.IzX, 6),
+            /* 62 */  Instruction("???", AddrMode.Imp, 2),
+            /* 63 */  Instruction("rra", AddrMode.IzX, 8),
+            /* 64 */  Instruction("nop", AddrMode.Zp, 3),
+            /* 65 */  Instruction("adc", AddrMode.Zp, 3),
+            /* 66 */  Instruction("ror", AddrMode.Zp, 5),
+            /* 67 */  Instruction("rra", AddrMode.Zp, 5),
+            /* 68 */  Instruction("pla", AddrMode.Imp, 4),
+            /* 69 */  Instruction("adc", AddrMode.Imm, 2),
+            /* 6a */  Instruction("ror", AddrMode.Acc, 2),
+            /* 6b */  Instruction("arr", AddrMode.Imm, 2),
+            /* 6c */  Instruction("jmp", AddrMode.Ind, 5),
+            /* 6d */  Instruction("adc", AddrMode.Abs, 4),
+            /* 6e */  Instruction("ror", AddrMode.Abs, 6),
+            /* 6f */  Instruction("rra", AddrMode.Abs, 6),
+            /* 70 */  Instruction("bvs", AddrMode.Rel, 2),
+            /* 71 */  Instruction("adc", AddrMode.IzY, 5),
+            /* 72 */  Instruction("???", AddrMode.Imp, 2),
+            /* 73 */  Instruction("rra", AddrMode.IzY, 8),
+            /* 74 */  Instruction("nop", AddrMode.ZpX, 4),
+            /* 75 */  Instruction("adc", AddrMode.ZpX, 4),
+            /* 76 */  Instruction("ror", AddrMode.ZpX, 6),
+            /* 77 */  Instruction("rra", AddrMode.ZpX, 6),
+            /* 78 */  Instruction("sei", AddrMode.Imp, 2),
+            /* 79 */  Instruction("adc", AddrMode.AbsY, 4),
+            /* 7a */  Instruction("nop", AddrMode.Imp, 2),
+            /* 7b */  Instruction("rra", AddrMode.AbsY, 7),
+            /* 7c */  Instruction("nop", AddrMode.AbsX, 4),
+            /* 7d */  Instruction("adc", AddrMode.AbsX, 4),
+            /* 7e */  Instruction("ror", AddrMode.AbsX, 7),
+            /* 7f */  Instruction("rra", AddrMode.AbsX, 7),
+            /* 80 */  Instruction("nop", AddrMode.Imm, 2),
+            /* 81 */  Instruction("sta", AddrMode.IzX, 6),
+            /* 82 */  Instruction("nop", AddrMode.Imm, 2),
+            /* 83 */  Instruction("sax", AddrMode.IzX, 6),
+            /* 84 */  Instruction("sty", AddrMode.Zp, 3),
+            /* 85 */  Instruction("sta", AddrMode.Zp, 3),
+            /* 86 */  Instruction("stx", AddrMode.Zp, 3),
+            /* 87 */  Instruction("sax", AddrMode.Zp, 3),
+            /* 88 */  Instruction("dey", AddrMode.Imp, 2),
+            /* 89 */  Instruction("nop", AddrMode.Imm, 2),
+            /* 8a */  Instruction("txa", AddrMode.Imp, 2),
+            /* 8b */  Instruction("xaa", AddrMode.Imm, 2),
+            /* 8c */  Instruction("sty", AddrMode.Abs, 4),
+            /* 8d */  Instruction("sta", AddrMode.Abs, 4),
+            /* 8e */  Instruction("stx", AddrMode.Abs, 4),
+            /* 8f */  Instruction("sax", AddrMode.Abs, 4),
+            /* 90 */  Instruction("bcc", AddrMode.Rel, 2),
+            /* 91 */  Instruction("sta", AddrMode.IzY, 6),
+            /* 92 */  Instruction("???", AddrMode.Imp, 2),
+            /* 93 */  Instruction("ahx", AddrMode.IzY, 6),
+            /* 94 */  Instruction("sty", AddrMode.ZpX, 4),
+            /* 95 */  Instruction("sta", AddrMode.ZpX, 4),
+            /* 96 */  Instruction("stx", AddrMode.ZpY, 4),
+            /* 97 */  Instruction("sax", AddrMode.ZpY, 4),
+            /* 98 */  Instruction("tya", AddrMode.Imp, 2),
+            /* 99 */  Instruction("sta", AddrMode.AbsY, 5),
+            /* 9a */  Instruction("txs", AddrMode.Imp, 2),
+            /* 9b */  Instruction("tas", AddrMode.AbsY, 5),
+            /* 9c */  Instruction("shy", AddrMode.AbsX, 5),
+            /* 9d */  Instruction("sta", AddrMode.AbsX, 5),
+            /* 9e */  Instruction("shx", AddrMode.AbsY, 5),
+            /* 9f */  Instruction("ahx", AddrMode.AbsY, 5),
+            /* a0 */  Instruction("ldy", AddrMode.Imm, 2),
+            /* a1 */  Instruction("lda", AddrMode.IzX, 6),
+            /* a2 */  Instruction("ldx", AddrMode.Imm, 2),
+            /* a3 */  Instruction("lax", AddrMode.IzX, 6),
+            /* a4 */  Instruction("ldy", AddrMode.Zp, 3),
+            /* a5 */  Instruction("lda", AddrMode.Zp, 3),
+            /* a6 */  Instruction("ldx", AddrMode.Zp, 3),
+            /* a7 */  Instruction("lax", AddrMode.Zp, 3),
+            /* a8 */  Instruction("tay", AddrMode.Imp, 2),
+            /* a9 */  Instruction("lda", AddrMode.Imm, 2),
+            /* aa */  Instruction("tax", AddrMode.Imp, 2),
+            /* ab */  Instruction("lax", AddrMode.Imm, 2),
+            /* ac */  Instruction("ldy", AddrMode.Abs, 4),
+            /* ad */  Instruction("lda", AddrMode.Abs, 4),
+            /* ae */  Instruction("ldx", AddrMode.Abs, 4),
+            /* af */  Instruction("lax", AddrMode.Abs, 4),
+            /* b0 */  Instruction("bcs", AddrMode.Rel, 2),
+            /* b1 */  Instruction("lda", AddrMode.IzY, 5),
+            /* b2 */  Instruction("???", AddrMode.Imp, 2),
+            /* b3 */  Instruction("lax", AddrMode.IzY, 5),
+            /* b4 */  Instruction("ldy", AddrMode.ZpX, 4),
+            /* b5 */  Instruction("lda", AddrMode.ZpX, 4),
+            /* b6 */  Instruction("ldx", AddrMode.ZpY, 4),
+            /* b7 */  Instruction("lax", AddrMode.ZpY, 4),
+            /* b8 */  Instruction("clv", AddrMode.Imp, 2),
+            /* b9 */  Instruction("lda", AddrMode.AbsY, 4),
+            /* ba */  Instruction("tsx", AddrMode.Imp, 2),
+            /* bb */  Instruction("las", AddrMode.AbsY, 4),
+            /* bc */  Instruction("ldy", AddrMode.AbsX, 4),
+            /* bd */  Instruction("lda", AddrMode.AbsX, 4),
+            /* be */  Instruction("ldx", AddrMode.AbsY, 4),
+            /* bf */  Instruction("lax", AddrMode.AbsY, 4),
+            /* c0 */  Instruction("cpy", AddrMode.Imm, 2),
+            /* c1 */  Instruction("cmp", AddrMode.IzX, 6),
+            /* c2 */  Instruction("nop", AddrMode.Imm, 2),
+            /* c3 */  Instruction("dcp", AddrMode.IzX, 8),
+            /* c4 */  Instruction("cpy", AddrMode.Zp, 3),
+            /* c5 */  Instruction("cmp", AddrMode.Zp, 3),
+            /* c6 */  Instruction("dec", AddrMode.Zp, 5),
+            /* c7 */  Instruction("dcp", AddrMode.Zp, 5),
+            /* c8 */  Instruction("iny", AddrMode.Imp, 2),
+            /* c9 */  Instruction("cmp", AddrMode.Imm, 2),
+            /* ca */  Instruction("dex", AddrMode.Imp, 2),
+            /* cb */  Instruction("axs", AddrMode.Imm, 2),
+            /* cc */  Instruction("cpy", AddrMode.Abs, 4),
+            /* cd */  Instruction("cmp", AddrMode.Abs, 4),
+            /* ce */  Instruction("dec", AddrMode.Abs, 6),
+            /* cf */  Instruction("dcp", AddrMode.Abs, 6),
+            /* d0 */  Instruction("bne", AddrMode.Rel, 2),
+            /* d1 */  Instruction("cmp", AddrMode.IzY, 5),
+            /* d2 */  Instruction("???", AddrMode.Imp, 2),
+            /* d3 */  Instruction("dcp", AddrMode.IzY, 8),
+            /* d4 */  Instruction("nop", AddrMode.ZpX, 4),
+            /* d5 */  Instruction("cmp", AddrMode.ZpX, 4),
+            /* d6 */  Instruction("dec", AddrMode.ZpX, 6),
+            /* d7 */  Instruction("dcp", AddrMode.ZpX, 6),
+            /* d8 */  Instruction("cld", AddrMode.Imp, 2),
+            /* d9 */  Instruction("cmp", AddrMode.AbsY, 4),
+            /* da */  Instruction("nop", AddrMode.Imp, 2),
+            /* db */  Instruction("dcp", AddrMode.AbsY, 7),
+            /* dc */  Instruction("nop", AddrMode.AbsX, 4),
+            /* dd */  Instruction("cmp", AddrMode.AbsX, 4),
+            /* de */  Instruction("dec", AddrMode.AbsX, 7),
+            /* df */  Instruction("dcp", AddrMode.AbsX, 7),
+            /* e0 */  Instruction("cpx", AddrMode.Imm, 2),
+            /* e1 */  Instruction("sbc", AddrMode.IzX, 6),
+            /* e2 */  Instruction("nop", AddrMode.Imm, 2),
+            /* e3 */  Instruction("isc", AddrMode.IzX, 8),
+            /* e4 */  Instruction("cpx", AddrMode.Zp, 3),
+            /* e5 */  Instruction("sbc", AddrMode.Zp, 3),
+            /* e6 */  Instruction("inc", AddrMode.Zp, 5),
+            /* e7 */  Instruction("isc", AddrMode.Zp, 5),
+            /* e8 */  Instruction("inx", AddrMode.Imp, 2),
+            /* e9 */  Instruction("sbc", AddrMode.Imm, 2),
+            /* ea */  Instruction("nop", AddrMode.Imp, 2),
+            /* eb */  Instruction("sbc", AddrMode.Imm, 2),
+            /* ec */  Instruction("cpx", AddrMode.Abs, 4),
+            /* ed */  Instruction("sbc", AddrMode.Abs, 4),
+            /* ee */  Instruction("inc", AddrMode.Abs, 6),
+            /* ef */  Instruction("isc", AddrMode.Abs, 6),
+            /* f0 */  Instruction("beq", AddrMode.Rel, 2),
+            /* f1 */  Instruction("sbc", AddrMode.IzY, 5),
+            /* f2 */  Instruction("???", AddrMode.Imp, 2),
+            /* f3 */  Instruction("isc", AddrMode.IzY, 8),
+            /* f4 */  Instruction("nop", AddrMode.ZpX, 4),
+            /* f5 */  Instruction("sbc", AddrMode.ZpX, 4),
+            /* f6 */  Instruction("inc", AddrMode.ZpX, 6),
+            /* f7 */  Instruction("isc", AddrMode.ZpX, 6),
+            /* f8 */  Instruction("sed", AddrMode.Imp, 2),
+            /* f9 */  Instruction("sbc", AddrMode.AbsY, 4),
+            /* fa */  Instruction("nop", AddrMode.Imp, 2),
+            /* fb */  Instruction("isc", AddrMode.AbsY, 7),
+            /* fc */  Instruction("nop", AddrMode.AbsX, 4),
+            /* fd */  Instruction("sbc", AddrMode.AbsX, 4),
+            /* fe */  Instruction("inc", AddrMode.AbsX, 7),
+            /* ff */  Instruction("isc", AddrMode.AbsX, 7)
+        ).toTypedArray()
+    }
 
-    private fun applyAddressingMode(addrMode: AddrMode) {
+    protected open fun applyAddressingMode(addrMode: AddrMode) {
         when (addrMode) {
             AddrMode.Imp, AddrMode.Acc -> {
                 fetchedData = A
@@ -706,6 +721,10 @@ open class Cpu6502(private val stopOnBrk: Boolean) : BusComponent() {
                 val lo = read(fetchedAddress)
                 val hi = read((fetchedAddress + 1) and 0xff)
                 fetchedAddress = Y + (lo or (hi shl 8)) and 0xffff
+            }
+            AddrMode.Zpr, AddrMode.Izp -> {
+                // addressing mode used by the 65C02 only
+                throw InstructionError("65c02 addressing mode not implemented on 6502")
             }
         }
     }
@@ -968,7 +987,8 @@ open class Cpu6502(private val stopOnBrk: Boolean) : BusComponent() {
             0xfd -> iSbc()
             0xfe -> iInc()
             0xff -> iIsc()
-            else -> { /* can't occur */ }
+            else -> { /* can't occur */
+            }
         }
     }
 
@@ -1060,7 +1080,7 @@ open class Cpu6502(private val stopOnBrk: Boolean) : BusComponent() {
         if (!Status.N) PC = fetchedAddress
     }
 
-    protected fun iBrk() {
+    protected open fun iBrk() {
         // handle BRK ('software interrupt') or a real hardware IRQ
         val interrupt = pendingInterrupt
         val nmi = interrupt?.first == true
@@ -1073,7 +1093,7 @@ open class Cpu6502(private val stopOnBrk: Boolean) : BusComponent() {
         Status.B = interrupt == null
         pushStack(Status)
         Status.I = true     // interrupts are now disabled
-        // NMOS 6502 doesn't clear the D flag (CMOS version does...)
+        // NMOS 6502 doesn't clear the D flag (CMOS 65C02 version does...)
         PC = readWord(if (nmi) NMI_vector else IRQ_vector)
         pendingInterrupt = null
     }
@@ -1123,7 +1143,7 @@ open class Cpu6502(private val stopOnBrk: Boolean) : BusComponent() {
         Status.N = ((Y - fetched) and 0b10000000) != 0
     }
 
-    protected fun iDec() {
+    protected open fun iDec() {
         val data = (read(fetchedAddress) - 1) and 0xff
         write(fetchedAddress, data)
         Status.Z = data == 0
@@ -1148,7 +1168,7 @@ open class Cpu6502(private val stopOnBrk: Boolean) : BusComponent() {
         Status.N = (A and 0b10000000) != 0
     }
 
-    protected fun iInc() {
+    protected open fun iInc() {
         val data = (read(fetchedAddress) + 1) and 0xff
         write(fetchedAddress, data)
         Status.Z = data == 0
