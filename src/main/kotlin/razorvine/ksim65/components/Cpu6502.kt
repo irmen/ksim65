@@ -36,7 +36,8 @@ open class Cpu6502(private val stopOnBrk: Boolean) : BusComponent() {
         Ind,
         IzX,
         IzY,
-        Izp         // special addressing mode used by the 65C02
+        Izp,         // special addressing mode used by the 65C02
+        IaX,         // special addressing mode used by the 65C02
     }
 
     class Instruction(val mnemonic: String, val mode: AddrMode, val cycles: Int)
@@ -169,11 +170,15 @@ open class Cpu6502(private val stopOnBrk: Boolean) : BusComponent() {
                 }
                 AddrMode.Zpr -> {
                     // addressing mode used by the 65C02 only
-                    TODO("ZPR addressing mode")
+                    TODO("disassemble ZPR addressing mode")
                 }
                 AddrMode.Izp -> {
                     // addressing mode used by the 65C02 only
-                    TODO("ZPI addressing mode")
+                    TODO("disassemble IZP addressing mode")
+                }
+                AddrMode.IaX -> {
+                    // addressing mode used by the 65C02 only
+                    TODO("disassemble IaX addressing mode")
                 }
                 AddrMode.ZpX -> {
                     val zpAddr = memory[address++]
@@ -722,7 +727,7 @@ open class Cpu6502(private val stopOnBrk: Boolean) : BusComponent() {
                 val hi = read((fetchedAddress + 1) and 0xff)
                 fetchedAddress = Y + (lo or (hi shl 8)) and 0xffff
             }
-            AddrMode.Zpr, AddrMode.Izp -> {
+            AddrMode.Zpr, AddrMode.Izp, AddrMode.IaX -> {
                 // addressing mode used by the 65C02 only
                 throw InstructionError("65c02 addressing mode not implemented on 6502")
             }

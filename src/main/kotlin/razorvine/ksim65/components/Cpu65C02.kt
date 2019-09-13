@@ -58,7 +58,7 @@ class Cpu65C02(stopOnBrk: Boolean) : Cpu6502(stopOnBrk) {
             AddrMode.Imp, AddrMode.Acc, AddrMode.Imm,
             AddrMode.Zp, AddrMode.ZpX, AddrMode.ZpY,
             AddrMode.Rel, AddrMode.Abs, AddrMode.AbsX, AddrMode.AbsY,
-            AddrMode.IzX, AddrMode.IzY-> {
+            AddrMode.IzX, AddrMode.IzY -> {
                 super.applyAddressingMode(addrMode)
             }
             AddrMode.Ind -> {
@@ -74,6 +74,15 @@ class Cpu65C02(stopOnBrk: Boolean) : Cpu6502(stopOnBrk) {
                 fetchedAddress = readPc()
                 val lo = read((fetchedAddress) and 0xff)
                 val hi = read((fetchedAddress + 1) and 0xff)
+                fetchedAddress = lo or (hi shl 8)
+            }
+            AddrMode.IaX -> {
+                // addressing mode used by the 65C02 only
+                var lo = readPc()
+                var hi = readPc()
+                fetchedAddress = lo or (hi shl 8)
+                lo = read((fetchedAddress + X) and 0xffff)
+                hi = read((fetchedAddress + X + 1) and 0xffff)
                 fetchedAddress = lo or (hi shl 8)
             }
         }
@@ -343,7 +352,6 @@ class Cpu65C02(stopOnBrk: Boolean) : Cpu6502(stopOnBrk) {
     }
 
     // opcode list:  http://www.oxyron.de/html/opcodesc02.html
-    // TODO fix cycle counts
     // TODO add optional additional cycles
     override val instructions: Array<Instruction> by lazy {
         listOf(
@@ -377,7 +385,7 @@ class Cpu65C02(stopOnBrk: Boolean) : Cpu6502(stopOnBrk) {
             /* 1b */  Instruction("nop", AddrMode.Imp, 1),
             /* 1c */  Instruction("trb", AddrMode.Abs, 6),
             /* 1d */  Instruction("ora", AddrMode.AbsX, 4),
-            /* 1e */  Instruction("asl", AddrMode.AbsX, 7),
+            /* 1e */  Instruction("asl", AddrMode.AbsX, 6),
             /* 1f */  Instruction("bbr1", AddrMode.Zpr, 5),
             /* 20 */  Instruction("jsr", AddrMode.Abs, 6),
             /* 21 */  Instruction("and", AddrMode.IzX, 6),
@@ -409,7 +417,7 @@ class Cpu65C02(stopOnBrk: Boolean) : Cpu6502(stopOnBrk) {
             /* 3b */  Instruction("nop", AddrMode.Imp, 1),
             /* 3c */  Instruction("bit", AddrMode.AbsX, 4),
             /* 3d */  Instruction("and", AddrMode.AbsX, 4),
-            /* 3e */  Instruction("rol", AddrMode.AbsX, 7),
+            /* 3e */  Instruction("rol", AddrMode.AbsX, 6),
             /* 3f */  Instruction("bbr3", AddrMode.Zpr, 5),
             /* 40 */  Instruction("rti", AddrMode.Imp, 6),
             /* 41 */  Instruction("eor", AddrMode.IzX, 6),
@@ -441,7 +449,7 @@ class Cpu65C02(stopOnBrk: Boolean) : Cpu6502(stopOnBrk) {
             /* 5b */  Instruction("nop", AddrMode.Imp, 1),
             /* 5c */  Instruction("nop", AddrMode.Abs, 8),
             /* 5d */  Instruction("eor", AddrMode.AbsX, 4),
-            /* 5e */  Instruction("lsr", AddrMode.AbsX, 7),
+            /* 5e */  Instruction("lsr", AddrMode.AbsX, 6),
             /* 5f */  Instruction("bbr5", AddrMode.Zpr, 5),
             /* 60 */  Instruction("rts", AddrMode.Imp, 6),
             /* 61 */  Instruction("adc", AddrMode.IzX, 6),
@@ -469,11 +477,11 @@ class Cpu65C02(stopOnBrk: Boolean) : Cpu6502(stopOnBrk) {
             /* 77 */  Instruction("rmb7", AddrMode.Zp, 5),
             /* 78 */  Instruction("sei", AddrMode.Imp, 2),
             /* 79 */  Instruction("adc", AddrMode.AbsY, 4),
-            /* 7a */  Instruction("ply", AddrMode.Imp, 2),
+            /* 7a */  Instruction("ply", AddrMode.Imp, 4),
             /* 7b */  Instruction("nop", AddrMode.Imp, 1),
-            /* 7c */  Instruction("jmp", AddrMode.AbsX, 4),
+            /* 7c */  Instruction("jmp", AddrMode.IaX, 6),
             /* 7d */  Instruction("adc", AddrMode.AbsX, 4),
-            /* 7e */  Instruction("ror", AddrMode.AbsX, 7),
+            /* 7e */  Instruction("ror", AddrMode.AbsX, 6),
             /* 7f */  Instruction("bbr7", AddrMode.Zpr, 5),
             /* 80 */  Instruction("bra", AddrMode.Rel, 3),
             /* 81 */  Instruction("sta", AddrMode.IzX, 6),
