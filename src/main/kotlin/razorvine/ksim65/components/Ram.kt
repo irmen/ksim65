@@ -1,6 +1,7 @@
 package razorvine.ksim65.components
 
 import java.io.File
+import java.net.URL
 
 class Ram(startAddress: Address, endAddress: Address) : MemoryComponent(startAddress, endAddress) {
     private val memory = ShortArray(endAddress - startAddress + 1)
@@ -44,12 +45,23 @@ class Ram(startAddress: Address, endAddress: Address) : MemoryComponent(startAdd
      */
     fun load(filename: String, address: Address) {
         val bytes = File(filename).readBytes()
-        bytes.forEachIndexed { index, byte ->
+        load(bytes, address)
+    }
+
+    fun load(source: URL, address: Address) {
+        val bytes = source.readBytes()
+        load(bytes, address)
+    }
+
+    fun load(data: Array<UByte>, address: Address) =
+        data.forEachIndexed { index, byte -> memory[address + index] = byte }
+
+    fun load(data: ByteArray, address: Address) =
+        data.forEachIndexed { index, byte ->
             memory[address + index] =
                 if (byte >= 0)
                     byte.toShort()
                 else
                     (256 + byte).toShort()
         }
-    }
 }

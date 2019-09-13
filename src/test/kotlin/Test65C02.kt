@@ -797,7 +797,7 @@ class Test65C02 : TestCommon6502() {
         memory[0x0043] = 0b11111111
         // $0000 RMB0 $43
         writeMem(memory, 0x0000, listOf(0x07, 0x43))
-        val expected = 0b01010101
+        val expected = 0b01110101
         mpu.Status.fromByte(expected)
         mpu.step()
         assertEquals(expected, mpu.Status.asByte().toInt())
@@ -822,7 +822,7 @@ class Test65C02 : TestCommon6502() {
         memory[0x0043] = 0b11111111
         // $0000 RMB1 $43
         writeMem(memory, 0x0000, listOf(0x17, 0x43))
-        val expected = 0b01010101
+        val expected = 0b01110101
         mpu.Status.fromByte(expected)
         mpu.step()
         assertEquals(expected, mpu.Status.asByte().toInt())
@@ -848,7 +848,7 @@ class Test65C02 : TestCommon6502() {
         memory[0x0043] = 0b11111111
         // $0000 RMB2 $43
         writeMem(memory, 0x0000, listOf(0x27, 0x43))
-        val expected = 0b01010101
+        val expected = 0b01110101
         mpu.Status.fromByte(expected)
         mpu.step()
         assertEquals(expected, mpu.Status.asByte().toInt())
@@ -873,7 +873,7 @@ class Test65C02 : TestCommon6502() {
         memory[0x0043] = 0b11111111
         // $0000 RMB3 $43
         writeMem(memory, 0x0000, listOf(0x37, 0x43))
-        val expected = 0b01010101
+        val expected = 0b01110101
         mpu.Status.fromByte(expected)
         mpu.step()
         assertEquals(expected, mpu.Status.asByte().toInt())
@@ -898,7 +898,7 @@ class Test65C02 : TestCommon6502() {
         memory[0x0043] = 0b11111111
         // $0000 RMB4 $43
         writeMem(memory, 0x0000, listOf(0x47, 0x43))
-        val expected = 0b01010101
+        val expected = 0b01110101
         mpu.Status.fromByte(expected)
         mpu.step()
         assertEquals(expected, mpu.Status.asByte().toInt())
@@ -923,7 +923,7 @@ class Test65C02 : TestCommon6502() {
         memory[0x0043] = 0b11111111
         // $0000 RMB5 $43
         writeMem(memory, 0x0000, listOf(0x57, 0x43))
-        val expected = 0b01010101
+        val expected = 0b01110101
         mpu.Status.fromByte(expected)
         mpu.step()
         assertEquals(expected, mpu.Status.asByte().toInt())
@@ -948,7 +948,7 @@ class Test65C02 : TestCommon6502() {
         memory[0x0043] = 0b11111111
         // $0000 RMB6 $43
         writeMem(memory, 0x0000, listOf(0x67, 0x43))
-        val expected = 0b01010101
+        val expected = 0b01110101
         mpu.Status.fromByte(expected)
         mpu.step()
         assertEquals(expected, mpu.Status.asByte().toInt())
@@ -974,7 +974,7 @@ class Test65C02 : TestCommon6502() {
         memory[0x0043] = 0b11111111
         // $0000 RMB7 $43
         writeMem(memory, 0x0000, listOf(0x77, 0x43))
-        val expected = 0b01010101
+        val expected = 0b01110101
         mpu.Status.fromByte(expected)
         mpu.step()
         assertEquals(expected, mpu.Status.asByte().toInt())
@@ -1027,7 +1027,7 @@ class Test65C02 : TestCommon6502() {
         writeMem(memory, 0x0000, listOf(0x87, 0x43))
         mpu.step()
         assertEquals(0x0002, mpu.PC)
-        assertEquals(5, mpu.totalCycles.toInt())
+        assertEquals(5 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
         val expected = 0b00000001
         assertEquals(expected, memory[0x0043].toInt())
     }
@@ -1037,7 +1037,7 @@ class Test65C02 : TestCommon6502() {
         memory[0x0043] = 0b00000000
         // $0000 SMB0 $43
         writeMem(memory, 0x0000, listOf(0x87, 0x43))
-        val expected = 0b11001100
+        val expected = 0b11101100
         mpu.Status.fromByte(expected)
         mpu.step()
         assertEquals(expected, mpu.Status.asByte().toInt())
@@ -1062,7 +1062,7 @@ class Test65C02 : TestCommon6502() {
         memory[0x0043] = 0b00000000
         // $0000 SMB1 $43
         writeMem(memory, 0x0000, listOf(0x97, 0x43))
-        val expected = 0b11001100
+        val expected = 0b11101100
         mpu.Status.fromByte(expected)
         mpu.step()
         assertEquals(expected, mpu.Status.asByte().toInt())
@@ -1088,7 +1088,7 @@ class Test65C02 : TestCommon6502() {
         memory[0x0043] = 0b00000000
         // $0000 SMB2 $43
         writeMem(memory, 0x0000, listOf(0xA7, 0x43))
-        val expected = 0b11001100
+        val expected = 0b11101100
         mpu.Status.fromByte(expected)
         mpu.step()
         assertEquals(expected, mpu.Status.asByte().toInt())
@@ -1114,7 +1114,7 @@ class Test65C02 : TestCommon6502() {
         memory[0x0043] = 0b00000000
         // $0000 SMB3 $43
         writeMem(memory, 0x0000, listOf(0xB7, 0x43))
-        val expected = 0b11001100
+        val expected = 0b11101100
         mpu.Status.fromByte(expected)
         mpu.step()
         assertEquals(expected, mpu.Status.asByte().toInt())
@@ -1140,7 +1140,7 @@ class Test65C02 : TestCommon6502() {
         memory[0x0043] = 0b00000000
         // $0000 SMB4 $43
         writeMem(memory, 0x0000, listOf(0xC7, 0x43))
-        val expected = 0b11001100
+        val expected = 0b11101100
         mpu.Status.fromByte(expected)
         mpu.step()
         assertEquals(expected, mpu.Status.asByte().toInt())
@@ -1165,7 +1165,7 @@ class Test65C02 : TestCommon6502() {
         memory[0x0043] = 0b00000000
         // $0000 SMB5 $43
         writeMem(memory, 0x0000, listOf(0xD7, 0x43))
-        val expected = 0b11001100
+        val expected = 0b11101100
         mpu.Status.fromByte(expected)
         mpu.step()
         assertEquals(expected, mpu.Status.asByte().toInt())
@@ -1190,7 +1190,7 @@ class Test65C02 : TestCommon6502() {
         memory[0x0043] = 0b00000000
         // $0000 SMB6 $43
         writeMem(memory, 0x0000, listOf(0xE7, 0x43))
-        val expected = 0b11001100
+        val expected = 0b11101100
         mpu.Status.fromByte(expected)
         mpu.step()
         assertEquals(expected, mpu.Status.asByte().toInt())
@@ -1215,7 +1215,7 @@ class Test65C02 : TestCommon6502() {
         memory[0x0043] = 0b00000000
         // $0000 SMB7 $43
         writeMem(memory, 0x0000, listOf(0xF7, 0x43))
-        val expected = 0b11001100
+        val expected = 0b11101100
         mpu.Status.fromByte(expected)
         mpu.step()
         assertEquals(expected, mpu.Status.asByte().toInt())
@@ -1518,7 +1518,7 @@ class Test65C02 : TestCommon6502() {
         writeMem(memory, 0x0000, listOf(0x80, 0x10))
         mpu.step()
         assertEquals(0x12, mpu.PC)
-        assertEquals(2 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(3 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
     }
 
     @Test
@@ -1544,5 +1544,64 @@ class Test65C02 : TestCommon6502() {
         assertEquals(Cpu65C02.Wait.Waiting, mpu.waiting)
         assertEquals(0x0205, mpu.PC)
         assertEquals(3 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+    }
+
+    //  BBR and BBS
+    @Test
+    fun test_bbr_all_set_doesnt_branch() {
+        mpu as Cpu65C02
+        mpu.PC = 0
+        memory[0xfe] = 0xff
+        writeMem(memory, 0, listOf(0x0f, 0xfe, 0x40,
+            0x1f, 0xfe, 0x40,
+            0x2f, 0xfe, 0x40,
+            0x3f, 0xfe, 0x40,
+            0x4f, 0xfe, 0x40,
+            0x5f, 0xfe, 0x40,
+            0x6f, 0xfe, 0x40,
+            0x7f, 0xfe, 0x40,
+            0xea))
+        repeat(8) { mpu.step() }
+        assertNotEquals(0x0040, mpu.PC)
+        assertEquals(0xea, memory[mpu.PC])
+    }
+
+    @Test
+    fun test_bbr_branches() {
+        mpu as Cpu65C02
+        mpu.PC = 0
+        memory[0xfe] = 0b10111111   // bit 6 cleared
+        writeMem(memory, 0, listOf(0x6f, 0xfe, 0x40))   // BBR6 $fe, $0040
+        mpu.step()
+        assertEquals(0x0043, mpu.PC)
+    }
+
+    @Test
+    fun test_bbs_all_clear_doesnt_branch() {
+        mpu as Cpu65C02
+        mpu.PC = 0
+        memory[0xfe] = 0
+        writeMem(memory, 0, listOf(0x8f, 0xfe, 0x40,
+            0x9f, 0xfe, 0x40,
+            0xaf, 0xfe, 0x40,
+            0xbf, 0xfe, 0x40,
+            0xcf, 0xfe, 0x40,
+            0xdf, 0xfe, 0x40,
+            0xef, 0xfe, 0x40,
+            0xff, 0xfe, 0x40,
+            0xea))
+        repeat(8) { mpu.step() }
+        assertNotEquals(0x0040, mpu.PC)
+        assertEquals(0xea, memory[mpu.PC])
+    }
+
+    @Test
+    fun test_bbs_branches() {
+        mpu as Cpu65C02
+        mpu.PC = 0
+        memory[0xfe] = 0b01000000   // bit 6 set
+        writeMem(memory, 0, listOf(0xef, 0xfe, 0x40))   // BBS6 $fe, $0040
+        mpu.step()
+        assertEquals(0x0043, mpu.PC)
     }
 }

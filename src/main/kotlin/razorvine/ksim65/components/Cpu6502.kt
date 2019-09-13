@@ -7,7 +7,7 @@ package razorvine.ksim65.components
 /**
  * 6502 cpu simulation (the NMOS version) including the 'illegal' opcodes.
  */
-open class Cpu6502(private val stopOnBrk: Boolean) : BusComponent() {
+open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
     var tracing: Boolean = false
     var totalCycles: Long = 0
         protected set
@@ -118,9 +118,7 @@ open class Cpu6502(private val stopOnBrk: Boolean) : BusComponent() {
         return if (msb == 0 && allowSingleByte)
             hexB(lsb)
         else
-            hexB(msb) + hexB(
-                lsb
-            )
+            hexB(msb) + hexB(lsb)
     }
 
     internal fun hexB(number: Short): String = hexB(number.toInt())
@@ -144,9 +142,7 @@ open class Cpu6502(private val stopOnBrk: Boolean) : BusComponent() {
 
         while (address <= (to - baseAddress)) {
             val byte = memory[address]
-            var line = "\$${hexW(address)}  ${hexB(
-                byte
-            )} "
+            var line = "\$${hexW(address)}  ${hexB(byte)} "
             address++
             val opcode = instructions[byte.toInt()]
             when (opcode.mode) {
@@ -158,39 +154,42 @@ open class Cpu6502(private val stopOnBrk: Boolean) : BusComponent() {
                 }
                 AddrMode.Imm -> {
                     val value = memory[address++]
-                    line += "${hexB(value)} $spacing2 ${opcode.mnemonic}  #\$${hexB(
-                        value
-                    )}"
+                    line += "${hexB(value)} $spacing2 ${opcode.mnemonic}  #\$${hexB(value)}"
                 }
                 AddrMode.Zp -> {
                     val zpAddr = memory[address++]
-                    line += "${hexB(zpAddr)} $spacing2 ${opcode.mnemonic}  \$${hexB(
-                        zpAddr
-                    )}"
+                    line += "${hexB(zpAddr)} $spacing2 ${opcode.mnemonic}  \$${hexB(zpAddr)}"
                 }
                 AddrMode.Zpr -> {
-                    // addressing mode used by the 65C02 only
-                    TODO("disassemble ZPR addressing mode")
+                    // addressing mode used by the 65C02, put here for convenience
+                    val zpAddr = memory[address++]
+                    val rel = memory[address++]
+                    val target =
+                        if (rel <= 0x7f)
+                            address + rel
+                        else
+                            address - (256 - rel)
+                    line += "${hexB(zpAddr)} ${hexB(rel)} $spacing3 ${opcode.mnemonic}  \$${hexB(zpAddr)}, \$${hexW(target, true)}"
                 }
                 AddrMode.Izp -> {
-                    // addressing mode used by the 65C02 only
-                    TODO("disassemble IZP addressing mode")
+                    // addressing mode used by the 65C02, put here for convenience
+                    val zpAddr = memory[address++]
+                    line += "${hexB(zpAddr)} $spacing2 ${opcode.mnemonic}  \$(${hexB(zpAddr)})"
                 }
                 AddrMode.IaX -> {
-                    // addressing mode used by the 65C02 only
-                    TODO("disassemble IaX addressing mode")
+                    // addressing mode used by the 65C02, put here for convenience
+                    val lo = memory[address++]
+                    val hi = memory[address++]
+                    val absAddr = lo.toInt() or (hi.toInt() shl 8)
+                    line += "${hexB(lo)} ${hexB(hi)} $spacing3 ${opcode.mnemonic}  \$(${hexW(absAddr)},x)"
                 }
                 AddrMode.ZpX -> {
                     val zpAddr = memory[address++]
-                    line += "${hexB(zpAddr)} $spacing2 ${opcode.mnemonic}  \$${hexB(
-                        zpAddr
-                    )},x"
+                    line += "${hexB(zpAddr)} $spacing2 ${opcode.mnemonic}  \$${hexB(zpAddr)},x"
                 }
                 AddrMode.ZpY -> {
                     val zpAddr = memory[address++]
-                    line += "${hexB(zpAddr)} $spacing2 ${opcode.mnemonic}  \$${hexB(
-                        zpAddr
-                    )},y"
+                    line += "${hexB(zpAddr)} $spacing2 ${opcode.mnemonic}  \$${hexB(zpAddr)},y"
                 }
                 AddrMode.Rel -> {
                     val rel = memory[address++]
@@ -199,56 +198,39 @@ open class Cpu6502(private val stopOnBrk: Boolean) : BusComponent() {
                             address + rel
                         else
                             address - (256 - rel)
-                    line += "${hexB(rel)} $spacing2 ${opcode.mnemonic}  \$${hexW(
-                        target,
-                        true
-                    )}"
+                    line += "${hexB(rel)} $spacing2 ${opcode.mnemonic}  \$${hexW(target, true)}"
                 }
                 AddrMode.Abs -> {
                     val lo = memory[address++]
                     val hi = memory[address++]
                     val absAddr = lo.toInt() or (hi.toInt() shl 8)
-                    line += "${hexB(lo)} ${hexB(
-                        hi
-                    )} $spacing3 ${opcode.mnemonic}  \$${hexW(absAddr)}"
+                    line += "${hexB(lo)} ${hexB(hi)} $spacing3 ${opcode.mnemonic}  \$${hexW(absAddr)}"
                 }
                 AddrMode.AbsX -> {
                     val lo = memory[address++]
                     val hi = memory[address++]
                     val absAddr = lo.toInt() or (hi.toInt() shl 8)
-                    line += "${hexB(lo)} ${hexB(
-                        hi
-                    )} $spacing3 ${opcode.mnemonic}  \$${hexW(absAddr)},x"
+                    line += "${hexB(lo)} ${hexB(hi)} $spacing3 ${opcode.mnemonic}  \$${hexW(absAddr)},x"
                 }
                 AddrMode.AbsY -> {
                     val lo = memory[address++]
                     val hi = memory[address++]
                     val absAddr = lo.toInt() or (hi.toInt() shl 8)
-                    line += "${hexB(lo)} ${hexB(
-                        hi
-                    )} $spacing3 ${opcode.mnemonic}  \$${hexW(absAddr)},y"
+                    line += "${hexB(lo)} ${hexB(hi)} $spacing3 ${opcode.mnemonic}  \$${hexW(absAddr)},y"
                 }
                 AddrMode.Ind -> {
                     val lo = memory[address++]
                     val hi = memory[address++]
                     val indirectAddr = lo.toInt() or (hi.toInt() shl 8)
-                    line += "${hexB(lo)} ${hexB(
-                        hi
-                    )} $spacing3 ${opcode.mnemonic}  (\$${hexW(
-                        indirectAddr
-                    )})"
+                    line += "${hexB(lo)} ${hexB(hi)} $spacing3 ${opcode.mnemonic}  (\$${hexW(indirectAddr)})"
                 }
                 AddrMode.IzX -> {
                     val zpAddr = memory[address++]
-                    line += "${hexB(zpAddr)} $spacing2 ${opcode.mnemonic}  (\$${hexB(
-                        zpAddr
-                    )},x)"
+                    line += "${hexB(zpAddr)} $spacing2 ${opcode.mnemonic}  (\$${hexB(zpAddr)},x)"
                 }
                 AddrMode.IzY -> {
                     val zpAddr = memory[address++]
-                    line += "${hexB(zpAddr)} $spacing2 ${opcode.mnemonic}  (\$${hexB(
-                        zpAddr
-                    )}),y"
+                    line += "${hexB(zpAddr)} $spacing2 ${opcode.mnemonic}  (\$${hexB(zpAddr)}),y"
                 }
             }
             result.add(line)
@@ -300,11 +282,7 @@ open class Cpu6502(private val stopOnBrk: Boolean) : BusComponent() {
                 }
 
                 if (stopOnBrk && currentOpcode == 0) {
-                    throw InstructionError(
-                        "stopped on BRK instruction at ${hexW(
-                            PC
-                        )}"
-                    )
+                    throw InstructionError("stopped on BRK instruction at ${hexW(PC)}")
                 }
             }
 
@@ -1472,9 +1450,7 @@ open class Cpu6502(private val stopOnBrk: Boolean) : BusComponent() {
     // invalid instruction (JAM / KIL)
     private fun iInvalid() {
         throw InstructionError(
-            "invalid instruction encountered: opcode=${hexB(
-                currentOpcode
-            )} instr=${currentInstruction.mnemonic}"
+            "invalid instruction encountered: opcode=${hexB(currentOpcode)} instr=${currentInstruction.mnemonic}"
         )
     }
 }

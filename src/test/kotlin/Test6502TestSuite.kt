@@ -7,7 +7,7 @@ import kotlin.test.*
 
 
 @TestInstance(TestInstance.Lifecycle.PER_METHOD)
-@Disabled("this test suite takes a long time")
+//@Disabled("this test suite takes a long time")
 class Test6502TestSuite {
 
     val cpu: Cpu6502 = Cpu6502(stopOnBrk = false)
@@ -46,7 +46,7 @@ class Test6502TestSuite {
     }
 
     private fun runTest(testprogram: String) {
-        ram.loadPrg("test/6502testsuite/$testprogram")
+        ram.loadPrg("src/test/kotlin/6502testsuite/$testprogram")
         bus.reset()
         cpu.SP = 0xfd
         cpu.Status.fromByte(0b00100100)

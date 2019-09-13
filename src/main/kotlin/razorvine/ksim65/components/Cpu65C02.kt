@@ -3,7 +3,7 @@ package razorvine.ksim65.components
 /**
  * 65C02 cpu simulation (the CMOS version of the 6502).
  */
-class Cpu65C02(stopOnBrk: Boolean) : Cpu6502(stopOnBrk) {
+class Cpu65C02(stopOnBrk: Boolean = false) : Cpu6502(stopOnBrk) {
 
     enum class Wait {
         Normal,
@@ -53,6 +53,9 @@ class Cpu65C02(stopOnBrk: Boolean) : Cpu6502(stopOnBrk) {
         }
     }
 
+    // branch-relative address fetched by the ZpR addressing mode
+    private var fetchedAddressZpr: Address = 0
+
     override fun applyAddressingMode(addrMode: AddrMode) {
         when (addrMode) {
             AddrMode.Imp, AddrMode.Acc, AddrMode.Imm,
@@ -62,12 +65,23 @@ class Cpu65C02(stopOnBrk: Boolean) : Cpu6502(stopOnBrk) {
                 super.applyAddressingMode(addrMode)
             }
             AddrMode.Ind -> {
-                // not able to fetch an address which crosses the page boundary (6502, fixed in 65C02)
-                TODO("IND addrmode fixed for 65c02")
+                var lo = readPc()
+                var hi = readPc()
+                fetchedAddress = lo or (hi shl 8)
+                // 65c02 doesn't have the page bug of the 6502
+                lo = read(fetchedAddress)
+                hi = read(fetchedAddress + 1)
+                fetchedAddress = lo or (hi shl 8)
             }
             AddrMode.Zpr -> {
                 // addressing mode used by the 65C02 only
-                TODO("ZPR addressing mode")
+                // combination of zp addresssing + relative branch addressing
+                fetchedAddress = readPc()
+                val relative = readPc()
+                fetchedAddressZpr = if (relative >= 0x80) {
+                    PC - (256 - relative) and 0xffff
+                } else
+                    PC + relative and 0xffff
             }
             AddrMode.Izp -> {
                 // addressing mode used by the 65C02 only
@@ -463,7 +477,7 @@ class Cpu65C02(stopOnBrk: Boolean) : Cpu6502(stopOnBrk) {
             /* 69 */  Instruction("adc", AddrMode.Imm, 2),
             /* 6a */  Instruction("ror", AddrMode.Acc, 2),
             /* 6b */  Instruction("nop", AddrMode.Imp, 1),
-            /* 6c */  Instruction("jmp", AddrMode.Ind, 5),
+            /* 6c */  Instruction("jmp", AddrMode.Ind, 6),
             /* 6d */  Instruction("adc", AddrMode.Abs, 4),
             /* 6e */  Instruction("ror", AddrMode.Abs, 6),
             /* 6f */  Instruction("bbr6", AddrMode.Zpr, 5),
@@ -632,21 +646,19 @@ class Cpu65C02(stopOnBrk: Boolean) : Cpu6502(stopOnBrk) {
         pendingInterrupt = null
     }
 
-    // TODO some opcodes gained a new addressing mode that we have to deal with
-
     override fun iDec() {
         if(currentInstruction.mode==AddrMode.Acc) {
-            TODO("dec A")
-//            Status.Z = data == 0
-//            Status.N = (data and 0b10000000) != 0
+            A = (A - 1) and 0xff
+            Status.Z = A == 0
+            Status.N = (A and 0b10000000) != 0
         } else super.iDec()
     }
 
     override fun iInc() {
         if(currentInstruction.mode==AddrMode.Acc) {
-            TODO("inc A")
-//            Status.Z = data == 0
-//            Status.N = (data and 0b10000000) != 0
+            A = (A + 1) and 0xff
+            Status.Z = A == 0
+            Status.N = (A and 0b10000000) != 0
         } else super.iInc()
     }
 
@@ -656,11 +668,15 @@ class Cpu65C02(stopOnBrk: Boolean) : Cpu6502(stopOnBrk) {
     }
 
     private fun iTrb() {
-        TODO("trb")
+        val m = read(fetchedAddress)
+        Status.Z = m and A ==0
+        write(fetchedAddress, m and A.inv())
     }
 
     private fun iTsb() {
-        TODO("tsb")
+        val m = read(fetchedAddress)
+        Status.Z = m and A ==0
+        write(fetchedAddress, m or A)
     }
 
     private fun iStz() {
@@ -696,133 +712,178 @@ class Cpu65C02(stopOnBrk: Boolean) : Cpu6502(stopOnBrk) {
     }
 
     private fun iBbr0() {
-        TODO("brr0")
-        val x = hexB(2)
-        val y = hexW(2)
-        val z = hexB(3.toShort())
+        val data = read(fetchedAddress)
+        if(data and 1 == 0)
+            PC = fetchedAddressZpr
     }
 
     private fun iBbr1() {
-        TODO("brr1")
+        val data = read(fetchedAddress)
+        if(data and 2 == 0)
+            PC = fetchedAddressZpr
     }
 
     private fun iBbr2() {
-        TODO("brr2")
+        val data = read(fetchedAddress)
+        if(data and 4 == 0)
+            PC = fetchedAddressZpr
     }
 
     private fun iBbr3() {
-        TODO("brr3")
+        val data = read(fetchedAddress)
+        if(data and 8 == 0)
+            PC = fetchedAddressZpr
     }
 
     private fun iBbr4() {
-        TODO("brr4")
+        val data = read(fetchedAddress)
+        if(data and 16 == 0)
+            PC = fetchedAddressZpr
     }
 
     private fun iBbr5() {
-        TODO("brr5")
+        val data = read(fetchedAddress)
+        if(data and 32 == 0)
+            PC = fetchedAddressZpr
     }
 
     private fun iBbr6() {
-        TODO("brr6")
+        val data = read(fetchedAddress)
+        if(data and 64 == 0)
+            PC = fetchedAddressZpr
     }
 
     private fun iBbr7() {
-        TODO("brr7")
+        val data = read(fetchedAddress)
+        if(data and 128 == 0)
+            PC = fetchedAddressZpr
     }
 
     private fun iBbs0() {
-        TODO("bbs0")
+        val data = read(fetchedAddress)
+        if(data and 1 != 0)
+            PC = fetchedAddressZpr
     }
 
     private fun iBbs1() {
-        TODO("bbs1")
+        val data = read(fetchedAddress)
+        if(data and 2 != 0)
+            PC = fetchedAddressZpr
     }
 
     private fun iBbs2() {
-        TODO("bbs2")
+        val data = read(fetchedAddress)
+        if(data and 4 != 0)
+            PC = fetchedAddressZpr
     }
 
     private fun iBbs3() {
-        TODO("bbs3")
+        val data = read(fetchedAddress)
+        if(data and 8 != 0)
+            PC = fetchedAddressZpr
     }
 
     private fun iBbs4() {
-        TODO("bbs4")
+        val data = read(fetchedAddress)
+        if(data and 16 != 0)
+            PC = fetchedAddressZpr
     }
 
     private fun iBbs5() {
-        TODO("bbs5")
+        val data = read(fetchedAddress)
+        if(data and 32 != 0)
+            PC = fetchedAddressZpr
     }
 
     private fun iBbs6() {
-        TODO("bbs6")
+        val data = read(fetchedAddress)
+        if(data and 64 != 0)
+            PC = fetchedAddressZpr
     }
 
     private fun iBbs7() {
-        TODO("bbs7")
+        val data = read(fetchedAddress)
+        if(data and 128 != 0)
+            PC = fetchedAddressZpr
     }
 
     private fun iSmb0() {
-        TODO("smb0")
+        val data = read(fetchedAddress)
+        write(fetchedAddress, data or 1)
     }
 
     private fun iSmb1() {
-        TODO("smb1")
+        val data = read(fetchedAddress)
+        write(fetchedAddress, data or 2)
     }
 
     private fun iSmb2() {
-        TODO("smb2")
+        val data = read(fetchedAddress)
+        write(fetchedAddress, data or 4)
     }
 
     private fun iSmb3() {
-        TODO("smb3")
+        val data = read(fetchedAddress)
+        write(fetchedAddress, data or 8)
     }
 
     private fun iSmb4() {
-        TODO("smb4")
+        val data = read(fetchedAddress)
+        write(fetchedAddress, data or 16)
     }
 
     private fun iSmb5() {
-        TODO("smb5")
+        val data = read(fetchedAddress)
+        write(fetchedAddress, data or 32)
     }
 
     private fun iSmb6() {
-        TODO("smb6")
+        val data = read(fetchedAddress)
+        write(fetchedAddress, data or 64)
     }
 
     private fun iSmb7() {
-        TODO("smb7")
+        val data = read(fetchedAddress)
+        write(fetchedAddress, data or 128)
     }
 
     private fun iRmb0() {
-        TODO("rmb0")
+        val data = read(fetchedAddress)
+        write(fetchedAddress, data and 0b11111110)
     }
 
     private fun iRmb1() {
-        TODO("rmb1")
+        val data = read(fetchedAddress)
+        write(fetchedAddress, data and 0b11111101)
     }
 
     private fun iRmb2() {
-        TODO("rmb2")
+        val data = read(fetchedAddress)
+        write(fetchedAddress, data and 0b11111011)
     }
 
     private fun iRmb3() {
-        TODO("rmb3")
+        val data = read(fetchedAddress)
+        write(fetchedAddress, data and 0b11110111)
     }
 
     private fun iRmb4() {
-        TODO("rmb4")
+        val data = read(fetchedAddress)
+        write(fetchedAddress, data and 0b11101111)
     }
 
     private fun iRmb5() {
-        TODO("rmb5")
+        val data = read(fetchedAddress)
+        write(fetchedAddress, data and 0b11011111)
     }
 
     private fun iRmb6() {
-        TODO("rmb6")
+        val data = read(fetchedAddress)
+        write(fetchedAddress, data and 0b10111111)
     }
 
     private fun iRmb7() {
-        TODO("rmb7")
+        val data = read(fetchedAddress)
+        write(fetchedAddress, data and 0b01111111)
     }
 }

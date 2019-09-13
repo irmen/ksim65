@@ -65,7 +65,8 @@ class Test6502CpuBasics {
         val ram = Ram(0, 0xffff)
         ram[Cpu6502.RESET_vector] = 0x00
         ram[Cpu6502.RESET_vector +1] = 0x10
-        ram.load("src/test/kotlin/testfiles/bcdtest.bin", 0x1000)
+        val bytes = javaClass.getResource("bcdtest.bin")!!
+        ram.load(bytes, 0x1000)
         bus.add(ram)
         bus.reset()
 
