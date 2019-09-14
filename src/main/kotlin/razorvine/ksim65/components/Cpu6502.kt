@@ -1,11 +1,10 @@
 package razorvine.ksim65.components
 
-// TODO: implement the illegal opcodes, see http://www.ffd2.com/fridge/docs/6502-NMOS.extra.opcodes
-// TODO: add the optional additional cycles to certain instructions and addressing modes
-// TODO: add 6510 behavior mode (is there even a difference to be simulated here?)
 
 /**
  * 6502 cpu simulation (the NMOS version) including the 'illegal' opcodes.
+ * TODO: actually implement the illegal opcodes, see http://www.ffd2.com/fridge/docs/6502-NMOS.extra.opcodes
+ * TODO: add the optional additional cycles to certain instructions and addressing modes
  */
 open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
     var tracing: Boolean = false
@@ -330,7 +329,7 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
         )
     }
 
-    private fun getFetched() =
+    protected fun getFetched() =
         if (currentInstruction.mode == AddrMode.Imm ||
             currentInstruction.mode == AddrMode.Acc ||
             currentInstruction.mode == AddrMode.Imp
@@ -978,7 +977,7 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
 
     // official instructions
 
-    protected fun iAdc() {
+    protected open fun iAdc() {
         val operand = getFetched()
         if (Status.D) {
             // BCD add
@@ -1044,7 +1043,7 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
         if (Status.Z) PC = fetchedAddress
     }
 
-    protected fun iBit() {
+    protected open fun iBit() {
         val operand = getFetched()
         Status.Z = (A and operand) == 0
         Status.V = (operand and 0b01000000) != 0
@@ -1288,7 +1287,7 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
         PC = (PC + 1) and 0xffff
     }
 
-    protected fun iSbc() {
+    protected open fun iSbc() {
         val operand = getFetched()
         val tmp = (A - operand - if (Status.C) 0 else 1) and 0xffff
         Status.V = (A xor operand) and (A xor tmp) and 0b10000000 != 0

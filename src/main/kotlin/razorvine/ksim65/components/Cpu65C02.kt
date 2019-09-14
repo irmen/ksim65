@@ -2,6 +2,7 @@ package razorvine.ksim65.components
 
 /**
  * 65C02 cpu simulation (the CMOS version of the 6502).
+ * TODO: add the optional additional cycles to certain instructions and addressing modes
  */
 class Cpu65C02(stopOnBrk: Boolean = false) : Cpu6502(stopOnBrk) {
 
@@ -366,7 +367,6 @@ class Cpu65C02(stopOnBrk: Boolean = false) : Cpu6502(stopOnBrk) {
     }
 
     // opcode list:  http://www.oxyron.de/html/opcodesc02.html
-    // TODO add optional additional cycles
     override val instructions: Array<Instruction> by lazy {
         listOf(
             /* 00 */  Instruction("brk", AddrMode.Imp, 7),
@@ -646,8 +646,66 @@ class Cpu65C02(stopOnBrk: Boolean = false) : Cpu6502(stopOnBrk) {
         pendingInterrupt = null
     }
 
+    override fun iBit() {
+        val data = getFetched()
+        Status.Z = (A and data) == 0
+        if (currentInstruction.mode != AddrMode.Imm) {
+            Status.V = (data and 0b01000000) != 0
+            Status.N = (data and 0b10000000) != 0
+        }
+    }
+
+    override fun iAdc() {
+        val value = getFetched()
+        if (Status.D) {
+            // BCD add
+            // see http://www.6502.org/tutorials/decimal_mode.html
+            // and https://sourceforge.net/p/vice-emu/code/HEAD/tree/trunk/vice/src/65c02core.c#l542
+            // (the implementation below is based on the code used by Vice)
+            var tmp = (A and 0x0f) + (value and 0x0f) + if (Status.C) 1 else 0
+            var tmp2 = (A and 0xf0) + (value and 0xf0)
+            if (tmp > 9) {
+                tmp2 += 0x10
+                tmp += 6
+            }
+            Status.V = (A xor value).inv() and (A xor tmp2) and 0b10000000 != 0
+            if (tmp2 > 0x90) tmp2 += 0x60
+            Status.C = tmp2 >= 0x100
+            tmp = (tmp and 0x0f) + (tmp2 and 0xf0)
+            Status.N = (tmp and 0b10000000) != 0
+            Status.Z = tmp == 0
+            A = tmp and 0xff
+        } else {
+            // normal add (identical to 6502)
+            val tmp = value + A + if (Status.C) 1 else 0
+            Status.N = (tmp and 0b10000000) != 0
+            Status.Z = (tmp and 0xff) == 0
+            Status.V = (A xor value).inv() and (A xor tmp) and 0b10000000 != 0
+            Status.C = tmp > 0xff
+            A = tmp and 0xff
+        }
+    }
+
+    override fun iSbc() {
+        // see http://www.6502.org/tutorials/decimal_mode.html
+        // and https://sourceforge.net/p/vice-emu/code/HEAD/tree/trunk/vice/src/65c02core.c#l1205
+        // (the implementation below is based on the code used by Vice)
+        val value = getFetched()
+        var tmp = (A - value - if (Status.C) 0 else 1) and 0xffff
+        Status.V = (A xor tmp) and (A xor value) and 0b10000000 != 0
+        if (Status.D) {
+            if (tmp > 0xff) tmp = (tmp - 0x60) and 0xffff
+            val tmp2 = ((A and 0x0f) - (value and 0x0f) - if (Status.C) 0 else 1) and 0xffff
+            if (tmp2 > 0xff) tmp -= 6
+        }
+        Status.C = (A - if (Status.C) 0 else 1) >= value
+        Status.Z = (tmp and 0xff) == 0
+        Status.N = (tmp and 0b10000000) != 0
+        A = tmp and 0xff
+    }
+
     override fun iDec() {
-        if(currentInstruction.mode==AddrMode.Acc) {
+        if (currentInstruction.mode == AddrMode.Acc) {
             A = (A - 1) and 0xff
             Status.Z = A == 0
             Status.N = (A and 0b10000000) != 0
@@ -655,7 +713,7 @@ class Cpu65C02(stopOnBrk: Boolean = false) : Cpu6502(stopOnBrk) {
     }
 
     override fun iInc() {
-        if(currentInstruction.mode==AddrMode.Acc) {
+        if (currentInstruction.mode == AddrMode.Acc) {
             A = (A + 1) and 0xff
             Status.Z = A == 0
             Status.N = (A and 0b10000000) != 0
@@ -668,15 +726,15 @@ class Cpu65C02(stopOnBrk: Boolean = false) : Cpu6502(stopOnBrk) {
     }
 
     private fun iTrb() {
-        val m = read(fetchedAddress)
-        Status.Z = m and A ==0
-        write(fetchedAddress, m and A.inv())
+        val data = getFetched()
+        Status.Z = data and A == 0
+        write(fetchedAddress, data and A.inv())
     }
 
     private fun iTsb() {
-        val m = read(fetchedAddress)
-        Status.Z = m and A ==0
-        write(fetchedAddress, m or A)
+        val data = getFetched()
+        Status.Z = data and A == 0
+        write(fetchedAddress, data or A)
     }
 
     private fun iStz() {
@@ -712,178 +770,178 @@ class Cpu65C02(stopOnBrk: Boolean = false) : Cpu6502(stopOnBrk) {
     }
 
     private fun iBbr0() {
-        val data = read(fetchedAddress)
-        if(data and 1 == 0)
+        val data = getFetched()
+        if (data and 1 == 0)
             PC = fetchedAddressZpr
     }
 
     private fun iBbr1() {
-        val data = read(fetchedAddress)
-        if(data and 2 == 0)
+        val data = getFetched()
+        if (data and 2 == 0)
             PC = fetchedAddressZpr
     }
 
     private fun iBbr2() {
-        val data = read(fetchedAddress)
-        if(data and 4 == 0)
+        val data = getFetched()
+        if (data and 4 == 0)
             PC = fetchedAddressZpr
     }
 
     private fun iBbr3() {
-        val data = read(fetchedAddress)
-        if(data and 8 == 0)
+        val data = getFetched()
+        if (data and 8 == 0)
             PC = fetchedAddressZpr
     }
 
     private fun iBbr4() {
-        val data = read(fetchedAddress)
-        if(data and 16 == 0)
+        val data = getFetched()
+        if (data and 16 == 0)
             PC = fetchedAddressZpr
     }
 
     private fun iBbr5() {
-        val data = read(fetchedAddress)
-        if(data and 32 == 0)
+        val data = getFetched()
+        if (data and 32 == 0)
             PC = fetchedAddressZpr
     }
 
     private fun iBbr6() {
-        val data = read(fetchedAddress)
-        if(data and 64 == 0)
+        val data = getFetched()
+        if (data and 64 == 0)
             PC = fetchedAddressZpr
     }
 
     private fun iBbr7() {
-        val data = read(fetchedAddress)
-        if(data and 128 == 0)
+        val data = getFetched()
+        if (data and 128 == 0)
             PC = fetchedAddressZpr
     }
 
     private fun iBbs0() {
-        val data = read(fetchedAddress)
-        if(data and 1 != 0)
+        val data = getFetched()
+        if (data and 1 != 0)
             PC = fetchedAddressZpr
     }
 
     private fun iBbs1() {
-        val data = read(fetchedAddress)
-        if(data and 2 != 0)
+        val data = getFetched()
+        if (data and 2 != 0)
             PC = fetchedAddressZpr
     }
 
     private fun iBbs2() {
-        val data = read(fetchedAddress)
-        if(data and 4 != 0)
+        val data = getFetched()
+        if (data and 4 != 0)
             PC = fetchedAddressZpr
     }
 
     private fun iBbs3() {
-        val data = read(fetchedAddress)
-        if(data and 8 != 0)
+        val data = getFetched()
+        if (data and 8 != 0)
             PC = fetchedAddressZpr
     }
 
     private fun iBbs4() {
-        val data = read(fetchedAddress)
-        if(data and 16 != 0)
+        val data = getFetched()
+        if (data and 16 != 0)
             PC = fetchedAddressZpr
     }
 
     private fun iBbs5() {
-        val data = read(fetchedAddress)
-        if(data and 32 != 0)
+        val data = getFetched()
+        if (data and 32 != 0)
             PC = fetchedAddressZpr
     }
 
     private fun iBbs6() {
-        val data = read(fetchedAddress)
-        if(data and 64 != 0)
+        val data = getFetched()
+        if (data and 64 != 0)
             PC = fetchedAddressZpr
     }
 
     private fun iBbs7() {
-        val data = read(fetchedAddress)
-        if(data and 128 != 0)
+        val data = getFetched()
+        if (data and 128 != 0)
             PC = fetchedAddressZpr
     }
 
     private fun iSmb0() {
-        val data = read(fetchedAddress)
+        val data = getFetched()
         write(fetchedAddress, data or 1)
     }
 
     private fun iSmb1() {
-        val data = read(fetchedAddress)
+        val data = getFetched()
         write(fetchedAddress, data or 2)
     }
 
     private fun iSmb2() {
-        val data = read(fetchedAddress)
+        val data = getFetched()
         write(fetchedAddress, data or 4)
     }
 
     private fun iSmb3() {
-        val data = read(fetchedAddress)
+        val data = getFetched()
         write(fetchedAddress, data or 8)
     }
 
     private fun iSmb4() {
-        val data = read(fetchedAddress)
+        val data = getFetched()
         write(fetchedAddress, data or 16)
     }
 
     private fun iSmb5() {
-        val data = read(fetchedAddress)
+        val data = getFetched()
         write(fetchedAddress, data or 32)
     }
 
     private fun iSmb6() {
-        val data = read(fetchedAddress)
+        val data = getFetched()
         write(fetchedAddress, data or 64)
     }
 
     private fun iSmb7() {
-        val data = read(fetchedAddress)
+        val data = getFetched()
         write(fetchedAddress, data or 128)
     }
 
     private fun iRmb0() {
-        val data = read(fetchedAddress)
+        val data = getFetched()
         write(fetchedAddress, data and 0b11111110)
     }
 
     private fun iRmb1() {
-        val data = read(fetchedAddress)
+        val data = getFetched()
         write(fetchedAddress, data and 0b11111101)
     }
 
     private fun iRmb2() {
-        val data = read(fetchedAddress)
+        val data = getFetched()
         write(fetchedAddress, data and 0b11111011)
     }
 
     private fun iRmb3() {
-        val data = read(fetchedAddress)
+        val data = getFetched()
         write(fetchedAddress, data and 0b11110111)
     }
 
     private fun iRmb4() {
-        val data = read(fetchedAddress)
+        val data = getFetched()
         write(fetchedAddress, data and 0b11101111)
     }
 
     private fun iRmb5() {
-        val data = read(fetchedAddress)
+        val data = getFetched()
         write(fetchedAddress, data and 0b11011111)
     }
 
     private fun iRmb6() {
-        val data = read(fetchedAddress)
+        val data = getFetched()
         write(fetchedAddress, data and 0b10111111)
     }
 
     private fun iRmb7() {
-        val data = read(fetchedAddress)
+        val data = getFetched()
         write(fetchedAddress, data and 0b01111111)
     }
 }

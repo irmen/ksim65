@@ -1,6 +1,7 @@
 import razorvine.ksim65.components.Bus
 import razorvine.ksim65.components.Ram
 import razorvine.ksim65.components.Cpu6502
+import razorvine.ksim65.components.Cpu65C02
 import java.lang.Exception
 import kotlin.test.*
 
@@ -10,7 +11,7 @@ class Test6502Functional {
     private class SuccessfulTestResult: Exception()
 
     @Test
-    fun testFunctional() {
+    fun testFunctional6502() {
         val cpu = Cpu6502(false)
         val bus = Bus()
         val ram = Ram(0, 0xffff)
@@ -26,7 +27,38 @@ class Test6502Functional {
         }
 
         try {
-            while (cpu.totalCycles < 900000000) {
+            while (cpu.totalCycles < 100000000) {
+                cpu.clock()
+            }
+        } catch (sx: SuccessfulTestResult) {
+            println("test successful  ${cpu.totalCycles}")
+            return
+        }
+
+        cpu.printState()
+        val d = cpu.disassemble(ram, cpu.PC-20, cpu.PC+20)
+        println(d.joinToString ("\n"))
+        fail("test failed")
+    }
+
+    @Test
+    fun testFunctional65C02() {
+        val cpu = Cpu65C02(false)
+        val bus = Bus()
+        val ram = Ram(0, 0xffff)
+        ram.load("src/test/kotlin/6502_functional_tests/bin_files/65C02_extended_opcodes_test.bin", 0)
+        bus.add(cpu)
+        bus.add(ram)
+        cpu.reset()
+        cpu.PC = 0x0400
+        cpu.breakpoint(0x24f1) { _, _ ->
+            // reaching this address means successful test result
+            if(cpu.currentOpcode==0x4c)
+                throw SuccessfulTestResult()
+        }
+
+        try {
+            while (cpu.totalCycles < 100000000) {
                 cpu.clock()
             }
         } catch (sx: SuccessfulTestResult) {

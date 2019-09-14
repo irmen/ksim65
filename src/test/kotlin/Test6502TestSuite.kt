@@ -7,7 +7,7 @@ import kotlin.test.*
 
 
 @TestInstance(TestInstance.Lifecycle.PER_METHOD)
-//@Disabled("this test suite takes a long time")
+@Disabled("this test suite takes a long time")
 class Test6502TestSuite {
 
     val cpu: Cpu6502 = Cpu6502(stopOnBrk = false)

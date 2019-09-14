@@ -1,5 +1,9 @@
 #include <stdio.h>
 
+/*
+    testing 65c02 core ADC and SBC from Vice
+*/
+
 static int flag_Z;
 static int flag_C;
 static int flag_N;
@@ -7,33 +11,29 @@ static int flag_V;
 
 unsigned int ADC(unsigned int A, unsigned int value, unsigned int bcd_mode)
 {
-        unsigned int tmp_value;
-        unsigned int tmp;
-
-        tmp_value = (value);
+        unsigned int tmp, tmp2;
+        unsigned int tmp_value = value;
 
         if (bcd_mode) {
             tmp = (A & 0xf) + (tmp_value & 0xf) + flag_C;
-            if (tmp > 0x9) {
-                tmp += 0x6;
+            tmp2 = (A & 0xf0) + (tmp_value & 0xf0);
+            if (tmp > 9) {
+                tmp2 += 0x10;
+                tmp += 6;
             }
-            if (tmp <= 0x0f) {
-                tmp = (tmp & 0xf) + (A & 0xf0) + (tmp_value & 0xf0);
-            } else {
-                tmp = (tmp & 0xf) + (A & 0xf0) + (tmp_value & 0xf0) + 0x10;
+            flag_V = ~(A ^ tmp_value) & (A ^ tmp2) & 0x80;
+            if (tmp2 > 0x90) {
+                tmp2 += 0x60;
             }
-            flag_Z = !((A + tmp_value + flag_C) & 0xff);
-            flag_N = tmp & 0x80;
-            flag_V = ((A ^ tmp) & 0x80)  && !((A ^ tmp_value) & 0x80);
-            if ((tmp & 0x1f0) > 0x90) {
-                tmp += 0x60;
-            }
-            flag_C = (tmp & 0xff0) > 0xf0;
+            flag_C = (tmp2 & 0xff00)!=0;
+            tmp = (tmp & 0xf) + (tmp2 & 0xf0);
+            flag_Z = tmp==0;
+            flag_N = tmp&0x80!=0;
         } else {
             tmp = tmp_value + A + flag_C;
             flag_Z = (tmp&0xff)==0;
             flag_N = (tmp&0x80)!=0;
-            flag_V = !((A ^ tmp_value) & 0x80)  && ((A ^ tmp) & 0x80);
+            flag_V = !((A ^ tmp_value) & 0x80) && ((A ^ tmp) & 0x80);
             flag_C = tmp > 0xff;
         }
         return tmp & 0xff;
@@ -41,33 +41,22 @@ unsigned int ADC(unsigned int A, unsigned int value, unsigned int bcd_mode)
 
 unsigned int SBC(unsigned int A, unsigned int value, unsigned int bcd_mode)
 {
-        unsigned int src, tmp;
-        src = (unsigned int)(value);
-        tmp = A - src - (flag_C ? 0 : 1);
-
+        unsigned int src = value;
+        unsigned int tmp = A - src + flag_C - 1;
+        flag_V = (((A ^ tmp) & 0x80) && ((A ^ src) & 0x80));
         if (bcd_mode) {
-            unsigned int tmp_a;
-            tmp_a = (A & 0xf) - (src & 0xf) - (flag_C ? 0 : 1);
-            if (tmp_a & 0x10) {
-                tmp_a = ((tmp_a - 6) & 0xf) | ((A & 0xf0) - (src & 0xf0) - 0x10);
-            } else {
-                tmp_a = (tmp_a & 0xf) | ((A & 0xf0) - (src & 0xf0));
+            if (tmp > 0xff) {
+                tmp -= 0x60;
             }
-            if (tmp_a & 0x100) {
-                tmp_a -= 0x60;
+            unsigned int tmp2 = (A & 0xf) - (src & 0xf) + flag_C - 1;
+            if (tmp2 > 0xff) {
+                tmp -= 6;
             }
-            flag_C = tmp < 0x100;
-            flag_Z = (tmp&0xff)==0;
-            flag_N = (tmp&0x80)!=0;
-            flag_V = ((A ^ tmp) & 0x80) && ((A ^ src) & 0x80);
-            return tmp_a && 255;
-        } else {
-            flag_Z = (tmp&0xff)==0;
-            flag_N = (tmp&0x80)!=0;
-            flag_C = tmp < 0x100;
-            flag_V = ((A ^ tmp) & 0x80) && ((A ^ src) & 0x80);
-            return tmp && 255;
         }
+        flag_C = (A + flag_C - 1 >= src);
+        flag_Z = (tmp&0xff)==0;
+        flag_N = (tmp&0x80)!=0;
+        return tmp & 0xff;
 }
 
 
@@ -81,6 +70,8 @@ void print_result(int result) {
 }
 
 int main(char* argv) {
+    printf("65c02   adc/sbc simulation\n");
+
     flag_C = flag_N = flag_V = flag_Z = 0;
 
     for(unsigned int A=0; A<256; ++A) {
