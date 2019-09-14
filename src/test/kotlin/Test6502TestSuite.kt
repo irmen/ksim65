@@ -470,7 +470,7 @@ class Test6502TestSuite {
     }
 
     @Test
-    @Disabled("todo: get all cycle times right")
+    @Disabled("todo: get all cycle times right, and uses c64 specific timing hardware")
     fun testCputiming() {
         runTest("cputiming")
     }
