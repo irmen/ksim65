@@ -1,9 +1,12 @@
 package razorvine.ksim65.components
 
 /**
- * A parallel output device (basically, prints bytes as characters to the screen)
- * First address = data byte (8 parallel bits)
- * Second address = control byte (bit 0 high = write byte)
+ * A simple parallel output device (basically, prints bytes as characters to the console)
+ *
+ * byte   value
+ * ----   ---------
+ *  00    data (the 8 parallel bits)
+ *  01    control latch (set bit 0 to write the data byte)
  */
 class ParallelPort(startAddress: Address, endAddress: Address) : MemMappedComponent(startAddress, endAddress) {
     private var dataByte: UByte = 0

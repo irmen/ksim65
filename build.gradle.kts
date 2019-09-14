@@ -1,22 +1,29 @@
 import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import kotlin.math.max
+import java.util.Properties
+
 
 plugins {
     // Apply the Kotlin JVM plugin to add support for Kotlin on the JVM.
     id("org.jetbrains.kotlin.jvm") version "1.3.50"
     id("com.gradle.build-scan") version "2.4.2"
     id("org.jetbrains.dokka") version "0.9.18"
+    id("com.jfrog.bintray") version "1.7.3"
+    id("maven-publish")
 }
 
-
-version = rootProject.file("src/main/resources/version.txt").readText().trim()
+val versionProps = Properties().also {
+    it.load(File("src/main/resources/version.properties").inputStream())
+}
+version = versionProps["version"] as String
 base.archivesBaseName = "ksim65"
 
 repositories {
     // Use jcenter for resolving dependencies.
     // You can declare any Maven/Ivy/file repository here.
     jcenter()
+    maven("https://jitpack.io")
 }
 
 dependencies {

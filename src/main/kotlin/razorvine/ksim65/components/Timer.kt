@@ -1,12 +1,17 @@
 package razorvine.ksim65.components
 
+import razorvine.ksim65.Cpu6502
+
 /**
  * A programmable timer. Causes an IRQ or NMI at specified 24-bits intervals.
+ *
  * byte   value
+ * ----   --------------
  *  00    control register  bit 0=enable  bit 1=nmi (instead of irq)
  *  01    24 bits interval value, bits 0-7 (lo)
  *  02    24 bits interval value, bits 8-15 (mid)
  *  03    24 bits interval value, bits 16-23  (hi)
+ *
  */
 class Timer(startAddress: Address, endAddress: Address, val cpu: Cpu6502) : MemMappedComponent(startAddress, endAddress) {
     private var counter: Int = 0

@@ -1,6 +1,6 @@
-import razorvine.ksim65.components.Bus
-import razorvine.ksim65.components.Cpu6502
-import razorvine.ksim65.components.Cpu65C02
+import razorvine.ksim65.Bus
+import razorvine.ksim65.Cpu6502
+import razorvine.ksim65.Cpu65C02
 import razorvine.ksim65.components.Ram
 import kotlin.test.*
 import kotlin.system.measureNanoTime
@@ -15,16 +15,16 @@ class Test6502CpuBasics {
         val bus = Bus()
         bus.add(cpu)
         cpu.reset()
-        assertEquals(0xfd, cpu.SP)
-        assertEquals(0xffff, cpu.PC)
+        assertEquals(0xfd, cpu.regSP)
+        assertEquals(0xffff, cpu.regPC)
         assertEquals(0, cpu.totalCycles)
         assertEquals(8, cpu.instrCycles)
-        assertEquals(0, cpu.A)
-        assertEquals(0, cpu.X)
-        assertEquals(0, cpu.Y)
+        assertEquals(0, cpu.regA)
+        assertEquals(0, cpu.regX)
+        assertEquals(0, cpu.regY)
         assertEquals(0, cpu.currentOpcode)
-        assertEquals(Cpu6502.StatusRegister(C = false, Z = false, I = true, D = false, B = false, V = false, N = false), cpu.Status)
-        assertEquals(0b00100100, cpu.Status.asByte())
+        assertEquals(Cpu6502.StatusRegister(C = false, Z = false, I = true, D = false, B = false, V = false, N = false), cpu.regP)
+        assertEquals(0b00100100, cpu.regP.asByte())
     }
 
     @Test
@@ -33,16 +33,16 @@ class Test6502CpuBasics {
         val bus = Bus()
         bus.add(cpu)
         cpu.reset()
-        assertEquals(0xfd, cpu.SP)
-        assertEquals(0xffff, cpu.PC)
+        assertEquals(0xfd, cpu.regSP)
+        assertEquals(0xffff, cpu.regPC)
         assertEquals(0, cpu.totalCycles)
         assertEquals(8, cpu.instrCycles)
-        assertEquals(0, cpu.A)
-        assertEquals(0, cpu.X)
-        assertEquals(0, cpu.Y)
+        assertEquals(0, cpu.regA)
+        assertEquals(0, cpu.regX)
+        assertEquals(0, cpu.regY)
         assertEquals(0, cpu.currentOpcode)
-        assertEquals(Cpu6502.StatusRegister(C = false, Z = false, I = true, D = false, B = false, V = false, N = false), cpu.Status)
-        assertEquals(0b00100100, cpu.Status.asByte())
+        assertEquals(Cpu6502.StatusRegister(C = false, Z = false, I = true, D = false, B = false, V = false, N = false), cpu.regP)
+        assertEquals(0b00100100, cpu.regP.asByte())
     }
 
     @Test
@@ -58,7 +58,7 @@ class Test6502CpuBasics {
         bus.add(cpu)
         bus.add(ram)
         cpu.reset()
-        cpu.PC = 0x1000
+        cpu.regPC = 0x1000
 
         // warmup
         while(cpu.totalCycles<5000000)
@@ -90,7 +90,7 @@ class Test6502CpuBasics {
         bus.add(cpu)
         bus.add(ram)
         cpu.reset()
-        cpu.PC = 0x1000
+        cpu.regPC = 0x1000
 
         // warmup
         while(cpu.totalCycles<5000000)

@@ -1,5 +1,9 @@
-package razorvine.ksim65.components
+package razorvine.ksim65
 
+import razorvine.ksim65.components.Address
+import razorvine.ksim65.components.BusComponent
+import razorvine.ksim65.components.MemoryComponent
+import razorvine.ksim65.components.UByte
 
 /**
  * 6502 cpu simulation (the NMOS version) including the 'illegal' opcodes.
@@ -86,12 +90,12 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
     protected class Instruction(val mnemonic: String, val mode: AddrMode, val cycles: Int)
 
 
-    var A: Int = 0
-    var X: Int = 0
-    var Y: Int = 0
-    var SP: Int = 0
-    var PC: Address = 0
-    val Status = StatusRegister()
+    var regA: Int = 0
+    var regX: Int = 0
+    var regY: Int = 0
+    var regSP: Int = 0
+    var regPC: Address = 0
+    val regP = StatusRegister()
     var currentOpcode: Int = 0
         protected set
     var instrCycles: Int = 0
@@ -137,7 +141,7 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
     }
 
     fun disassemble(component: MemoryComponent, from: Address, to: Address) =
-        disassemble(component.cloneContents(), component.startAddress, from, to)
+        disassemble(component.copyOfMem(), component.startAddress, from, to)
 
     fun disassemble(memory: Array<UByte>, baseAddress: Address, from: Address, to: Address): List<String> {
         var location = from - baseAddress
@@ -246,18 +250,18 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
     }
 
     override fun reset() {
-        SP = 0xfd
-        PC = readWord(RESET_vector)
-        A = 0
-        X = 0
-        Y = 0
-        Status.C = false
-        Status.Z = false
-        Status.I = true
-        Status.D = false
-        Status.B = false
-        Status.V = false
-        Status.N = false
+        regSP = 0xfd
+        regPC = readWord(RESET_vector)
+        regA = 0
+        regX = 0
+        regY = 0
+        regP.C = false
+        regP.Z = false
+        regP.I = true
+        regP.D = false
+        regP.B = false
+        regP.V = false
+        regP.N = false
         instrCycles = resetCycles       // a reset takes time as well
         currentOpcode = 0
         currentInstruction = instructions[0]
@@ -272,17 +276,17 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
                 currentInstruction = instructions[0]
             } else {
                 // no interrupt, fetch next instruction from memory
-                currentOpcode = read(PC)
+                currentOpcode = read(regPC)
                 currentInstruction = instructions[currentOpcode]
 
                 tracing?.invoke(logState())
 
-                breakpoints[PC]?.let { breakpoint ->
-                    val oldPC = PC
-                    val result = breakpoint(this, PC)
+                breakpoints[regPC]?.let { breakpoint ->
+                    val oldPC = regPC
+                    val result = breakpoint(this, regPC)
                     if(result.newPC!=null)
-                        PC = result.newPC
-                    if (PC != oldPC)
+                        regPC = result.newPC
+                    if (regPC != oldPC)
                         return clock()
                     else if(result.newOpcode!=null) {
                         currentOpcode = result.newOpcode
@@ -291,11 +295,11 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
                 }
 
                 if (stopOnBrk && currentOpcode == 0) {
-                    throw InstructionError("stopped on BRK instruction at ${hexW(PC)}")
+                    throw InstructionError("stopped on BRK instruction at ${hexW(regPC)}")
                 }
             }
 
-            PC++
+            regPC++
             instrCycles = currentInstruction.cycles
             applyAddressingMode(currentInstruction.mode)
             dispatchOpcode(currentOpcode)
@@ -317,23 +321,23 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
     }
 
     fun irq(source: BusComponent) {
-        if (!Status.I)
+        if (!regP.I)
             pendingInterrupt = Pair(false, source)
     }
 
     fun logState(): String =
-                    "cycle:$totalCycles - pc=${hexW(PC)} " +
-                    "A=${hexB(A)} " +
-                    "X=${hexB(X)} " +
-                    "Y=${hexB(Y)} " +
-                    "SP=${hexB(SP)} " +
-                    " n=" + (if (Status.N) "1" else "0") +
-                    " v=" + (if (Status.V) "1" else "0") +
-                    " b=" + (if (Status.B) "1" else "0") +
-                    " d=" + (if (Status.D) "1" else "0") +
-                    " i=" + (if (Status.I) "1" else "0") +
-                    " z=" + (if (Status.Z) "1" else "0") +
-                    " c=" + (if (Status.C) "1" else "0") +
+                    "cycle:$totalCycles - pc=${hexW(regPC)} " +
+                    "A=${hexB(regA)} " +
+                    "X=${hexB(regX)} " +
+                    "Y=${hexB(regY)} " +
+                    "SP=${hexB(regSP)} " +
+                    " n=" + (if (regP.N) "1" else "0") +
+                    " v=" + (if (regP.V) "1" else "0") +
+                    " b=" + (if (regP.B) "1" else "0") +
+                    " d=" + (if (regP.D) "1" else "0") +
+                    " i=" + (if (regP.I) "1" else "0") +
+                    " z=" + (if (regP.Z) "1" else "0") +
+                    " c=" + (if (regP.C) "1" else "0") +
                     "  icycles=$instrCycles  instr=${hexB(currentOpcode)}:${currentInstruction.mnemonic}"
 
     protected fun getFetched() =
@@ -345,7 +349,7 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
         else
             read(fetchedAddress)
 
-    protected fun readPc(): Int = bus.read(PC++).toInt()
+    protected fun readPc(): Int = bus.read(regPC++).toInt()
 
     protected fun pushStackAddr(address: Address) {
         val lo = address and 0xff
@@ -359,13 +363,13 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
     }
 
     protected fun pushStack(data: Int) {
-        write(SP or 0x0100, data)
-        SP = (SP - 1) and 0xff
+        write(regSP or 0x0100, data)
+        regSP = (regSP - 1) and 0xff
     }
 
     protected fun popStack(): Int {
-        SP = (SP + 1) and 0xff
-        return read(SP or 0x0100)
+        regSP = (regSP + 1) and 0xff
+        return read(regSP or 0x0100)
     }
 
     protected fun popStackAddr(): Address {
@@ -379,7 +383,7 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
     protected fun write(address: Address, data: Int) = bus.write(address, data.toShort())
 
     // opcodes table from  http://www.oxyron.de/html/opcodes02.html
-    protected open val instructions: Array<Instruction> by lazy {
+    protected open val instructions: Array<Instruction> =
         listOf(
             /* 00 */  Instruction("brk", AddrMode.Imp, 7),
             /* 01 */  Instruction("ora", AddrMode.IzX, 6),
@@ -638,12 +642,11 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
             /* fe */  Instruction("inc", AddrMode.AbsX, 7),
             /* ff */  Instruction("isc", AddrMode.AbsX, 7)
         ).toTypedArray()
-    }
 
     protected open fun applyAddressingMode(addrMode: AddrMode) {
         when (addrMode) {
             AddrMode.Imp, AddrMode.Acc -> {
-                fetchedData = A
+                fetchedData = regA
             }
             AddrMode.Imm -> {
                 fetchedData = readPc()
@@ -653,18 +656,18 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
             }
             AddrMode.ZpX -> {
                 // note: zeropage index will not leave Zp when page boundary is crossed
-                fetchedAddress = (readPc() + X) and 0xff
+                fetchedAddress = (readPc() + regX) and 0xff
             }
             AddrMode.ZpY -> {
                 // note: zeropage index will not leave Zp when page boundary is crossed
-                fetchedAddress = (readPc() + Y) and 0xff
+                fetchedAddress = (readPc() + regY) and 0xff
             }
             AddrMode.Rel -> {
                 val relative = readPc()
                 fetchedAddress = if (relative >= 0x80) {
-                    PC - (256 - relative) and 0xffff
+                    regPC - (256 - relative) and 0xffff
                 } else
-                    PC + relative and 0xffff
+                    regPC + relative and 0xffff
             }
             AddrMode.Abs -> {
                 val lo = readPc()
@@ -674,12 +677,12 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
             AddrMode.AbsX -> {
                 val lo = readPc()
                 val hi = readPc()
-                fetchedAddress = X + (lo or (hi shl 8)) and 0xffff
+                fetchedAddress = regX + (lo or (hi shl 8)) and 0xffff
             }
             AddrMode.AbsY -> {
                 val lo = readPc()
                 val hi = readPc()
-                fetchedAddress = Y + (lo or (hi shl 8)) and 0xffff
+                fetchedAddress = regY + (lo or (hi shl 8)) and 0xffff
             }
             AddrMode.Ind -> {
                 // not able to fetch an address which crosses the page boundary (6502, fixed in 65C02)
@@ -700,8 +703,8 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
             AddrMode.IzX -> {
                 // note: not able to fetch an adress which crosses the page boundary
                 fetchedAddress = readPc()
-                val lo = read((fetchedAddress + X) and 0xff)
-                val hi = read((fetchedAddress + X + 1) and 0xff)
+                val lo = read((fetchedAddress + regX) and 0xff)
+                val hi = read((fetchedAddress + regX + 1) and 0xff)
                 fetchedAddress = lo or (hi shl 8)
             }
             AddrMode.IzY -> {
@@ -709,7 +712,7 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
                 fetchedAddress = readPc()
                 val lo = read(fetchedAddress)
                 val hi = read((fetchedAddress + 1) and 0xff)
-                fetchedAddress = Y + (lo or (hi shl 8)) and 0xffff
+                fetchedAddress = regY + (lo or (hi shl 8)) and 0xffff
             }
             AddrMode.Zpr, AddrMode.Izp, AddrMode.IaX -> {
                 // addressing mode used by the 65C02 only
@@ -986,87 +989,87 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
 
     protected open fun iAdc() {
         val operand = getFetched()
-        if (Status.D) {
+        if (regP.D) {
             // BCD add
             // see http://www.6502.org/tutorials/decimal_mode.html
             // and http://nesdev.com/6502.txt
             // and https://sourceforge.net/p/vice-emu/code/HEAD/tree/trunk/vice/src/6510core.c#l598
             // (the implementation below is based on the code used by Vice)
-            var tmp = (A and 0xf) + (operand and 0xf) + (if (Status.C) 1 else 0)
+            var tmp = (regA and 0xf) + (operand and 0xf) + (if (regP.C) 1 else 0)
             if (tmp > 9) tmp += 6
             tmp = if (tmp <= 0x0f) {
-                (tmp and 0xf) + (A and 0xf0) + (operand and 0xf0)
+                (tmp and 0xf) + (regA and 0xf0) + (operand and 0xf0)
             } else {
-                (tmp and 0xf) + (A and 0xf0) + (operand and 0xf0) + 0x10
+                (tmp and 0xf) + (regA and 0xf0) + (operand and 0xf0) + 0x10
             }
-            Status.Z = A + operand + (if (Status.C) 1 else 0) and 0xff == 0
-            Status.N = tmp and 0b10000000 != 0
-            Status.V = (A xor tmp) and 0x80 != 0 && (A xor operand) and 0b10000000 == 0
+            regP.Z = regA + operand + (if (regP.C) 1 else 0) and 0xff == 0
+            regP.N = tmp and 0b10000000 != 0
+            regP.V = (regA xor tmp) and 0x80 != 0 && (regA xor operand) and 0b10000000 == 0
             if (tmp and 0x1f0 > 0x90) tmp += 0x60
-            Status.C = tmp > 0xf0     // original: (tmp and 0xff0) > 0xf0
-            A = tmp and 0xff
+            regP.C = tmp > 0xf0     // original: (tmp and 0xff0) > 0xf0
+            regA = tmp and 0xff
         } else {
             // normal add
-            val tmp = operand + A + if (Status.C) 1 else 0
-            Status.N = (tmp and 0b10000000) != 0
-            Status.Z = (tmp and 0xff) == 0
-            Status.V = (A xor operand).inv() and (A xor tmp) and 0b10000000 != 0
-            Status.C = tmp > 0xff
-            A = tmp and 0xff
+            val tmp = operand + regA + if (regP.C) 1 else 0
+            regP.N = (tmp and 0b10000000) != 0
+            regP.Z = (tmp and 0xff) == 0
+            regP.V = (regA xor operand).inv() and (regA xor tmp) and 0b10000000 != 0
+            regP.C = tmp > 0xff
+            regA = tmp and 0xff
         }
     }
 
     protected fun iAnd() {
-        A = A and getFetched()
-        Status.Z = A == 0
-        Status.N = (A and 0b10000000) != 0
+        regA = regA and getFetched()
+        regP.Z = regA == 0
+        regP.N = (regA and 0b10000000) != 0
     }
 
     protected fun iAsl() {
         if (currentInstruction.mode == AddrMode.Acc) {
-            Status.C = (A and 0b10000000) != 0
-            A = (A shl 1) and 0xff
-            Status.Z = A == 0
-            Status.N = (A and 0b10000000) != 0
+            regP.C = (regA and 0b10000000) != 0
+            regA = (regA shl 1) and 0xff
+            regP.Z = regA == 0
+            regP.N = (regA and 0b10000000) != 0
         } else {
             val data = read(fetchedAddress)
-            Status.C = (data and 0b10000000) != 0
+            regP.C = (data and 0b10000000) != 0
             val shifted = (data shl 1) and 0xff
             write(fetchedAddress, shifted)
-            Status.Z = shifted == 0
-            Status.N = (shifted and 0b10000000) != 0
+            regP.Z = shifted == 0
+            regP.N = (shifted and 0b10000000) != 0
         }
     }
 
     protected fun iBcc() {
-        if (!Status.C) PC = fetchedAddress
+        if (!regP.C) regPC = fetchedAddress
     }
 
     protected fun iBcs() {
-        if (Status.C) PC = fetchedAddress
+        if (regP.C) regPC = fetchedAddress
     }
 
     protected fun iBeq() {
-        if (Status.Z) PC = fetchedAddress
+        if (regP.Z) regPC = fetchedAddress
     }
 
     protected open fun iBit() {
         val operand = getFetched()
-        Status.Z = (A and operand) == 0
-        Status.V = (operand and 0b01000000) != 0
-        Status.N = (operand and 0b10000000) != 0
+        regP.Z = (regA and operand) == 0
+        regP.V = (operand and 0b01000000) != 0
+        regP.N = (operand and 0b10000000) != 0
     }
 
     protected fun iBmi() {
-        if (Status.N) PC = fetchedAddress
+        if (regP.N) regPC = fetchedAddress
     }
 
     protected fun iBne() {
-        if (!Status.Z) PC = fetchedAddress
+        if (!regP.Z) regPC = fetchedAddress
     }
 
     protected fun iBpl() {
-        if (!Status.N) PC = fetchedAddress
+        if (!regP.N) regPC = fetchedAddress
     }
 
     protected open fun iBrk() {
@@ -1074,309 +1077,309 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
         val interrupt = pendingInterrupt
         val nmi = interrupt?.first == true
         if (interrupt != null) {
-            pushStackAddr(PC - 1)
+            pushStackAddr(regPC - 1)
         } else {
-            PC++
-            pushStackAddr(PC)
+            regPC++
+            pushStackAddr(regPC)
         }
-        Status.B = interrupt == null
-        pushStack(Status)
-        Status.I = true     // interrupts are now disabled
+        regP.B = interrupt == null
+        pushStack(regP)
+        regP.I = true     // interrupts are now disabled
         // NMOS 6502 doesn't clear the D flag (CMOS 65C02 version does...)
-        PC = readWord(if (nmi) NMI_vector else IRQ_vector)
+        regPC = readWord(if (nmi) NMI_vector else IRQ_vector)
         pendingInterrupt = null
     }
 
     protected fun iBvc() {
-        if (!Status.V) PC = fetchedAddress
+        if (!regP.V) regPC = fetchedAddress
     }
 
     protected fun iBvs() {
-        if (Status.V) PC = fetchedAddress
+        if (regP.V) regPC = fetchedAddress
     }
 
     protected fun iClc() {
-        Status.C = false
+        regP.C = false
     }
 
     protected fun iCld() {
-        Status.D = false
+        regP.D = false
     }
 
     protected fun iCli() {
-        Status.I = false
+        regP.I = false
     }
 
     protected fun iClv() {
-        Status.V = false
+        regP.V = false
     }
 
     protected fun iCmp() {
         val fetched = getFetched()
-        Status.C = A >= fetched
-        Status.Z = A == fetched
-        Status.N = ((A - fetched) and 0b10000000) != 0
+        regP.C = regA >= fetched
+        regP.Z = regA == fetched
+        regP.N = ((regA - fetched) and 0b10000000) != 0
     }
 
     protected fun iCpx() {
         val fetched = getFetched()
-        Status.C = X >= fetched
-        Status.Z = X == fetched
-        Status.N = ((X - fetched) and 0b10000000) != 0
+        regP.C = regX >= fetched
+        regP.Z = regX == fetched
+        regP.N = ((regX - fetched) and 0b10000000) != 0
     }
 
     protected fun iCpy() {
         val fetched = getFetched()
-        Status.C = Y >= fetched
-        Status.Z = Y == fetched
-        Status.N = ((Y - fetched) and 0b10000000) != 0
+        regP.C = regY >= fetched
+        regP.Z = regY == fetched
+        regP.N = ((regY - fetched) and 0b10000000) != 0
     }
 
     protected open fun iDec() {
         val data = (read(fetchedAddress) - 1) and 0xff
         write(fetchedAddress, data)
-        Status.Z = data == 0
-        Status.N = (data and 0b10000000) != 0
+        regP.Z = data == 0
+        regP.N = (data and 0b10000000) != 0
     }
 
     protected fun iDex() {
-        X = (X - 1) and 0xff
-        Status.Z = X == 0
-        Status.N = (X and 0b10000000) != 0
+        regX = (regX - 1) and 0xff
+        regP.Z = regX == 0
+        regP.N = (regX and 0b10000000) != 0
     }
 
     protected fun iDey() {
-        Y = (Y - 1) and 0xff
-        Status.Z = Y == 0
-        Status.N = (Y and 0b10000000) != 0
+        regY = (regY - 1) and 0xff
+        regP.Z = regY == 0
+        regP.N = (regY and 0b10000000) != 0
     }
 
     protected fun iEor() {
-        A = A xor getFetched()
-        Status.Z = A == 0
-        Status.N = (A and 0b10000000) != 0
+        regA = regA xor getFetched()
+        regP.Z = regA == 0
+        regP.N = (regA and 0b10000000) != 0
     }
 
     protected open fun iInc() {
         val data = (read(fetchedAddress) + 1) and 0xff
         write(fetchedAddress, data)
-        Status.Z = data == 0
-        Status.N = (data and 0b10000000) != 0
+        regP.Z = data == 0
+        regP.N = (data and 0b10000000) != 0
     }
 
     protected fun iInx() {
-        X = (X + 1) and 0xff
-        Status.Z = X == 0
-        Status.N = (X and 0b10000000) != 0
+        regX = (regX + 1) and 0xff
+        regP.Z = regX == 0
+        regP.N = (regX and 0b10000000) != 0
     }
 
     protected fun iIny() {
-        Y = (Y + 1) and 0xff
-        Status.Z = Y == 0
-        Status.N = (Y and 0b10000000) != 0
+        regY = (regY + 1) and 0xff
+        regP.Z = regY == 0
+        regP.N = (regY and 0b10000000) != 0
     }
 
     protected fun iJmp() {
-        PC = fetchedAddress
+        regPC = fetchedAddress
     }
 
     protected fun iJsr() {
-        pushStackAddr(PC - 1)
-        PC = fetchedAddress
+        pushStackAddr(regPC - 1)
+        regPC = fetchedAddress
     }
 
     protected fun iLda() {
-        A = getFetched()
-        Status.Z = A == 0
-        Status.N = (A and 0b10000000) != 0
+        regA = getFetched()
+        regP.Z = regA == 0
+        regP.N = (regA and 0b10000000) != 0
     }
 
     protected fun iLdx() {
-        X = getFetched()
-        Status.Z = X == 0
-        Status.N = (X and 0b10000000) != 0
+        regX = getFetched()
+        regP.Z = regX == 0
+        regP.N = (regX and 0b10000000) != 0
     }
 
     protected fun iLdy() {
-        Y = getFetched()
-        Status.Z = Y == 0
-        Status.N = (Y and 0b10000000) != 0
+        regY = getFetched()
+        regP.Z = regY == 0
+        regP.N = (regY and 0b10000000) != 0
     }
 
     protected fun iLsr() {
         if (currentInstruction.mode == AddrMode.Acc) {
-            Status.C = (A and 1) == 1
-            A = A ushr 1
-            Status.Z = A == 0
-            Status.N = (A and 0b10000000) != 0
+            regP.C = (regA and 1) == 1
+            regA = regA ushr 1
+            regP.Z = regA == 0
+            regP.N = (regA and 0b10000000) != 0
         } else {
             val data = read(fetchedAddress)
-            Status.C = (data and 1) == 1
+            regP.C = (data and 1) == 1
             val shifted = data ushr 1
             write(fetchedAddress, shifted)
-            Status.Z = shifted == 0
-            Status.N = (shifted and 0b10000000) != 0
+            regP.Z = shifted == 0
+            regP.N = (shifted and 0b10000000) != 0
         }
     }
 
     protected fun iNop() {}
 
     protected fun iOra() {
-        A = A or getFetched()
-        Status.Z = A == 0
-        Status.N = (A and 0b10000000) != 0
+        regA = regA or getFetched()
+        regP.Z = regA == 0
+        regP.N = (regA and 0b10000000) != 0
     }
 
     protected fun iPha() {
-        pushStack(A)
+        pushStack(regA)
     }
 
     protected fun iPhp() {
-        val origBreakflag = Status.B
-        Status.B = true
-        pushStack(Status)
-        Status.B = origBreakflag
+        val origBreakflag = regP.B
+        regP.B = true
+        pushStack(regP)
+        regP.B = origBreakflag
     }
 
     protected fun iPla() {
-        A = popStack()
-        Status.Z = A == 0
-        Status.N = (A and 0b10000000) != 0
+        regA = popStack()
+        regP.Z = regA == 0
+        regP.N = (regA and 0b10000000) != 0
     }
 
     protected fun iPlp() {
-        Status.fromByte(popStack())
-        Status.B = true  // break is always 1 except when pushing on stack
+        regP.fromByte(popStack())
+        regP.B = true  // break is always 1 except when pushing on stack
     }
 
     protected fun iRol() {
-        val oldCarry = Status.C
+        val oldCarry = regP.C
         if (currentInstruction.mode == AddrMode.Acc) {
-            Status.C = (A and 0b10000000) != 0
-            A = (A shl 1 and 0xff) or (if (oldCarry) 1 else 0)
-            Status.Z = A == 0
-            Status.N = (A and 0b10000000) != 0
+            regP.C = (regA and 0b10000000) != 0
+            regA = (regA shl 1 and 0xff) or (if (oldCarry) 1 else 0)
+            regP.Z = regA == 0
+            regP.N = (regA and 0b10000000) != 0
         } else {
             val data = read(fetchedAddress)
-            Status.C = (data and 0b10000000) != 0
+            regP.C = (data and 0b10000000) != 0
             val shifted = (data shl 1 and 0xff) or (if (oldCarry) 1 else 0)
             write(fetchedAddress, shifted)
-            Status.Z = shifted == 0
-            Status.N = (shifted and 0b10000000) != 0
+            regP.Z = shifted == 0
+            regP.N = (shifted and 0b10000000) != 0
         }
     }
 
     protected fun iRor() {
-        val oldCarry = Status.C
+        val oldCarry = regP.C
         if (currentInstruction.mode == AddrMode.Acc) {
-            Status.C = (A and 1) == 1
-            A = (A ushr 1) or (if (oldCarry) 0b10000000 else 0)
-            Status.Z = A == 0
-            Status.N = (A and 0b10000000) != 0
+            regP.C = (regA and 1) == 1
+            regA = (regA ushr 1) or (if (oldCarry) 0b10000000 else 0)
+            regP.Z = regA == 0
+            regP.N = (regA and 0b10000000) != 0
         } else {
             val data = read(fetchedAddress)
-            Status.C = (data and 1) == 1
+            regP.C = (data and 1) == 1
             val shifted = (data ushr 1) or (if (oldCarry) 0b10000000 else 0)
             write(fetchedAddress, shifted)
-            Status.Z = shifted == 0
-            Status.N = (shifted and 0b10000000) != 0
+            regP.Z = shifted == 0
+            regP.N = (shifted and 0b10000000) != 0
         }
     }
 
     protected fun iRti() {
-        Status.fromByte(popStack())
-        Status.B = true  // break is always 1 except when pushing on stack
-        PC = popStackAddr()
+        regP.fromByte(popStack())
+        regP.B = true  // break is always 1 except when pushing on stack
+        regPC = popStackAddr()
     }
 
     protected fun iRts() {
-        PC = popStackAddr()
-        PC = (PC + 1) and 0xffff
+        regPC = popStackAddr()
+        regPC = (regPC + 1) and 0xffff
     }
 
     protected open fun iSbc() {
         val operand = getFetched()
-        val tmp = (A - operand - if (Status.C) 0 else 1) and 0xffff
-        Status.V = (A xor operand) and (A xor tmp) and 0b10000000 != 0
-        if (Status.D) {
+        val tmp = (regA - operand - if (regP.C) 0 else 1) and 0xffff
+        regP.V = (regA xor operand) and (regA xor tmp) and 0b10000000 != 0
+        if (regP.D) {
             // BCD subtract
             // see http://www.6502.org/tutorials/decimal_mode.html
             // and http://nesdev.com/6502.txt
             // and https://sourceforge.net/p/vice-emu/code/HEAD/tree/trunk/vice/src/6510core.c#l1396
             // (the implementation below is based on the code used by Vice)
-            var tmpA = ((A and 0xf) - (operand and 0xf) - if (Status.C) 0 else 1) and 0xffff
+            var tmpA = ((regA and 0xf) - (operand and 0xf) - if (regP.C) 0 else 1) and 0xffff
             tmpA = if ((tmpA and 0x10) != 0) {
-                ((tmpA - 6) and 0xf) or (A and 0xf0) - (operand and 0xf0) - 0x10
+                ((tmpA - 6) and 0xf) or (regA and 0xf0) - (operand and 0xf0) - 0x10
             } else {
-                (tmpA and 0xf) or (A and 0xf0) - (operand and 0xf0)
+                (tmpA and 0xf) or (regA and 0xf0) - (operand and 0xf0)
             }
             if ((tmpA and 0x100) != 0) tmpA -= 0x60
-            A = tmpA and 0xff
+            regA = tmpA and 0xff
         } else {
             // normal subtract
-            A = tmp and 0xff
+            regA = tmp and 0xff
         }
-        Status.C = tmp < 0x100
-        Status.Z = (tmp and 0xff) == 0
-        Status.N = (tmp and 0b10000000) != 0
+        regP.C = tmp < 0x100
+        regP.Z = (tmp and 0xff) == 0
+        regP.N = (tmp and 0b10000000) != 0
     }
 
     protected fun iSec() {
-        Status.C = true
+        regP.C = true
     }
 
     protected fun iSed() {
-        Status.D = true
+        regP.D = true
     }
 
     protected fun iSei() {
-        Status.I = true
+        regP.I = true
     }
 
     protected fun iSta() {
-        write(fetchedAddress, A)
+        write(fetchedAddress, regA)
     }
 
     protected fun iStx() {
-        write(fetchedAddress, X)
+        write(fetchedAddress, regX)
     }
 
     protected fun iSty() {
-        write(fetchedAddress, Y)
+        write(fetchedAddress, regY)
     }
 
     protected fun iTax() {
-        X = A
-        Status.Z = X == 0
-        Status.N = (X and 0b10000000) != 0
+        regX = regA
+        regP.Z = regX == 0
+        regP.N = (regX and 0b10000000) != 0
     }
 
     protected fun iTay() {
-        Y = A
-        Status.Z = Y == 0
-        Status.N = (Y and 0b10000000) != 0
+        regY = regA
+        regP.Z = regY == 0
+        regP.N = (regY and 0b10000000) != 0
     }
 
     protected fun iTsx() {
-        X = SP
-        Status.Z = X == 0
-        Status.N = (X and 0b10000000) != 0
+        regX = regSP
+        regP.Z = regX == 0
+        regP.N = (regX and 0b10000000) != 0
     }
 
     protected fun iTxa() {
-        A = X
-        Status.Z = A == 0
-        Status.N = (A and 0b10000000) != 0
+        regA = regX
+        regP.Z = regA == 0
+        regP.N = (regA and 0b10000000) != 0
     }
 
     protected fun iTxs() {
-        SP = X
+        regSP = regX
     }
 
     protected fun iTya() {
-        A = Y
-        Status.Z = A == 0
-        Status.N = (A and 0b10000000) != 0
+        regA = regY
+        regP.Z = regA == 0
+        regP.N = (regA and 0b10000000) != 0
     }
 
     // unofficial/illegal 6502 instructions

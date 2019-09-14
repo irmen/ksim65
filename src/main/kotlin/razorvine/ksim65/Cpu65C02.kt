@@ -1,4 +1,6 @@
-package razorvine.ksim65.components
+package razorvine.ksim65
+
+import razorvine.ksim65.components.Address
 
 /**
  * 65C02 cpu simulation (the CMOS version of the 6502).
@@ -34,7 +36,7 @@ class Cpu65C02(stopOnBrk: Boolean = false) : Cpu6502(stopOnBrk) {
             Wait.Stopped -> {
                 if (pendingInterrupt != null) {
                     // jump to reset vector after hardware interrupt
-                    PC = readWord(RESET_vector)
+                    regPC = readWord(RESET_vector)
                 }
             }
         }
@@ -80,9 +82,9 @@ class Cpu65C02(stopOnBrk: Boolean = false) : Cpu6502(stopOnBrk) {
                 fetchedAddress = readPc()
                 val relative = readPc()
                 fetchedAddressZpr = if (relative >= 0x80) {
-                    PC - (256 - relative) and 0xffff
+                    regPC - (256 - relative) and 0xffff
                 } else
-                    PC + relative and 0xffff
+                    regPC + relative and 0xffff
             }
             AddrMode.Izp -> {
                 // addressing mode used by the 65C02 only
@@ -96,8 +98,8 @@ class Cpu65C02(stopOnBrk: Boolean = false) : Cpu6502(stopOnBrk) {
                 var lo = readPc()
                 var hi = readPc()
                 fetchedAddress = lo or (hi shl 8)
-                lo = read((fetchedAddress + X) and 0xffff)
-                hi = read((fetchedAddress + X + 1) and 0xffff)
+                lo = read((fetchedAddress + regX) and 0xffff)
+                hi = read((fetchedAddress + regX + 1) and 0xffff)
                 fetchedAddress = lo or (hi shl 8)
             }
         }
@@ -367,7 +369,7 @@ class Cpu65C02(stopOnBrk: Boolean = false) : Cpu6502(stopOnBrk) {
     }
 
     // opcode list:  http://www.oxyron.de/html/opcodesc02.html
-    override val instructions: Array<Instruction> by lazy {
+    override val instructions: Array<Instruction> =
         listOf(
             /* 00 */  Instruction("brk", AddrMode.Imp, 7),
             /* 01 */  Instruction("ora", AddrMode.IzX, 6),
@@ -626,63 +628,62 @@ class Cpu65C02(stopOnBrk: Boolean = false) : Cpu6502(stopOnBrk) {
             /* fe */  Instruction("inc", AddrMode.AbsX, 7),
             /* ff */  Instruction("bbs7", AddrMode.Zpr, 5)
         ).toTypedArray()
-    }
 
     override fun iBrk() {
         // handle BRK ('software interrupt') or a real hardware IRQ
         val interrupt = pendingInterrupt
         val nmi = interrupt?.first == true
         if (interrupt != null) {
-            pushStackAddr(PC - 1)
+            pushStackAddr(regPC - 1)
         } else {
-            PC++
-            pushStackAddr(PC)
+            regPC++
+            pushStackAddr(regPC)
         }
-        Status.B = interrupt == null
-        pushStack(Status)
-        Status.I = true     // interrupts are now disabled
-        Status.D = false    // this is different from NMOS 6502
-        PC = readWord(if (nmi) Cpu6502.NMI_vector else Cpu6502.IRQ_vector)
+        regP.B = interrupt == null
+        pushStack(regP)
+        regP.I = true     // interrupts are now disabled
+        regP.D = false    // this is different from NMOS 6502
+        regPC = readWord(if (nmi) Cpu6502.NMI_vector else Cpu6502.IRQ_vector)
         pendingInterrupt = null
     }
 
     override fun iBit() {
         val data = getFetched()
-        Status.Z = (A and data) == 0
+        regP.Z = (regA and data) == 0
         if (currentInstruction.mode != AddrMode.Imm) {
-            Status.V = (data and 0b01000000) != 0
-            Status.N = (data and 0b10000000) != 0
+            regP.V = (data and 0b01000000) != 0
+            regP.N = (data and 0b10000000) != 0
         }
     }
 
     override fun iAdc() {
         val value = getFetched()
-        if (Status.D) {
+        if (regP.D) {
             // BCD add
             // see http://www.6502.org/tutorials/decimal_mode.html
             // and https://sourceforge.net/p/vice-emu/code/HEAD/tree/trunk/vice/src/65c02core.c#l542
             // (the implementation below is based on the code used by Vice)
-            var tmp = (A and 0x0f) + (value and 0x0f) + if (Status.C) 1 else 0
-            var tmp2 = (A and 0xf0) + (value and 0xf0)
+            var tmp = (regA and 0x0f) + (value and 0x0f) + if (regP.C) 1 else 0
+            var tmp2 = (regA and 0xf0) + (value and 0xf0)
             if (tmp > 9) {
                 tmp2 += 0x10
                 tmp += 6
             }
-            Status.V = (A xor value).inv() and (A xor tmp2) and 0b10000000 != 0
+            regP.V = (regA xor value).inv() and (regA xor tmp2) and 0b10000000 != 0
             if (tmp2 > 0x90) tmp2 += 0x60
-            Status.C = tmp2 >= 0x100
+            regP.C = tmp2 >= 0x100
             tmp = (tmp and 0x0f) + (tmp2 and 0xf0)
-            Status.N = (tmp and 0b10000000) != 0
-            Status.Z = tmp == 0
-            A = tmp and 0xff
+            regP.N = (tmp and 0b10000000) != 0
+            regP.Z = tmp == 0
+            regA = tmp and 0xff
         } else {
             // normal add (identical to 6502)
-            val tmp = value + A + if (Status.C) 1 else 0
-            Status.N = (tmp and 0b10000000) != 0
-            Status.Z = (tmp and 0xff) == 0
-            Status.V = (A xor value).inv() and (A xor tmp) and 0b10000000 != 0
-            Status.C = tmp > 0xff
-            A = tmp and 0xff
+            val tmp = value + regA + if (regP.C) 1 else 0
+            regP.N = (tmp and 0b10000000) != 0
+            regP.Z = (tmp and 0xff) == 0
+            regP.V = (regA xor value).inv() and (regA xor tmp) and 0b10000000 != 0
+            regP.C = tmp > 0xff
+            regA = tmp and 0xff
         }
     }
 
@@ -691,50 +692,50 @@ class Cpu65C02(stopOnBrk: Boolean = false) : Cpu6502(stopOnBrk) {
         // and https://sourceforge.net/p/vice-emu/code/HEAD/tree/trunk/vice/src/65c02core.c#l1205
         // (the implementation below is based on the code used by Vice)
         val value = getFetched()
-        var tmp = (A - value - if (Status.C) 0 else 1) and 0xffff
-        Status.V = (A xor tmp) and (A xor value) and 0b10000000 != 0
-        if (Status.D) {
+        var tmp = (regA - value - if (regP.C) 0 else 1) and 0xffff
+        regP.V = (regA xor tmp) and (regA xor value) and 0b10000000 != 0
+        if (regP.D) {
             if (tmp > 0xff) tmp = (tmp - 0x60) and 0xffff
-            val tmp2 = ((A and 0x0f) - (value and 0x0f) - if (Status.C) 0 else 1) and 0xffff
+            val tmp2 = ((regA and 0x0f) - (value and 0x0f) - if (regP.C) 0 else 1) and 0xffff
             if (tmp2 > 0xff) tmp -= 6
         }
-        Status.C = (A - if (Status.C) 0 else 1) >= value
-        Status.Z = (tmp and 0xff) == 0
-        Status.N = (tmp and 0b10000000) != 0
-        A = tmp and 0xff
+        regP.C = (regA - if (regP.C) 0 else 1) >= value
+        regP.Z = (tmp and 0xff) == 0
+        regP.N = (tmp and 0b10000000) != 0
+        regA = tmp and 0xff
     }
 
     override fun iDec() {
         if (currentInstruction.mode == AddrMode.Acc) {
-            A = (A - 1) and 0xff
-            Status.Z = A == 0
-            Status.N = (A and 0b10000000) != 0
+            regA = (regA - 1) and 0xff
+            regP.Z = regA == 0
+            regP.N = (regA and 0b10000000) != 0
         } else super.iDec()
     }
 
     override fun iInc() {
         if (currentInstruction.mode == AddrMode.Acc) {
-            A = (A + 1) and 0xff
-            Status.Z = A == 0
-            Status.N = (A and 0b10000000) != 0
+            regA = (regA + 1) and 0xff
+            regP.Z = regA == 0
+            regP.N = (regA and 0b10000000) != 0
         } else super.iInc()
     }
 
     private fun iBra() {
         // unconditional branch
-        PC = fetchedAddress
+        regPC = fetchedAddress
     }
 
     private fun iTrb() {
         val data = getFetched()
-        Status.Z = data and A == 0
-        write(fetchedAddress, data and A.inv())
+        regP.Z = data and regA == 0
+        write(fetchedAddress, data and regA.inv())
     }
 
     private fun iTsb() {
         val data = getFetched()
-        Status.Z = data and A == 0
-        write(fetchedAddress, data or A)
+        regP.Z = data and regA == 0
+        write(fetchedAddress, data or regA)
     }
 
     private fun iStz() {
@@ -750,119 +751,119 @@ class Cpu65C02(stopOnBrk: Boolean = false) : Cpu6502(stopOnBrk) {
     }
 
     private fun iPhx() {
-        pushStack(X)
+        pushStack(regX)
     }
 
     private fun iPlx() {
-        X = popStack()
-        Status.Z = X == 0
-        Status.N = (X and 0b10000000) != 0
+        regX = popStack()
+        regP.Z = regX == 0
+        regP.N = (regX and 0b10000000) != 0
     }
 
     private fun iPhy() {
-        pushStack(Y)
+        pushStack(regY)
     }
 
     private fun iPly() {
-        Y = popStack()
-        Status.Z = Y == 0
-        Status.N = (Y and 0b10000000) != 0
+        regY = popStack()
+        regP.Z = regY == 0
+        regP.N = (regY and 0b10000000) != 0
     }
 
     private fun iBbr0() {
         val data = getFetched()
         if (data and 1 == 0)
-            PC = fetchedAddressZpr
+            regPC = fetchedAddressZpr
     }
 
     private fun iBbr1() {
         val data = getFetched()
         if (data and 2 == 0)
-            PC = fetchedAddressZpr
+            regPC = fetchedAddressZpr
     }
 
     private fun iBbr2() {
         val data = getFetched()
         if (data and 4 == 0)
-            PC = fetchedAddressZpr
+            regPC = fetchedAddressZpr
     }
 
     private fun iBbr3() {
         val data = getFetched()
         if (data and 8 == 0)
-            PC = fetchedAddressZpr
+            regPC = fetchedAddressZpr
     }
 
     private fun iBbr4() {
         val data = getFetched()
         if (data and 16 == 0)
-            PC = fetchedAddressZpr
+            regPC = fetchedAddressZpr
     }
 
     private fun iBbr5() {
         val data = getFetched()
         if (data and 32 == 0)
-            PC = fetchedAddressZpr
+            regPC = fetchedAddressZpr
     }
 
     private fun iBbr6() {
         val data = getFetched()
         if (data and 64 == 0)
-            PC = fetchedAddressZpr
+            regPC = fetchedAddressZpr
     }
 
     private fun iBbr7() {
         val data = getFetched()
         if (data and 128 == 0)
-            PC = fetchedAddressZpr
+            regPC = fetchedAddressZpr
     }
 
     private fun iBbs0() {
         val data = getFetched()
         if (data and 1 != 0)
-            PC = fetchedAddressZpr
+            regPC = fetchedAddressZpr
     }
 
     private fun iBbs1() {
         val data = getFetched()
         if (data and 2 != 0)
-            PC = fetchedAddressZpr
+            regPC = fetchedAddressZpr
     }
 
     private fun iBbs2() {
         val data = getFetched()
         if (data and 4 != 0)
-            PC = fetchedAddressZpr
+            regPC = fetchedAddressZpr
     }
 
     private fun iBbs3() {
         val data = getFetched()
         if (data and 8 != 0)
-            PC = fetchedAddressZpr
+            regPC = fetchedAddressZpr
     }
 
     private fun iBbs4() {
         val data = getFetched()
         if (data and 16 != 0)
-            PC = fetchedAddressZpr
+            regPC = fetchedAddressZpr
     }
 
     private fun iBbs5() {
         val data = getFetched()
         if (data and 32 != 0)
-            PC = fetchedAddressZpr
+            regPC = fetchedAddressZpr
     }
 
     private fun iBbs6() {
         val data = getFetched()
         if (data and 64 != 0)
-            PC = fetchedAddressZpr
+            regPC = fetchedAddressZpr
     }
 
     private fun iBbs7() {
         val data = getFetched()
         if (data and 128 != 0)
-            PC = fetchedAddressZpr
+            regPC = fetchedAddressZpr
     }
 
     private fun iSmb0() {

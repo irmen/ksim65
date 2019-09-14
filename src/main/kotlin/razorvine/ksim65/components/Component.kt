@@ -1,9 +1,14 @@
 package razorvine.ksim65.components
 
+import razorvine.ksim65.Bus
+
 typealias UByte = Short
 typealias Address = Int
 
 
+/**
+ * Base class for any component connected to the system bus.
+ */
 abstract class BusComponent {
     lateinit var bus: Bus
 
@@ -11,6 +16,10 @@ abstract class BusComponent {
     abstract fun reset()
 }
 
+/**
+ * Base class for components that have registers mapped into the cpu's address space.
+ * Most I/O components fall into this category.
+ */
 abstract class MemMappedComponent(val startAddress: Address, val endAddress: Address) : BusComponent() {
     abstract operator fun get(address: Address): UByte
     abstract operator fun set(address: Address, data: UByte)
@@ -38,7 +47,10 @@ abstract class MemMappedComponent(val startAddress: Address, val endAddress: Add
     }
 }
 
+/**
+ * Base class for components that actually contain memory (RAM or ROM chips).
+ */
 abstract class MemoryComponent(startAddress: Address, endAddress: Address) :
     MemMappedComponent(startAddress, endAddress) {
-    abstract fun cloneContents(): Array<UByte>
+    abstract fun copyOfMem(): Array<UByte>
 }

@@ -26,4 +26,4 @@ Properties of this simulator:
 
 ## Documentation
 
-Still to be written. For now, 
+Still to be written. For now, use the source ;-)

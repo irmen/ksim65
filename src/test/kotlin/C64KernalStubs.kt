@@ -1,5 +1,5 @@
 import razorvine.ksim65.components.Address
-import razorvine.ksim65.components.Cpu6502
+import razorvine.ksim65.Cpu6502
 import razorvine.ksim65.components.Ram
 
 
@@ -10,7 +10,7 @@ class C64KernalStubs(private val ram: Ram) {
             0xffd2 -> {
                 // CHROUT
                 ram[0x030c] = 0
-                val char = cpu.A.toChar()
+                val char = cpu.regA.toChar()
                 if(char==13.toChar())
                     println()
                 else if(char in ' '..'~')

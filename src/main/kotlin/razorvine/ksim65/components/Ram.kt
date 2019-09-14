@@ -3,6 +3,9 @@ package razorvine.ksim65.components
 import java.io.File
 import java.net.URL
 
+/**
+ * A RAM chip with read/write memory.
+ */
 class Ram(startAddress: Address, endAddress: Address) : MemoryComponent(startAddress, endAddress) {
     private val memory = ShortArray(endAddress - startAddress + 1)
 
@@ -12,7 +15,7 @@ class Ram(startAddress: Address, endAddress: Address) : MemoryComponent(startAdd
         memory[address - startAddress] = data
     }
 
-    override fun cloneContents(): Array<UByte> = memory.toTypedArray()
+    override fun copyOfMem(): Array<UByte> = memory.toTypedArray()
 
     override fun clock() {}
 

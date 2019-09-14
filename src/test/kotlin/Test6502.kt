@@ -1,4 +1,4 @@
-import razorvine.ksim65.components.Cpu6502
+import razorvine.ksim65.Cpu6502
 import org.junit.jupiter.api.TestInstance
 import kotlin.test.*
 
@@ -48,8 +48,8 @@ class Test6502 : TestCommon6502() {
 
     @Test
     fun test_adc_ind_indexed_has_page_wrap_bug() {
-        mpu.A = 0x01
-        mpu.X = 0xFF
+        mpu.regA = 0x01
+        mpu.regX = 0xFF
         // $0000 ADC ($80,X)
         // $007f Vector to $BBBB (read if page wrapped)
         // $017f Vector to $ABCD (read if no page wrap)
@@ -59,16 +59,16 @@ class Test6502 : TestCommon6502() {
         memory[0xABCD] = 0x01
         memory[0xBBBB] = 0x02
         mpu.step()
-        assertEquals(0x03, mpu.A)
+        assertEquals(0x03, mpu.regA)
     }
 
     // ADC Indexed, Indirect (Y)
 
     @Test
     fun test_adc_indexed_ind_y_has_page_wrap_bug() {
-        mpu.PC = 0x1000
-        mpu.A = 0x42
-        mpu.Y = 0x02
+        mpu.regPC = 0x1000
+        mpu.regA = 0x42
+        mpu.regY = 0x02
         // $1000 ADC ($FF),Y
         writeMem(memory, 0x1000, listOf(0x71, 0xff))
         // Vector
@@ -79,30 +79,30 @@ class Test6502 : TestCommon6502() {
         memory[0x2012] = 0x14 // read if no page wrap
         memory[0x0012] = 0x42 // read if page wrapped
         mpu.step()
-        assertEquals(0x84, mpu.A)
+        assertEquals(0x84, mpu.regA)
     }
 
     // LDA Zero Page, X-Indexed
 
     @Test
     fun test_lda_zp_x_indexed_page_wraps() {
-        mpu.A = 0x00
-        mpu.X = 0xFF
+        mpu.regA = 0x00
+        mpu.regX = 0xFF
         // $0000 LDA $80,X
         writeMem(memory, 0x0000, listOf(0xB5, 0x80))
         memory[0x007F] = 0x42
         mpu.step()
-        assertEquals(0x0002, mpu.PC)
-        assertEquals(0x42, mpu.A)
+        assertEquals(0x0002, mpu.regPC)
+        assertEquals(0x42, mpu.regA)
     }
 
     // AND Indexed, Indirect (Y)
 
     @Test
     fun test_and_indexed_ind_y_has_page_wrap_bug() {
-        mpu.PC = 0x1000
-        mpu.A = 0x42
-        mpu.Y = 0x02
+        mpu.regPC = 0x1000
+        mpu.regA = 0x42
+        mpu.regY = 0x02
         // $1000 AND ($FF),Y
         writeMem(memory, 0x1000, listOf(0x31, 0xff))
         // Vector
@@ -113,38 +113,38 @@ class Test6502 : TestCommon6502() {
         memory[0x2012] = 0x00 // read if no page wrap
         memory[0x0012] = 0xFF // read if page wrapped
         mpu.step()
-        assertEquals(0x42, mpu.A)
+        assertEquals(0x42, mpu.regA)
     }
 
     // BRK
 
     @Test
     fun test_brk_preserves_decimal_flag_when_it_is_set() {
-        mpu.Status.D = true
+        mpu.regP.D = true
         // $C000 BRK
         memory[0xC000] = 0x00
-        mpu.PC = 0xC000
+        mpu.regPC = 0xC000
         mpu.step()
-        assertTrue(mpu.Status.B)
-        assertTrue(mpu.Status.D)
+        assertTrue(mpu.regP.B)
+        assertTrue(mpu.regP.D)
     }
 
     @Test
     fun test_brk_preserves_decimal_flag_when_it_is_clear() {
         // $C000 BRK
         memory[0xC000] = 0x00
-        mpu.PC = 0xC000
+        mpu.regPC = 0xC000
         mpu.step()
-        assertTrue(mpu.Status.B)
-        assertFalse(mpu.Status.D)
+        assertTrue(mpu.regP.B)
+        assertFalse(mpu.regP.D)
     }
 
     // CMP Indirect, Indexed (X)
 
     @Test
     fun test_cmp_ind_x_has_page_wrap_bug() {
-        mpu.A = 0x42
-        mpu.X = 0xFF
+        mpu.regA = 0x42
+        mpu.regX = 0xFF
         // $0000 CMP ($80,X)
         // $007f Vector to $BBBB (read if page wrapped)
         // $017f Vector to $ABCD (read if no page wrap)
@@ -154,16 +154,16 @@ class Test6502 : TestCommon6502() {
         memory[0xABCD] = 0x00
         memory[0xBBBB] = 0x42
         mpu.step()
-        assertTrue(mpu.Status.Z)
+        assertTrue(mpu.regP.Z)
     }
 
     // CMP Indexed, Indirect (Y)
 
     @Test
     fun test_cmp_indexed_ind_y_has_page_wrap_bug() {
-        mpu.PC = 0x1000
-        mpu.A = 0x42
-        mpu.Y = 0x02
+        mpu.regPC = 0x1000
+        mpu.regA = 0x42
+        mpu.regY = 0x02
         // $1000 CMP ($FF),Y
         writeMem(memory, 0x1000, listOf(0xd1, 0xff))
         // Vector
@@ -174,15 +174,15 @@ class Test6502 : TestCommon6502() {
         memory[0x2012] = 0x14 // read if no page wrap
         memory[0x0012] = 0x42 // read if page wrapped
         mpu.step()
-        assertTrue(mpu.Status.Z)
+        assertTrue(mpu.regP.Z)
     }
 
     // EOR Indirect, Indexed (X)
 
     @Test
     fun test_eor_ind_x_has_page_wrap_bug() {
-        mpu.A = 0xAA
-        mpu.X = 0xFF
+        mpu.regA = 0xAA
+        mpu.regX = 0xFF
         // $0000 EOR ($80,X)
         // $007f Vector to $BBBB (read if page wrapped)
         // $017f Vector to $ABCD (read if no page wrap)
@@ -192,16 +192,16 @@ class Test6502 : TestCommon6502() {
         memory[0xABCD] = 0x00
         memory[0xBBBB] = 0xFF
         mpu.step()
-        assertEquals(0x55, mpu.A)
+        assertEquals(0x55, mpu.regA)
     }
 
     // EOR Indexed, Indirect (Y)
 
     @Test
     fun test_eor_indexed_ind_y_has_page_wrap_bug() {
-        mpu.PC = 0x1000
-        mpu.A = 0xAA
-        mpu.Y = 0x02
+        mpu.regPC = 0x1000
+        mpu.regA = 0xAA
+        mpu.regY = 0x02
         // $1000 EOR ($FF),Y
         writeMem(memory, 0x1000, listOf(0x51, 0xff))
         // Vector
@@ -212,15 +212,15 @@ class Test6502 : TestCommon6502() {
         memory[0x2012] = 0x00 // read if no page wrap
         memory[0x0012] = 0xFF // read if page wrapped
         mpu.step()
-        assertEquals(0x55, mpu.A)
+        assertEquals(0x55, mpu.regA)
     }
 
     // LDA Indirect, Indexed (X)
 
     @Test
     fun test_lda_ind_indexed_x_has_page_wrap_bug() {
-        mpu.A = 0x00
-        mpu.X = 0xff
+        mpu.regA = 0x00
+        mpu.regX = 0xff
         // $0000 LDA ($80,X)
         // $007f Vector to $BBBB (read if page wrapped)
         // $017f Vector to $ABCD (read if no page wrap)
@@ -230,16 +230,16 @@ class Test6502 : TestCommon6502() {
         memory[0xABCD] = 0x42
         memory[0xBBBB] = 0xEF
         mpu.step()
-        assertEquals(0xEF, mpu.A)
+        assertEquals(0xEF, mpu.regA)
     }
 
     // LDA Indexed, Indirect (Y)
 
     @Test
     fun test_lda_indexed_ind_y_has_page_wrap_bug() {
-        mpu.PC = 0x1000
-        mpu.A = 0x00
-        mpu.Y = 0x02
+        mpu.regPC = 0x1000
+        mpu.regA = 0x00
+        mpu.regY = 0x02
         // $1000 LDA ($FF),Y
         writeMem(memory, 0x1000, listOf(0xb1, 0xff))
         // Vector
@@ -250,21 +250,21 @@ class Test6502 : TestCommon6502() {
         memory[0x2012] = 0x14 // read if no page wrap
         memory[0x0012] = 0x42 // read if page wrapped
         mpu.step()
-        assertEquals(0x42, mpu.A)
+        assertEquals(0x42, mpu.regA)
     }
 
     // LDA Zero Page, X-Indexed
 
     @Test
     fun test_lda_zp_x_has_page_wrap_bug() {
-        mpu.A = 0x00
-        mpu.X = 0xFF
+        mpu.regA = 0x00
+        mpu.regX = 0xFF
         // $0000 LDA $80,X
         writeMem(memory, 0x0000, listOf(0xB5, 0x80))
         memory[0x007F] = 0x42
         mpu.step()
-        assertEquals(0x0002, mpu.PC)
-        assertEquals(0x42, mpu.A)
+        assertEquals(0x0002, mpu.regPC)
+        assertEquals(0x42, mpu.regA)
     }
 
     // JMP Indirect
@@ -275,7 +275,7 @@ class Test6502 : TestCommon6502() {
         // $0000 JMP ($00)
         writeMem(memory, 0, listOf(0x6c, 0xff, 0x00))
         mpu.step()
-        assertEquals(0x6c00, mpu.PC)
+        assertEquals(0x6c00, mpu.regPC)
         assertEquals((5+ Cpu6502.resetCycles).toLong(), mpu.totalCycles)
     }
 
@@ -283,9 +283,9 @@ class Test6502 : TestCommon6502() {
 
     @Test
     fun test_ora_indexed_ind_y_has_page_wrap_bug() {
-        mpu.PC = 0x1000
-        mpu.A = 0x00
-        mpu.Y = 0x02
+        mpu.regPC = 0x1000
+        mpu.regA = 0x00
+        mpu.regY = 0x02
         // $1000 ORA ($FF),Y
         writeMem(memory, 0x1000, listOf(0x11, 0xff))
         // Vector
@@ -296,7 +296,7 @@ class Test6502 : TestCommon6502() {
         memory[0x2012] = 0x00 // read if no page wrap
         memory[0x0012] = 0x42 // read if page wrapped
         mpu.step()
-        assertEquals(0x42, mpu.A)
+        assertEquals(0x42, mpu.regA)
     }
 
     // SBC Indexed, Indirect (Y)
@@ -304,10 +304,10 @@ class Test6502 : TestCommon6502() {
     @Test
     fun test_sbc_indexed_ind_y_has_page_wrap_bug() {
 
-        mpu.PC = 0x1000
-        mpu.Status.C = true
-        mpu.A = 0x42
-        mpu.Y = 0x02
+        mpu.regPC = 0x1000
+        mpu.regP.C = true
+        mpu.regA = 0x42
+        mpu.regY = 0x02
         // $1000 SBC ($FF),Y
         writeMem(memory, 0x1000, listOf(0xf1, 0xff))
         // Vector
@@ -318,44 +318,44 @@ class Test6502 : TestCommon6502() {
         memory[0x2012] = 0x02 // read if no page wrap
         memory[0x0012] = 0x03 // read if page wrapped
         mpu.step()
-        assertEquals(0x3f, mpu.A)
+        assertEquals(0x3f, mpu.regA)
     }
 
     @Test
     fun test_sbc_bcd_on_immediate_20_minus_0a_carry_unset() {
-        mpu.Status.D = true
-        mpu.Status.C = false
-        mpu.A = 0x20
+        mpu.regP.D = true
+        mpu.regP.C = false
+        mpu.regA = 0x20
         // $0000 SBC #$0a
         writeMem(memory, 0x0000, listOf(0xe9, 0x0a))
         mpu.step()
-        assertEquals(0x0002, mpu.PC)
-        assertEquals(0x1f, mpu.A)       // 0x1f on 6502, 0x0f on 65c02
-        assertFalse(mpu.Status.Z)
-        assertTrue(mpu.Status.C)
-        assertFalse(mpu.Status.N)
-        assertFalse(mpu.Status.V)
+        assertEquals(0x0002, mpu.regPC)
+        assertEquals(0x1f, mpu.regA)       // 0x1f on 6502, 0x0f on 65c02
+        assertFalse(mpu.regP.Z)
+        assertTrue(mpu.regP.C)
+        assertFalse(mpu.regP.N)
+        assertFalse(mpu.regP.V)
     }
 
     @Test
     fun test_adc_bcd_on_immediate_9c_plus_9d() {
-        mpu.Status.D = true
-        mpu.Status.C = false
-        mpu.Status.N = true
-        mpu.A = 0x9c
+        mpu.regP.D = true
+        mpu.regP.C = false
+        mpu.regP.N = true
+        mpu.regA = 0x9c
         // $0000 ADC #$9d
         // $0002 ADC #$9d
         writeMem(memory, 0x0000, listOf(0x69, 0x9d))
         writeMem(memory, 0x0002, listOf(0x69, 0x9d))
         mpu.step()
-        assertEquals(0x9f, mpu.A)
-        assertTrue(mpu.Status.C)
+        assertEquals(0x9f, mpu.regA)
+        assertTrue(mpu.regP.C)
         mpu.step()
-        assertEquals(0x0004, mpu.PC)
-        assertEquals(0x93, mpu.A)
-        assertFalse(mpu.Status.Z)
-        assertTrue(mpu.Status.C)
-        assertTrue(mpu.Status.V)
-        assertFalse(mpu.Status.N)   // False on 6502,  True on 65C02
+        assertEquals(0x0004, mpu.regPC)
+        assertEquals(0x93, mpu.regA)
+        assertFalse(mpu.regP.Z)
+        assertTrue(mpu.regP.C)
+        assertTrue(mpu.regP.V)
+        assertFalse(mpu.regP.N)   // False on 6502,  True on 65C02
     }
 }

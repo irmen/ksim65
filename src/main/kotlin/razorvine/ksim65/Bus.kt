@@ -1,5 +1,17 @@
-package razorvine.ksim65.components
+package razorvine.ksim65
 
+import razorvine.ksim65.components.Address
+import razorvine.ksim65.components.BusComponent
+import razorvine.ksim65.components.MemMappedComponent
+import razorvine.ksim65.components.UByte
+
+/**
+ * The system bus that connects all other components together.
+ * Usually, there is just a single Bus present.
+ *
+ * It distributes reset and clock signals to every connected component.
+ * Data bytes can be read from the bus or written to the bus. It's distributed to the corresponding component(s).
+ */
 class Bus {
 
     private val components = mutableListOf<BusComponent>()
@@ -25,6 +37,10 @@ class Bus {
         component.bus = this
     }
 
+    /**
+     * Read a data byte at the given address.
+     * The first memory mapped component that listens to that address, will respond.
+     */
     fun read(address: Address): UByte {
         memComponents.forEach {
             if (address >= it.startAddress && address <= it.endAddress)
@@ -33,6 +49,10 @@ class Bus {
         return 0xff
     }
 
+    /**
+     * Write a data byte to the given address.
+     * Any memory mapped component that listens to the address, will receive the data.
+     */
     fun write(address: Address, data: UByte) {
         memComponents.forEach {
             if (address >= it.startAddress && address <= it.endAddress)

@@ -5,17 +5,20 @@ import java.time.LocalTime
 
 
 /**
- * A real-time clock (time of day clock).
+ * A real-time time of day clock.
+ * (System timers are elsewhere)
+ *
  * byte   value
- *  00     year (lsb)
- *  01     year (msb)
- *  02     month, 1-12
- *  03     day, 1-31
- *  04     hour, 0-23
- *  05     minute, 0-59
- *  06     second, 0-59
- *  07     millisecond, 0-999 (lsb)
- *  08     millisecond, 0-999 (msb)
+ * ----   ----------
+ *  00    year (lsb)
+ *  01    year (msb)
+ *  02    month, 1-12
+ *  03    day, 1-31
+ *  04    hour, 0-23
+ *  05    minute, 0-59
+ *  06    second, 0-59
+ *  07    millisecond, 0-999 (lsb)
+ *  08    millisecond, 0-999 (msb)
  */
 class RealTimeClock(startAddress: Address, endAddress: Address) : MemMappedComponent(startAddress, endAddress) {
 

@@ -1,5 +1,5 @@
-import razorvine.ksim65.components.Bus
-import razorvine.ksim65.components.Cpu6502
+import razorvine.ksim65.Bus
+import razorvine.ksim65.Cpu6502
 import razorvine.ksim65.components.Ram
 import kotlin.test.*
 
@@ -44,8 +44,8 @@ abstract class FunctionalTestsBase {
     protected fun runTest(testprogram: String) {
         ram.loadPrg("src/test/kotlin/6502testsuite/$testprogram")
         bus.reset()
-        cpu.SP = 0xfd
-        cpu.Status.fromByte(0b00100100)
+        cpu.regSP = 0xfd
+        cpu.regP.fromByte(0b00100100)
         try {
             while (cpu.totalCycles < 50000000L) {
                 bus.clock()

@@ -1,20 +1,14 @@
-package razorvine.ksim65
+package testmain
 
+import razorvine.ksim65.Bus
+import razorvine.ksim65.Cpu6502
+import razorvine.ksim65.Version
 import razorvine.ksim65.components.*
-import razorvine.ksim65.components.Cpu6502.Companion.IRQ_vector
-import razorvine.ksim65.components.Cpu6502.Companion.NMI_vector
-import razorvine.ksim65.components.Cpu6502.Companion.RESET_vector
 
 
 fun main(args: Array<String>) {
-    printSoftwareHeader()
+    println(Version.copyright)
     startSimulator(args)
-}
-
-internal fun printSoftwareHeader() {
-    val buildVersion = object {}.javaClass.getResource("/version.txt").readText().trim()
-    println("\nKSim65 6502 cpu simulator v$buildVersion by Irmen de Jong (irmen@razorvine.net)")
-    println("This software is free and licensed under the MIT open-source license\n")
 }
 
 
@@ -25,12 +19,12 @@ private fun startSimulator(args: Array<String>) {
     // it determines the priority of reads and writes.
     val cpu = Cpu6502(true)
     val ram = Ram(0, 0xffff)
-    ram[RESET_vector] = 0x00
-    ram[RESET_vector + 1] = 0x10
-    ram[IRQ_vector] = 0x00
-    ram[IRQ_vector + 1] = 0x20
-    ram[NMI_vector] = 0x00
-    ram[NMI_vector + 1] = 0x30
+    ram[Cpu6502.RESET_vector] = 0x00
+    ram[Cpu6502.RESET_vector + 1] = 0x10
+    ram[Cpu6502.IRQ_vector] = 0x00
+    ram[Cpu6502.IRQ_vector + 1] = 0x20
+    ram[Cpu6502.NMI_vector] = 0x00
+    ram[Cpu6502.NMI_vector + 1] = 0x30
 
 //    // read the RTC and write the date+time to $2000
 //    for(b in listOf(0xa0, 0x00, 0xb9, 0x00, 0xd1, 0x99, 0x00, 0x20, 0xc8, 0xc0, 0x09, 0xd0, 0xf5, 0x00).withIndex()) {
@@ -63,7 +57,7 @@ private fun startSimulator(args: Array<String>) {
     bus.add(ram)
     bus.reset()
 
-    cpu.Status.I = false    // enable interrupts
+    cpu.regP.I = false    // enable interrupts
 
     // TODO
 //    try {
