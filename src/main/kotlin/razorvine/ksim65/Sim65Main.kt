@@ -14,7 +14,7 @@ fun main(args: Array<String>) {
 internal fun printSoftwareHeader() {
     val buildVersion = object {}.javaClass.getResource("/version.txt").readText().trim()
     println("\nKSim65 6502 cpu simulator v$buildVersion by Irmen de Jong (irmen@razorvine.net)")
-    println("This software is licensed under the GNU GPL 3.0, see https://www.gnu.org/licenses/gpl.html\n")
+    println("This software is free and licensed under the MIT open-source license\n")
 }
 
 
@@ -70,8 +70,7 @@ private fun startSimulator(args: Array<String>) {
             bus.clock()
         }
     } catch (ix: Cpu6502.InstructionError) {
-        println("HMMM $ix")
-        // ignore
+        println("Hmmm... $ix")
     }
 
     ram.hexDump(0x1000, 0x1020)

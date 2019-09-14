@@ -75,23 +75,23 @@ ${'$'}0050  00          brk""", result)
         val cpu = Cpu65C02()
         val memory = Ram(0, 0x1000)
         val source = javaClass.classLoader.getResource("disassem_wdc65c02.bin")!!
-        memory.load(source, 0)
-        val resultLines = cpu.disassemble(memory, 0x0000, 0x0015)
+        memory.load(source, 0x200)
+        val resultLines = cpu.disassemble(memory, 0x0200, 0x0215)
         val result = resultLines.joinToString("\n")
-        assertEquals("""${'$'}0000  cb          wai
-${'$'}0001  db          stp
-${'$'}0002  3a          dec  a
-${'$'}0003  1a          inc  a
-${'$'}0004  64 12       stz  ${'$'}12
-${'$'}0006  14 12       trb  ${'$'}12
-${'$'}0008  04 12       tsb  ${'$'}12
-${'$'}000a  72 12       adc  ${'$'}(12)
-${'$'}000c  b2 12       lda  ${'$'}(12)
-${'$'}000e  92 12       sta  ${'$'}(12)
-${'$'}0010  7c 00 20    jmp  ${'$'}(2000,x)
-${'$'}0013  00          brk
-${'$'}0014  00          brk
-${'$'}0015  00          brk""", result)
+        assertEquals("""${'$'}0200  cb          wai
+${'$'}0201  db          stp
+${'$'}0202  3a          dec  a
+${'$'}0203  1a          inc  a
+${'$'}0204  64 12       stz  ${'$'}12
+${'$'}0206  14 12       trb  ${'$'}12
+${'$'}0208  04 12       tsb  ${'$'}12
+${'$'}020a  72 12       adc  ${'$'}(12)
+${'$'}020c  b2 12       lda  ${'$'}(12)
+${'$'}020e  92 12       sta  ${'$'}(12)
+${'$'}0210  7c 00 20    jmp  ${'$'}(2000,x)
+${'$'}0213  00          brk
+${'$'}0214  00          brk
+${'$'}0215  00          brk""", result)
     }
 
 }
