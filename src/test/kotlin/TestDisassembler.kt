@@ -10,7 +10,7 @@ class TestDisassembler {
     fun testDisassembleAll6502Opcodes() {
         val cpu = Cpu6502()
         val memory = Ram(0, 0xffff)
-        val binfile = javaClass.classLoader.getResourceAsStream("disassem_instr_test.prg")?.readAllBytes()!!
+        val binfile = javaClass.classLoader.getResourceAsStream("disassem_instr_test.prg")?.readBytes()!!
         memory.load(binfile, 0x1000-2)
         val result = cpu.disassemble(memory, 0x1000, 0x1221)
         assertEquals(256, result.size)

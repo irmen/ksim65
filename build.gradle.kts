@@ -6,17 +6,17 @@ import java.util.Properties
 
 plugins {
     // Apply the Kotlin JVM plugin to add support for Kotlin on the JVM.
-    id("org.jetbrains.kotlin.jvm") version "1.3.50"
-    id("com.gradle.build-scan") version "2.4.2"
+    kotlin("jvm") version "1.3.50"
     id("org.jetbrains.dokka") version "0.9.18"
     id("com.jfrog.bintray") version "1.7.3"
     id("maven-publish")
 }
 
 val versionProps = Properties().also {
-    it.load(File("src/main/resources/version.properties").inputStream())
+    it.load(File("$projectDir/src/main/resources/version.properties").inputStream())
 }
 version = versionProps["version"] as String
+group = "net.razorvine"
 base.archivesBaseName = "ksim65"
 
 repositories {
@@ -39,12 +39,6 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.1.0")
 }
 
-//buildScan {
-//    termsOfServiceUrl = "https://gradle.com/terms-of-service"
-//    termsOfServiceAgree="yes"
-//    publishOnFailure()
-//}
-
 tasks.named<Test>("test") {
     // Enable JUnit 5 (Gradle 4.6+).
     useJUnitPlatform()
@@ -59,10 +53,8 @@ tasks.named<Test>("test") {
     maxParallelForks = max(1, Runtime.getRuntime().availableProcessors() / 2)
 }
 
-tasks.withType<KotlinCompile>().all {
-    kotlinOptions {
-        jvmTarget = "1.8"
-    }
+tasks.withType<KotlinCompile>() {
+    kotlinOptions.jvmTarget = "1.8"
 }
 
 tasks.named<DokkaTask>("dokka") {
