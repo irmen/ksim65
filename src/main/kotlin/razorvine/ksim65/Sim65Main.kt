@@ -65,13 +65,14 @@ private fun startSimulator(args: Array<String>) {
 
     cpu.Status.I = false    // enable interrupts
 
-    try {
-        while (true) {
-            bus.clock()
-        }
-    } catch (ix: Cpu6502.InstructionError) {
-        println("Hmmm... $ix")
-    }
+    // TODO
+//    try {
+//        while (true) {
+//            bus.clock()
+//        }
+//    } catch (ix: Cpu6502.InstructionError) {
+//        println("Hmmm... $ix")
+//    }
 
     ram.hexDump(0x1000, 0x1020)
     val dis = cpu.disassemble(ram, 0x1000, 0x1020)

@@ -1,5 +1,6 @@
 import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import kotlin.math.max
 
 plugins {
     // Apply the Kotlin JVM plugin to add support for Kotlin on the JVM.
@@ -46,9 +47,9 @@ tasks.named<Test>("test") {
     testLogging.events("failed")
 
     // parallel tests.
-    systemProperties["junit.jupiter.execution.parallel.enabled"] = true
-    systemProperties["junit.jupiter.execution.parallel.mode.default"] = "concurrent"
-    maxParallelForks = Runtime.getRuntime().availableProcessors() / 2
+    systemProperty("junit.jupiter.execution.parallel.enabled", "true")
+    systemProperty("junit.jupiter.execution.parallel.mode.default", "concurrent")
+    maxParallelForks = max(1, Runtime.getRuntime().availableProcessors() / 2)
 }
 
 tasks.withType<KotlinCompile>().all {

@@ -1,14 +1,12 @@
 package razorvine.ksim65.components
 
-import razorvine.ksim65.c64.Petscii
-
 /**
  * A parallel output device (basically, prints bytes as characters to the screen)
  * First address = data byte (8 parallel bits)
  * Second address = control byte (bit 0 high = write byte)
  */
 class ParallelPort(startAddress: Address, endAddress: Address) : MemMappedComponent(startAddress, endAddress) {
-    var dataByte: UByte = 0
+    private var dataByte: UByte = 0
 
     init {
         require(endAddress - startAddress + 1 == 2) { "parallel needs exactly 2 memory bytes (data + control)" }
@@ -29,7 +27,7 @@ class ParallelPort(startAddress: Address, endAddress: Address) : MemMappedCompon
             dataByte = data
         else if (address == endAddress) {
             if ((data.toInt() and 1) == 1) {
-                val char = Petscii.decodeScreencode(listOf(dataByte), false).first()
+                val char = dataByte.toChar()
                 println("PARALLEL WRITE: '$char'")
             }
         }

@@ -1,4 +1,3 @@
-import razorvine.ksim65.c64.Petscii
 import razorvine.ksim65.components.Address
 import razorvine.ksim65.components.Cpu6502
 import razorvine.ksim65.components.Ram
@@ -6,17 +5,17 @@ import razorvine.ksim65.components.Ram
 
 class C64KernalStubs(private val ram: Ram) {
 
-    fun handleBreakpoint(cpu: Cpu6502, pc: Address) {
+    fun handleBreakpoint(cpu: Cpu6502, pc: Address): Cpu6502.BreakpointResult {
         when(pc) {
             0xffd2 -> {
                 // CHROUT
                 ram[0x030c] = 0
-                val char = Petscii.decodePetscii(listOf(cpu.A.toShort()), true).first()
+                val char = cpu.A.toChar()
                 if(char==13.toChar())
                     println()
                 else if(char in ' '..'~')
                     print(char)
-                cpu.currentOpcode = 0x60    // rts to end the stub
+                return Cpu6502.BreakpointResult(null, 0x60)     // perform an RTS to exit this subroutine
             }
             0xffe4 -> {
                 // GETIN
@@ -40,6 +39,8 @@ class C64KernalStubs(private val ram: Ram) {
 //                cpu.PC = 0x0816     // continue in next module
             }
         }
+
+        return Cpu6502.BreakpointResult(null, null)
     }
 }
 

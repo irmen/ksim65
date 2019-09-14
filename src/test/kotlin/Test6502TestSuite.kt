@@ -7,7 +7,7 @@ import kotlin.test.*
 
 
 @TestInstance(TestInstance.Lifecycle.PER_METHOD)
-@Disabled("this test suite takes a long time")
+// @Disabled("this test suite takes a long time")
 class Test6502TestSuite {
 
     val cpu: Cpu6502 = Cpu6502(stopOnBrk = false)
@@ -16,10 +16,10 @@ class Test6502TestSuite {
     val kernalStubs = C64KernalStubs(ram)
 
     init {
-        cpu.tracing = false
-        cpu.breakpoint(0xffd2) { cpu, pc -> kernalStubs.handleBreakpoint(cpu, pc) }
-        cpu.breakpoint(0xffe4) { cpu, pc -> kernalStubs.handleBreakpoint(cpu, pc) }
-        cpu.breakpoint(0xe16f) { cpu, pc -> kernalStubs.handleBreakpoint(cpu, pc) }
+        cpu.tracing = null
+        cpu.addBreakpoint(0xffd2) { cpu, pc -> kernalStubs.handleBreakpoint(cpu, pc) }
+        cpu.addBreakpoint(0xffe4) { cpu, pc -> kernalStubs.handleBreakpoint(cpu, pc) }
+        cpu.addBreakpoint(0xe16f) { cpu, pc -> kernalStubs.handleBreakpoint(cpu, pc) }
 
         // create the system bus and add device to it.
         // note that the order is relevant w.r.t. where reads and writes are going.
@@ -54,7 +54,7 @@ class Test6502TestSuite {
             while (cpu.totalCycles < 50000000L) {
                 bus.clock()
             }
-            fail("test hangs")
+            fail("test hangs: " + cpu.logState())
         } catch (e: Cpu6502.InstructionError) {
             println(">>> INSTRUCTION ERROR: ${e.message}")
         } catch (le: KernalLoadNextPart) {

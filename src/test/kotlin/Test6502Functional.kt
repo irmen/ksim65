@@ -20,10 +20,11 @@ class Test6502Functional {
         bus.add(ram)
         cpu.reset()
         cpu.PC = 0x0400
-        cpu.breakpoint(0x3469) { _, _ ->
+        cpu.addBreakpoint(0x3469) { _, _ ->
             // reaching this address means successful test result
             if(cpu.currentOpcode==0x4c)
                 throw SuccessfulTestResult()
+            Cpu6502.BreakpointResult(null, null)
         }
 
         try {
@@ -35,7 +36,7 @@ class Test6502Functional {
             return
         }
 
-        cpu.printState()
+        println(cpu.logState())
         val d = cpu.disassemble(ram, cpu.PC-20, cpu.PC+20)
         println(d.joinToString ("\n"))
         fail("test failed")
@@ -51,10 +52,11 @@ class Test6502Functional {
         bus.add(ram)
         cpu.reset()
         cpu.PC = 0x0400
-        cpu.breakpoint(0x24f1) { _, _ ->
+        cpu.addBreakpoint(0x24f1) { _, _ ->
             // reaching this address means successful test result
             if(cpu.currentOpcode==0x4c)
                 throw SuccessfulTestResult()
+            Cpu6502.BreakpointResult(null, null)
         }
 
         try {
@@ -66,7 +68,7 @@ class Test6502Functional {
             return
         }
 
-        cpu.printState()
+        println(cpu.logState())
         val d = cpu.disassemble(ram, cpu.PC-20, cpu.PC+20)
         println(d.joinToString ("\n"))
         fail("test failed")

@@ -7,7 +7,7 @@ package razorvine.ksim65.components
  * TODO: add the optional additional cycles to certain instructions and addressing modes
  */
 open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
-    var tracing: Boolean = false
+    var tracing: ((state:String) -> Unit)? = null
     var totalCycles: Long = 0
         protected set
 
@@ -20,7 +20,7 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
         const val resetCycles = 8
     }
 
-    enum class AddrMode {
+    protected enum class AddrMode {
         Imp,
         Acc,
         Imm,
@@ -38,8 +38,6 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
         Izp,         // special addressing mode used by the 65C02
         IaX,         // special addressing mode used by the 65C02
     }
-
-    class Instruction(val mnemonic: String, val mode: AddrMode, val cycles: Int)
 
     class StatusRegister(
         var C: Boolean = false,
@@ -85,8 +83,9 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
         }
     }
 
+    protected class Instruction(val mnemonic: String, val mode: AddrMode, val cycles: Int)
 
-    var instrCycles: Int = 0
+
     var A: Int = 0
     var X: Int = 0
     var Y: Int = 0
@@ -94,24 +93,32 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
     var PC: Address = 0
     val Status = StatusRegister()
     var currentOpcode: Int = 0
+        protected set
+    var instrCycles: Int = 0
+        protected set
+
     protected lateinit var currentInstruction: Instruction
 
     // has an interrupt been requested?
     protected var pendingInterrupt: Pair<Boolean, BusComponent>? = null
 
     // data byte from the instruction (only set when addr.mode is Accumulator, Immediate or Implied)
-    private var fetchedData: Int = 0
+    protected var fetchedData: Int = 0
 
     // all other addressing modes yield a fetched memory address
     protected var fetchedAddress: Address = 0
 
-    private val breakpoints = mutableMapOf<Address, (cpu: Cpu6502, pc: Address) -> Unit>()
+    class BreakpointResult(val newPC: Address?, val newOpcode: Int?)
 
-    fun breakpoint(address: Address, action: (cpu: Cpu6502, pc: Address) -> Unit) {
+    private val breakpoints = mutableMapOf<Address, (cpu: Cpu6502, pc: Address) -> BreakpointResult>()
+
+    fun addBreakpoint(address: Address, action: (cpu: Cpu6502, pc: Address) -> BreakpointResult) {
         breakpoints[address] = action
     }
 
-    internal fun hexW(number: Address, allowSingleByte: Boolean = false): String {
+    fun removeBreakpoint(address: Address) = breakpoints.remove(address)
+
+    fun hexW(number: Address, allowSingleByte: Boolean = false): String {
         val msb = number ushr 8
         val lsb = number and 0xff
         return if (msb == 0 && allowSingleByte)
@@ -120,9 +127,9 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
             hexB(msb) + hexB(lsb)
     }
 
-    internal fun hexB(number: Short): String = hexB(number.toInt())
+    fun hexB(number: Short): String = hexB(number.toInt())
 
-    internal fun hexB(number: Int): String {
+    fun hexB(number: Int): String {
         val hexdigits = "0123456789abcdef"
         val loNibble = number and 15
         val hiNibble = number ushr 4
@@ -268,16 +275,19 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
                 currentOpcode = read(PC)
                 currentInstruction = instructions[currentOpcode]
 
-                if (tracing) printState()
+                tracing?.invoke(logState())
 
-                breakpoints[PC]?.let {
+                breakpoints[PC]?.let { breakpoint ->
                     val oldPC = PC
-                    val oldOpcode = currentOpcode
-                    it(this, PC)
+                    val result = breakpoint(this, PC)
+                    if(result.newPC!=null)
+                        PC = result.newPC
                     if (PC != oldPC)
                         return clock()
-                    if (oldOpcode != currentOpcode)
+                    else if(result.newOpcode!=null) {
+                        currentOpcode = result.newOpcode
                         currentInstruction = instructions[currentOpcode]
+                    }
                 }
 
                 if (stopOnBrk && currentOpcode == 0) {
@@ -311,9 +321,8 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
             pendingInterrupt = Pair(false, source)
     }
 
-    fun printState() {
-        println(
-            "cycle:$totalCycles - pc=${hexW(PC)} " +
+    fun logState(): String =
+                    "cycle:$totalCycles - pc=${hexW(PC)} " +
                     "A=${hexB(A)} " +
                     "X=${hexB(X)} " +
                     "Y=${hexB(Y)} " +
@@ -326,8 +335,6 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
                     " z=" + (if (Status.Z) "1" else "0") +
                     " c=" + (if (Status.C) "1" else "0") +
                     "  icycles=$instrCycles  instr=${hexB(currentOpcode)}:${currentInstruction.mnemonic}"
-        )
-    }
 
     protected fun getFetched() =
         if (currentInstruction.mode == AddrMode.Imm ||
@@ -361,7 +368,7 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
         return read(SP or 0x0100)
     }
 
-    private fun popStackAddr(): Address {
+    protected fun popStackAddr(): Address {
         val lo = popStack()
         val hi = popStack()
         return lo or (hi shl 8)
