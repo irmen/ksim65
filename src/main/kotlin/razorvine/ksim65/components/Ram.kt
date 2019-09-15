@@ -28,14 +28,14 @@ class Ram(startAddress: Address, endAddress: Address) : MemoryComponent(startAdd
     }
 
     /**
-     * load a c64-style prg program at the given address,
-     * this file has the load address as the first two bytes.
+     * Load a c64-style prg program. This file type has the load address as the first two bytes.
      */
     fun loadPrg(filename: String) {
         val bytes = File(filename).readBytes()
-        val address = (bytes[0].toInt() or (bytes[1].toInt() shl 8)) and 65535
+        val loadAddress = (bytes[0].toInt() or (bytes[1].toInt() shl 8)) and 65535
+        val baseAddress = loadAddress - startAddress
         bytes.drop(2).forEachIndexed { index, byte ->
-            memory[address + index] =
+            memory[baseAddress + index] =
                 if (byte >= 0)
                     byte.toShort()
                 else
@@ -57,11 +57,15 @@ class Ram(startAddress: Address, endAddress: Address) : MemoryComponent(startAdd
     }
 
     fun load(data: Array<UByte>, address: Address) =
-        data.forEachIndexed { index, byte -> memory[address + index] = byte }
+        data.forEachIndexed { index, byte ->
+            val baseAddress = address - startAddress
+            memory[baseAddress + index] = byte
+        }
 
     fun load(data: ByteArray, address: Address) =
         data.forEachIndexed { index, byte ->
-            memory[address + index] =
+            val baseAddress = address - startAddress
+            memory[baseAddress + index] =
                 if (byte >= 0)
                     byte.toShort()
                 else
