@@ -7,6 +7,7 @@ import razorvine.ksim65.components.Address
  * TODO: add the optional additional cycles to certain instructions and addressing modes
  */
 class Cpu65C02(stopOnBrk: Boolean = false) : Cpu6502(stopOnBrk) {
+    override val name = "65C02"
 
     enum class Wait {
         Normal,
@@ -23,6 +24,9 @@ class Cpu65C02(stopOnBrk: Boolean = false) : Cpu6502(stopOnBrk) {
         const val resetCycles = Cpu6502.resetCycles
     }
 
+    /**
+     * Process once clock cycle in the cpu
+     */
     override fun clock() {
         when (waiting) {
             Wait.Normal -> super.clock()
@@ -42,13 +46,15 @@ class Cpu65C02(stopOnBrk: Boolean = false) : Cpu6502(stopOnBrk) {
         }
     }
 
+    /**
+     * Execute one single complete instruction
+     */
     override fun step() {
-        // step a whole instruction
         if (waiting == Wait.Normal) {
-            while (instrCycles > 0) clock()        // remaining instruction subcycles from the previous instruction
-            clock()   // the actual instruction execution cycle
+            while (instrCycles > 0) clock()
+            clock()
             if (waiting == Wait.Normal)
-                while (instrCycles > 0) clock()        // instruction subcycles
+                while (instrCycles > 0) clock()
             else {
                 totalCycles += instrCycles
                 instrCycles = 0

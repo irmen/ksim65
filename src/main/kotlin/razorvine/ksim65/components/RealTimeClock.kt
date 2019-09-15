@@ -8,7 +8,7 @@ import java.time.LocalTime
  * A real-time time of day clock.
  * (System timers are elsewhere)
  *
- * byte   value
+ * reg.   value
  * ----   ----------
  *  00    year (lsb)
  *  01    year (msb)
@@ -36,28 +36,28 @@ class RealTimeClock(startAddress: Address, endAddress: Address) : MemMappedCompo
 
     override operator fun get(address: Address): UByte {
         return when (address - startAddress) {
-            0 -> {
+            0x00 -> {
                 val year = LocalDate.now().year
                 (year and 255).toShort()
             }
-            1 -> {
+            0x01 -> {
                 val year = LocalDate.now().year
                 (year ushr 8).toShort()
             }
-            2 -> LocalDate.now().monthValue.toShort()
-            3 -> LocalDate.now().dayOfMonth.toShort()
-            4 -> LocalTime.now().hour.toShort()
-            5 -> LocalTime.now().minute.toShort()
-            6 -> LocalTime.now().second.toShort()
-            7 -> {
+            0x02 -> LocalDate.now().monthValue.toShort()
+            0x03 -> LocalDate.now().dayOfMonth.toShort()
+            0x04 -> LocalTime.now().hour.toShort()
+            0x05 -> LocalTime.now().minute.toShort()
+            0x06 -> LocalTime.now().second.toShort()
+            0x07 -> {
                 val ms = LocalTime.now().nano / 1000
                 (ms and 255).toShort()
             }
-            8 -> {
+            0x08 -> {
                 val ms = LocalTime.now().nano / 1000
                 (ms ushr 8).toShort()
             }
-            else -> 0
+            else -> 0xff
         }
     }
 

@@ -11,6 +11,7 @@ import razorvine.ksim65.components.UByte
  * TODO: add the optional additional cycles to certain instructions and addressing modes
  */
 open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
+    open val name = "6502"
     var tracing: ((state:String) -> Unit)? = null
     var totalCycles: Long = 0
         protected set
@@ -102,6 +103,8 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
         protected set
 
     protected lateinit var currentInstruction: Instruction
+    val currentMnemonic: String
+        get() = currentInstruction.mnemonic
 
     // has an interrupt been requested?
     protected var pendingInterrupt: Pair<Boolean, BusComponent>? = null
@@ -249,6 +252,9 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
         return result
     }
 
+    /**
+     * Reset the cpu
+     */
     override fun reset() {
         regSP = 0xfd
         regPC = readWord(RESET_vector)
@@ -267,6 +273,9 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
         currentInstruction = instructions[0]
     }
 
+    /**
+     * Process once clock cycle in the cpu
+     */
     override fun clock() {
         if (instrCycles == 0) {
             if (pendingInterrupt != null) {
@@ -309,11 +318,13 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
         totalCycles++
     }
 
+    /**
+     * Execute one single complete instruction
+     */
     open fun step() {
-        // step a whole instruction
-        while (instrCycles > 0) clock()        // remaining instruction subcycles from the previous instruction
-        clock()   // the actual instruction execution cycle
-        while (instrCycles > 0) clock()        // instruction subcycles
+        while (instrCycles > 0) clock()
+        clock()
+        while (instrCycles > 0) clock()
     }
 
     fun nmi(source: BusComponent) {

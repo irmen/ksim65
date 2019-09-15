@@ -3,7 +3,7 @@ package razorvine.ksim65.components
 /**
  * A simple parallel output device (basically, prints bytes as characters to the console)
  *
- * byte   value
+ * reg.   value
  * ----   ---------
  *  00    data (the 8 parallel bits)
  *  01    control latch (set bit 0 to write the data byte)
@@ -22,7 +22,7 @@ class ParallelPort(startAddress: Address, endAddress: Address) : MemMappedCompon
         return if (address == startAddress)
             dataByte
         else
-            0
+            0xff
     }
 
     override operator fun set(address: Address, data: UByte) {

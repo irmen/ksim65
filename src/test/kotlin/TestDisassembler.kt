@@ -28,7 +28,7 @@ class TestDisassembler {
     @Test
     fun testDisassembleRockwell65C02() {
         val cpu = Cpu65C02()
-        val memory = Ram(0, 0x1000)
+        val memory = Ram(0, 0x0fff)
         val source = javaClass.classLoader.getResource("disassem_r65c02.bin")!!
         memory.load(source, 0x0200)
         val resultLines = cpu.disassemble(memory, 0x0200, 0x0250)
@@ -73,7 +73,7 @@ ${'$'}0250  00          brk""", result)
     @Test
     fun testDisassembleWDC65C02() {
         val cpu = Cpu65C02()
-        val memory = Ram(0, 0x1000)
+        val memory = Ram(0, 0x0fff)
         val source = javaClass.classLoader.getResource("disassem_wdc65c02.bin")!!
         memory.load(source, 0x200)
         val resultLines = cpu.disassemble(memory, 0x0200, 0x0215)

@@ -27,6 +27,12 @@ class Bus {
         memComponents.forEach { it.clock() }
     }
 
+    operator fun plusAssign(memcomponent: MemMappedComponent) = add(memcomponent)
+    operator fun plusAssign(component: BusComponent) = add(component)
+    operator fun get(address: Address): UByte = read(address)
+    operator fun set(address: Address, data: UByte) = write(address, data)
+
+
     fun add(component: BusComponent) {
         components.add(component)
         component.bus = this
@@ -54,6 +60,7 @@ class Bus {
      * Any memory mapped component that listens to the address, will receive the data.
      */
     fun write(address: Address, data: UByte) {
+        require(data in 0..255) { "data must be a byte 0..255" }
         memComponents.forEach {
             if (address >= it.startAddress && address <= it.endAddress)
                 it[address] = data

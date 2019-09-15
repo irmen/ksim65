@@ -3,15 +3,14 @@ package razorvine.ksim65.components
 import razorvine.ksim65.Cpu6502
 
 /**
- * A programmable timer. Causes an IRQ or NMI at specified 24-bits intervals.
+ * A programmable timer. Causes an IRQ or NMI at specified 24-bits clock cycle intervals.
  *
- * byte   value
+ * reg.   value
  * ----   --------------
  *  00    control register  bit 0=enable  bit 1=nmi (instead of irq)
  *  01    24 bits interval value, bits 0-7 (lo)
  *  02    24 bits interval value, bits 8-15 (mid)
  *  03    24 bits interval value, bits 16-23  (hi)
- *
  */
 class Timer(startAddress: Address, endAddress: Address, val cpu: Cpu6502) : MemMappedComponent(startAddress, endAddress) {
     private var counter: Int = 0
@@ -51,40 +50,34 @@ class Timer(startAddress: Address, endAddress: Address, val cpu: Cpu6502) : MemM
     }
 
     override operator fun get(address: Address): UByte {
-        when (address - startAddress) {
-            0 -> {
+        return when (address - startAddress) {
+            0x00 -> {
                 var data = 0
                 if (enabled) data = data or 0b00000001
                 if (nmi) data = data or 0b00000010
-                return data.toShort()
+                data.toShort()
             }
-            1 -> {
-                return (counter and 0xff).toShort()
-            }
-            2 -> {
-                return ((counter ushr 8) and 0xff).toShort()
-            }
-            3 -> {
-                return ((counter ushr 16) and 0xff).toShort()
-            }
-            else -> return 0
+            0x01 -> (counter and 0xff).toShort()
+            0x02 -> ((counter ushr 8) and 0xff).toShort()
+            0x03 -> ((counter ushr 16) and 0xff).toShort()
+            else -> 0xff
         }
     }
 
     override operator fun set(address: Address, data: UByte) {
         when (address - startAddress) {
-            0 -> {
+            0x00 -> {
                 val i = data.toInt()
                 enabled = (i and 0b00000001) != 0
                 nmi = (i and 0b00000010) != 0
             }
-            1 -> {
+            0x01 -> {
                 interval = (interval and 0x7fffff00) or data.toInt()
             }
-            2 -> {
+            0x02 -> {
                 interval = (interval and 0x7fff00ff) or (data.toInt() shl 8)
             }
-            3 -> {
+            0x03 -> {
                 interval = (interval and 0x7f00ffff) or (data.toInt() shl 16)
             }
         }
