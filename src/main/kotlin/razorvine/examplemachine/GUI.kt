@@ -28,7 +28,7 @@ object ScreenDefs {
     val Characters = loadCharacters()
 
     private fun loadCharacters(): Array<BufferedImage> {
-        val img = ImageIO.read(javaClass.getResource("/charset/unscii8x16.png"))
+        val img = ImageIO.read(javaClass.getResourceAsStream("/charset/unscii8x16.png"))
         val charactersImage = BufferedImage(img.width, img.height, BufferedImage.TYPE_INT_ARGB)
         charactersImage.createGraphics().drawImage(img, 0, 0, null)
 
@@ -62,6 +62,7 @@ private class BitmapScreenPanel : JPanel() {
     private val g2d = image.graphics as Graphics2D
     private var cursorX: Int = 0
     private var cursorY: Int = 0
+    private var cursorState: Boolean = false
 
     init {
         val size = Dimension(
@@ -85,6 +86,16 @@ private class BitmapScreenPanel : JPanel() {
             image, 0, 0, (image.width * ScreenDefs.DISPLAY_PIXEL_SCALING).toInt(),
             (image.height * ScreenDefs.DISPLAY_PIXEL_SCALING).toInt(), null
         )
+        if(cursorState) {
+            val scx = (cursorX * ScreenDefs.DISPLAY_PIXEL_SCALING * 8).toInt()
+            val scy = (cursorY * ScreenDefs.DISPLAY_PIXEL_SCALING * 16).toInt()
+            val scw = (8 * ScreenDefs.DISPLAY_PIXEL_SCALING).toInt()
+            val sch = (16 * ScreenDefs.DISPLAY_PIXEL_SCALING).toInt()
+            g2d.setXORMode(Color.CYAN)
+            g2d.fillRect(scx, scy, scw, sch)
+            g2d.setPaintMode()
+        }
+
     }
 
     fun clearScreen() {
@@ -121,6 +132,12 @@ private class BitmapScreenPanel : JPanel() {
             (pos.x / ScreenDefs.DISPLAY_PIXEL_SCALING).toInt(),
             (pos.y / ScreenDefs.DISPLAY_PIXEL_SCALING).toInt()
         )
+    }
+
+    fun blinkCursor(x: Int, y: Int) {
+        cursorX = x
+        cursorY = y
+        cursorState = !cursorState
     }
 }
 
@@ -367,5 +384,9 @@ class MainWindow(title: String) : JFrame(title), KeyListener, MouseInputListener
             null
         else
             keyboardBuffer.pop()
+    }
+
+    override fun blinkCursor(x: Int, y: Int) {
+        canvas.blinkCursor(x, y)
     }
 }

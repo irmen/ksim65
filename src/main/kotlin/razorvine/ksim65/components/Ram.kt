@@ -1,9 +1,8 @@
 package razorvine.ksim65.components
 
 import java.io.File
-import java.net.URI
+import java.io.InputStream
 import java.net.URL
-import java.nio.file.Paths
 
 /**
  * A RAM chip with read/write memory.
@@ -33,14 +32,14 @@ class Ram(startAddress: Address, endAddress: Address) : MemoryComponent(startAdd
      * Load a c64-style prg program. This file type has the load address as the first two bytes.
      */
     fun loadPrg(filename: String) {
-        loadPrg(Paths.get(filename).toUri())
+        loadPrg(File(filename).inputStream())
     }
 
     /**
      * Load a c64-style prg program. This file type has the load address as the first two bytes.
      */
-    fun loadPrg(file: URI) {
-        val bytes = File(file).readBytes()
+    fun loadPrg(stream: InputStream) {
+        val bytes = stream.readAllBytes()
         val loadAddress = (bytes[0].toInt() or (bytes[1].toInt() shl 8)) and 65535
         val baseAddress = loadAddress - startAddress
         bytes.drop(2).forEachIndexed { index, byte ->

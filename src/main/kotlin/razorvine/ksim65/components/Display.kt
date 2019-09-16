@@ -8,6 +8,8 @@ import kotlin.math.min
  * Text mode and graphics (bitmap) mode display.
  * Note that the character matrix and pixel matrix are NOT memory mapped,
  * this display device is controlled by sending char/pixel commands to it.
+ * Also, the blinking cursor is 'hardware controlled' (by the host display),
+ * these device registers merely can set it to a different screen position.
  *
  * Requires a host display to actually view the stuff, obviously.
  *
@@ -25,8 +27,6 @@ import kotlin.math.min
  *  09      cursor Y position (r/w)
  *  0a      read or write character at cursor pos, updates cursor position, scrolls up if necessary
  *          control characters: 0x08=backspace, 0x09=tab, 0x0a=newline, 0x0c=formfeed(clear screen), 0x0d=carriagereturn
- *
- *          TODO: cursor blinking, blink speed (0=off)
  */
 class Display(
     startAddress: Address, endAddress: Address,
@@ -49,10 +49,16 @@ class Display(
     private var pixelX = 0
     private var pixelY = 0
     private val charMatrix = Array<ShortArray>(charHeight) { ShortArray(charWidth) }    // matrix[y][x] to access
+    private var cursorCycles = 0
 
     override fun clock() {
         // if the system clock is synced to the display refresh,
         // you *could* add a Vertical Blank interrupt here.
+        // for now, only the cursor blinking is controlled by this.
+        cursorCycles++
+        if(cursorCycles % 8000 == 0) {
+            host.blinkCursor(cursorX, cursorY)
+        }
     }
 
     override fun reset() {

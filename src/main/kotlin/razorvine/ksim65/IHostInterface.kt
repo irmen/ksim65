@@ -13,6 +13,7 @@ interface IHostInterface {
     fun scrollUp()
     fun mouse(): MouseInfo
     fun keyboard(): Char?
+    fun blinkCursor(x: Int, y: Int)
 
     class MouseInfo(val x: Int, val y: Int, val left: Boolean, val right: Boolean, val middle: Boolean)
 }

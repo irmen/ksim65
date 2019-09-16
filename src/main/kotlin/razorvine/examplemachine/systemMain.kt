@@ -28,7 +28,7 @@ class VirtualMachine(title: String) {
     init {
         ram[Cpu6502.RESET_vector] = 0x00
         ram[Cpu6502.RESET_vector + 1] = 0x10
-        ram.loadPrg(javaClass.getResource("/vmdemo.prg").toURI())
+        ram.loadPrg(javaClass.getResourceAsStream("/vmdemo.prg"))
 
         bus += rtc
         bus += timer
@@ -57,7 +57,7 @@ class VirtualMachine(title: String) {
         val timer = java.util.Timer("clock", true)
         timer.scheduleAtFixedRate(1, 1) {
             if(!paused) {
-                repeat(5) {
+                repeat(10) {
                     stepInstruction()
                 }
                 debugWindow.updateCpu(cpu)

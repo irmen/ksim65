@@ -10,6 +10,7 @@ plugins {
     id("org.jetbrains.dokka") version "0.9.18"
     id("com.jfrog.bintray") version "1.7.3"
     id("maven-publish")
+    id("application")
 }
 
 val versionProps = Properties().also {
@@ -37,6 +38,11 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.1.0")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.1.0")
+}
+
+application {
+    applicationName = "ksim65vm"
+    mainClassName = "razorvine.examplemachine.SystemMainKt"
 }
 
 tasks.named<Test>("test") {
