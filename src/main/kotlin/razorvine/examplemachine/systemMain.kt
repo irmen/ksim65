@@ -1,7 +1,6 @@
 package razorvine.examplemachine
 
 import kotlin.concurrent.scheduleAtFixedRate
-import java.time.LocalDateTime
 import razorvine.ksim65.Bus
 import razorvine.ksim65.Cpu6502
 import razorvine.ksim65.Version
@@ -58,7 +57,7 @@ class VirtualMachine(title: String) {
         val timer = java.util.Timer("clock", true)
         timer.scheduleAtFixedRate(1, 1) {
             if(!paused) {
-                repeat(10) {
+                repeat(5) {
                     stepInstruction()
                 }
                 debugWindow.updateCpu(cpu)

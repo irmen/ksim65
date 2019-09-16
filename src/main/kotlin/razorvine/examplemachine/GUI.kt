@@ -9,6 +9,7 @@ import javax.swing.event.MouseInputListener
 import razorvine.ksim65.IHostInterface
 import java.awt.event.*
 import javax.swing.*
+import javax.swing.border.LineBorder
 
 
 /**
@@ -130,13 +131,15 @@ class DebugWindow(val vm: VirtualMachine) : JFrame("debugger"), ActionListener {
     val regYtf = JTextField("000")
     val regPCtf = JTextField("00000")
     val regSPtf = JTextField("000")
-    val regPtf = JTextField("000000000")
+    val regPtf = JTextArea("NV-BDIZC\n000000000")
     val opcodeTf = JTextField("000")
     val mnemonicTf = JTextField("brk ")
     private val pauseBt = JButton("Pause").also { it.actionCommand = "pause" }
 
     init {
         isFocusable = true
+        defaultCloseOperation = EXIT_ON_CLOSE
+        preferredSize = Dimension(250, 600)
         val cpuPanel = JPanel(GridBagLayout())
         cpuPanel.border = BorderFactory.createTitledBorder("CPU: ${vm.cpu.name}")
         val gc = GridBagConstraints()
@@ -150,22 +153,26 @@ class DebugWindow(val vm: VirtualMachine) : JFrame("debugger"), ActionListener {
         val regYlb = JLabel("Y")
         val regSPlb = JLabel("SP")
         val regPClb = JLabel("PC")
-        val dummyLb = JLabel("")
         val regPlb = JLabel("Status")
         val opcodeLb = JLabel("opcode")
         val mnemonicLb = JLabel("mnemonic")
-        listOf(cyclesLb, regAlb, regXlb, regYlb, regSPlb, regPClb, dummyLb, regPlb, opcodeLb, mnemonicLb).forEach {
+        listOf(cyclesLb, regAlb, regXlb, regYlb, regSPlb, regPClb, regPlb, opcodeLb, mnemonicLb).forEach {
             cpuPanel.add(it, gc)
             gc.gridy++
         }
         gc.anchor = GridBagConstraints.WEST
         gc.gridx = 1
         gc.gridy = 0
-        val bitsLb = JTextField("NV-BDIZC")
-        listOf(cyclesTf, regAtf, regXtf, regYtf, regSPtf, regPCtf, bitsLb, regPtf, opcodeTf, mnemonicTf).forEach {
-            it.font = Font(Font.MONOSPACED, Font.PLAIN, 16)
+        listOf(cyclesTf, regAtf, regXtf, regYtf, regSPtf, regPCtf, regPtf, opcodeTf, mnemonicTf).forEach {
+            it.font = Font(Font.MONOSPACED, Font.PLAIN, 14)
             it.isEditable = false
-            it.columns = it.text.length
+            if(it is JTextField) {
+                it.columns = it.text.length
+            } else if(it is JTextArea) {
+                it.background = this.background
+                it.border = BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY),
+                    BorderFactory.createEmptyBorder(2,2,2,2))
+            }
             cpuPanel.add(it, gc)
             gc.gridy++
         }
@@ -176,7 +183,8 @@ class DebugWindow(val vm: VirtualMachine) : JFrame("debugger"), ActionListener {
 
         val resetBt = JButton("Reset").also { it.actionCommand = "reset" }
         val cycleBt = JButton("Step").also { it.actionCommand = "step" }
-        listOf(resetBt, cycleBt, pauseBt).forEach {
+        val quitBt = JButton("Quit").also { it.actionCommand = "quit" }
+        listOf(resetBt, cycleBt, pauseBt, quitBt).forEach {
             it.addActionListener(this)
             buttonPanel.add(it)
         }
@@ -187,24 +195,27 @@ class DebugWindow(val vm: VirtualMachine) : JFrame("debugger"), ActionListener {
     }
 
     override fun actionPerformed(e: ActionEvent) {
-        when {
-            e.actionCommand == "reset" -> {
+        when(e.actionCommand) {
+            "reset" -> {
                 vm.bus.reset()
                 updateCpu(vm.cpu)
             }
-            e.actionCommand == "step" -> {
+            "step" -> {
                 vm.stepInstruction()
                 updateCpu(vm.cpu)
             }
-            e.actionCommand == "pause" -> {
+            "pause" -> {
                 vm.paused = true
                 pauseBt.actionCommand = "continue"
                 pauseBt.text = "Cont."
             }
-            e.actionCommand == "continue" -> {
+            "continue" -> {
                 vm.paused = false
                 pauseBt.actionCommand = "pause"
                 pauseBt.text = "Pause"
+            }
+            "quit" -> {
+                dispatchEvent(WindowEvent(this, WindowEvent.WINDOW_CLOSING))
             }
         }
     }
@@ -214,7 +225,7 @@ class DebugWindow(val vm: VirtualMachine) : JFrame("debugger"), ActionListener {
         regAtf.text = cpu.hexB(cpu.regA)
         regXtf.text = cpu.hexB(cpu.regX)
         regYtf.text = cpu.hexB(cpu.regY)
-        regPtf.text = cpu.regP.asByte().toString(2).padStart(8, '0')
+        regPtf.text = "NV-BDIZC\n" + cpu.regP.asByte().toString(2).padStart(8, '0')
         regPCtf.text = cpu.hexW(cpu.regPC)
         regSPtf.text = cpu.hexB(cpu.regSP)
         opcodeTf.text = cpu.hexB(cpu.currentOpcode)
