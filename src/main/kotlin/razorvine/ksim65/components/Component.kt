@@ -59,7 +59,8 @@ abstract class MemMappedComponent(val startAddress: Address, val endAddress: Add
  */
 abstract class MemoryComponent(startAddress: Address, endAddress: Address) :
     MemMappedComponent(startAddress, endAddress) {
-    abstract fun copyOfMem(): Array<UByte>
+
+    abstract val data: Array<UByte>
 
     init {
         require(startAddress and 0xff == 0 && endAddress and 0xff == 0xff) {"address range must span complete page(s)"}

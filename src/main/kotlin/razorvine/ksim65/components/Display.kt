@@ -22,11 +22,11 @@ import kotlin.math.min
  *  04      pixel X pos (msb)
  *  05      pixel Y pos (lsb)
  *  06      pixel Y pos (msb)
- *  07      read or write pixel value at pX, pY
- *  08      cursor X position (r/w)
- *  09      cursor Y position (r/w)
- *  0a      read or write character at cursor pos, updates cursor position, scrolls up if necessary
- *          control characters: 0x08=backspace, 0x09=tab, 0x0a=newline, 0x0c=formfeed(clear screen), 0x0d=carriagereturn
+ *  07      r/w pixel value at pX, pY
+ *  08      cursor X position
+ *  09      cursor Y position
+ *  0a      r/w character at cursor pos, updates cursor position, scrolls up if necessary
+ *          control chars: 8=backspace, 9=tab, 10=newline, 12=form feed (clear screen), 13=carriage return
  */
 class Display(
     startAddress: Address, endAddress: Address,
@@ -49,16 +49,10 @@ class Display(
     private var pixelX = 0
     private var pixelY = 0
     private val charMatrix = Array<ShortArray>(charHeight) { ShortArray(charWidth) }    // matrix[y][x] to access
-    private var cursorCycles = 0
 
     override fun clock() {
         // if the system clock is synced to the display refresh,
         // you *could* add a Vertical Blank interrupt here.
-        // for now, only the cursor blinking is controlled by this.
-        cursorCycles++
-        if(cursorCycles % 8000 == 0) {
-            host.blinkCursor(cursorX, cursorY)
-        }
     }
 
     override fun reset() {
@@ -136,7 +130,7 @@ class Display(
                         }
                         0x09 -> {
                             // tab
-                            cursorX = (cursorX and 248) + 8
+                            cursorX = (cursorX and 0b11111000) + 8
                             if(cursorX >= charWidth) {
                                 cursorX = 0
                                 cursorDown()
@@ -161,6 +155,7 @@ class Display(
                         }
                     }
                 }
+                host.cursor(cursorX, cursorY)
             }
         }
     }

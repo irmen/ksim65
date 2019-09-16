@@ -8,15 +8,13 @@ import java.net.URL
  * A RAM chip with read/write memory.
  */
 class Ram(startAddress: Address, endAddress: Address) : MemoryComponent(startAddress, endAddress) {
-    private val memory = ShortArray(endAddress - startAddress + 1)
+    override val data = Array<UByte>(endAddress - startAddress + 1) { 0 }
 
-    override operator fun get(address: Address): UByte = memory[address - startAddress]
+    override operator fun get(address: Address): UByte = data[address - startAddress]
 
     override operator fun set(address: Address, data: UByte) {
-        memory[address - startAddress] = data
+        this.data[address - startAddress] = data
     }
-
-    override fun copyOfMem(): Array<UByte> = memory.toTypedArray()
 
     override fun clock() {}
 
@@ -24,16 +22,12 @@ class Ram(startAddress: Address, endAddress: Address) : MemoryComponent(startAdd
         // contents of RAM doesn't change on a reset
     }
 
-    fun fill(data: UByte) {
-        memory.fill(data)
-    }
+    fun fill(data: UByte) = this.data.fill(data)
 
     /**
      * Load a c64-style prg program. This file type has the load address as the first two bytes.
      */
-    fun loadPrg(filename: String) {
-        loadPrg(File(filename).inputStream())
-    }
+    fun loadPrg(filename: String) = loadPrg(File(filename).inputStream())
 
     /**
      * Load a c64-style prg program. This file type has the load address as the first two bytes.
@@ -43,7 +37,7 @@ class Ram(startAddress: Address, endAddress: Address) : MemoryComponent(startAdd
         val loadAddress = (bytes[0].toInt() or (bytes[1].toInt() shl 8)) and 65535
         val baseAddress = loadAddress - startAddress
         bytes.drop(2).forEachIndexed { index, byte ->
-            memory[baseAddress + index] =
+            data[baseAddress + index] =
                 if (byte >= 0)
                     byte.toShort()
                 else
@@ -67,13 +61,13 @@ class Ram(startAddress: Address, endAddress: Address) : MemoryComponent(startAdd
     fun load(data: Array<UByte>, address: Address) =
         data.forEachIndexed { index, byte ->
             val baseAddress = address - startAddress
-            memory[baseAddress + index] = byte
+            this.data[baseAddress + index] = byte
         }
 
     fun load(data: ByteArray, address: Address) =
         data.forEachIndexed { index, byte ->
             val baseAddress = address - startAddress
-            memory[baseAddress + index] =
+            this.data[baseAddress + index] =
                 if (byte >= 0)
                     byte.toShort()
                 else

@@ -55,12 +55,16 @@ class VirtualMachine(title: String) {
 
     fun start() {
         val timer = java.util.Timer("clock", true)
+        val startTime = System.currentTimeMillis()
         timer.scheduleAtFixedRate(1, 1) {
             if(!paused) {
-                repeat(10) {
+                repeat(5) {
                     stepInstruction()
                 }
-                debugWindow.updateCpu(cpu)
+                debugWindow.updateCpu(cpu, ram)
+                val duration = System.currentTimeMillis() - startTime
+                val speedKhz = cpu.totalCycles.toDouble() / duration
+                debugWindow.speedKhzTf.text = "%.1f".format(speedKhz)
             }
         }
     }

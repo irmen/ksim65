@@ -16,7 +16,22 @@ start
 	txs
 	cli
 
+; ------- print stuff
+	lda  #10
+	sta  DISPLAY+8
+	sta  DISPLAY+9
+	ldx  #5
+printloop
+	ldy  #32
+printloop2
+	sty  DISPLAY+10
+	iny
+	bne  printloop2
+	dex
+	bne  printloop
+
 ; ------- fill the screen
+
 	ldx  #0
 	ldy  #0
 fillscreen

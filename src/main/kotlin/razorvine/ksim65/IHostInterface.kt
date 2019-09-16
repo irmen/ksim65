@@ -10,10 +10,10 @@ interface IHostInterface {
     fun setPixel(x: Int, y: Int)
     fun clearPixel(x: Int, y: Int)
     fun setChar(x: Int, y: Int, character: Char)
+    fun cursor(x: Int, y: Int)
     fun scrollUp()
     fun mouse(): MouseInfo
     fun keyboard(): Char?
-    fun blinkCursor(x: Int, y: Int)
 
     class MouseInfo(val x: Int, val y: Int, val left: Boolean, val right: Boolean, val middle: Boolean)
 }

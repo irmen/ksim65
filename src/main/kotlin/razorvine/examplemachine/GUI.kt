@@ -7,9 +7,9 @@ import java.util.ArrayDeque
 import javax.imageio.ImageIO
 import javax.swing.event.MouseInputListener
 import razorvine.ksim65.IHostInterface
+import razorvine.ksim65.components.MemoryComponent
 import java.awt.event.*
 import javax.swing.*
-import javax.swing.border.LineBorder
 
 
 /**
@@ -101,8 +101,7 @@ private class BitmapScreenPanel : JPanel() {
     fun clearScreen() {
         g2d.background = ScreenDefs.BG_COLOR
         g2d.clearRect(0, 0, ScreenDefs.SCREEN_WIDTH, ScreenDefs.SCREEN_HEIGHT)
-        cursorX = 0
-        cursorY = 0
+        cursorPos(0, 0)
     }
 
     fun setPixel(x: Int, y: Int, onOff: Boolean) {
@@ -134,29 +133,34 @@ private class BitmapScreenPanel : JPanel() {
         )
     }
 
-    fun blinkCursor(x: Int, y: Int) {
+    fun cursorPos(x: Int, y: Int) {
+        if(x!=cursorX || y!=cursorY)
+            cursorState=true
         cursorX = x
         cursorY = y
+    }
+
+    fun blinkCursor() {
         cursorState = !cursorState
     }
 }
 
 class DebugWindow(val vm: VirtualMachine) : JFrame("debugger"), ActionListener {
     val cyclesTf = JTextField("00000000000000")
+    val speedKhzTf = JTextField("0000000")
     val regAtf = JTextField("000")
     val regXtf = JTextField("000")
     val regYtf = JTextField("000")
     val regPCtf = JTextField("00000")
     val regSPtf = JTextField("000")
     val regPtf = JTextArea("NV-BDIZC\n000000000")
-    val opcodeTf = JTextField("000")
-    val mnemonicTf = JTextField("brk ")
+    val disassemTf = JTextField("00 00 00   lda   (fffff),x")
     private val pauseBt = JButton("Pause").also { it.actionCommand = "pause" }
 
     init {
         isFocusable = true
         defaultCloseOperation = EXIT_ON_CLOSE
-        preferredSize = Dimension(250, 600)
+        preferredSize = Dimension(350, 600)
         val cpuPanel = JPanel(GridBagLayout())
         cpuPanel.border = BorderFactory.createTitledBorder("CPU: ${vm.cpu.name}")
         val gc = GridBagConstraints()
@@ -165,22 +169,22 @@ class DebugWindow(val vm: VirtualMachine) : JFrame("debugger"), ActionListener {
         gc.gridx = 0
         gc.gridy = 0
         val cyclesLb = JLabel("cycles")
+        val speedKhzLb = JLabel("speed (kHz)")
         val regAlb = JLabel("A")
         val regXlb = JLabel("X")
         val regYlb = JLabel("Y")
         val regSPlb = JLabel("SP")
         val regPClb = JLabel("PC")
         val regPlb = JLabel("Status")
-        val opcodeLb = JLabel("opcode")
-        val mnemonicLb = JLabel("mnemonic")
-        listOf(cyclesLb, regAlb, regXlb, regYlb, regSPlb, regPClb, regPlb, opcodeLb, mnemonicLb).forEach {
+        val disassemLb = JLabel("Instruction")
+        listOf(cyclesLb, speedKhzLb, regAlb, regXlb, regYlb, regSPlb, regPClb, regPlb, disassemLb).forEach {
             cpuPanel.add(it, gc)
             gc.gridy++
         }
         gc.anchor = GridBagConstraints.WEST
         gc.gridx = 1
         gc.gridy = 0
-        listOf(cyclesTf, regAtf, regXtf, regYtf, regSPtf, regPCtf, regPtf, opcodeTf, mnemonicTf).forEach {
+        listOf(cyclesTf, speedKhzTf, regAtf, regXtf, regYtf, regSPtf, regPCtf, regPtf, disassemTf).forEach {
             it.font = Font(Font.MONOSPACED, Font.PLAIN, 14)
             it.isEditable = false
             if(it is JTextField) {
@@ -215,11 +219,11 @@ class DebugWindow(val vm: VirtualMachine) : JFrame("debugger"), ActionListener {
         when(e.actionCommand) {
             "reset" -> {
                 vm.bus.reset()
-                updateCpu(vm.cpu)
+                updateCpu(vm.cpu, vm.ram)
             }
             "step" -> {
                 vm.stepInstruction()
-                updateCpu(vm.cpu)
+                updateCpu(vm.cpu, vm.ram)
             }
             "pause" -> {
                 vm.paused = true
@@ -237,7 +241,7 @@ class DebugWindow(val vm: VirtualMachine) : JFrame("debugger"), ActionListener {
         }
     }
 
-    fun updateCpu(cpu: Cpu6502) {
+    fun updateCpu(cpu: Cpu6502, mem: MemoryComponent) {
         cyclesTf.text = cpu.totalCycles.toString()
         regAtf.text = cpu.hexB(cpu.regA)
         regXtf.text = cpu.hexB(cpu.regX)
@@ -245,8 +249,7 @@ class DebugWindow(val vm: VirtualMachine) : JFrame("debugger"), ActionListener {
         regPtf.text = "NV-BDIZC\n" + cpu.regP.asByte().toString(2).padStart(8, '0')
         regPCtf.text = cpu.hexW(cpu.regPC)
         regSPtf.text = cpu.hexB(cpu.regSP)
-        opcodeTf.text = cpu.hexB(cpu.currentOpcode)
-        mnemonicTf.text = cpu.currentMnemonic
+        disassemTf.text = cpu.disassembleOneInstruction(mem.data, cpu.regPC, mem.startAddress).first.substringAfter(' ').trim()
     }
 }
 
@@ -322,7 +325,14 @@ class MainWindow(title: String) : JFrame(title), KeyListener, MouseInputListener
 
     fun start() {
         // repaint the screen's back buffer ~60 times per second
-        val repaintTimer = Timer(1000 / 60) { repaint() }
+        var cursorBlink = 0L
+        val repaintTimer = Timer(1000 / 60) {
+            repaint()
+            if(it.`when` - cursorBlink > 200L) {
+                cursorBlink = it.`when`
+                canvas.blinkCursor()
+            }
+        }
         repaintTimer.initialDelay = 0
         repaintTimer.start()
     }
@@ -369,15 +379,13 @@ class MainWindow(title: String) : JFrame(title), KeyListener, MouseInputListener
 
     // the overrides required for IHostDisplay:
     override fun clearScreen() = canvas.clearScreen()
-
     override fun setPixel(x: Int, y: Int) = canvas.setPixel(x, y, true)
     override fun clearPixel(x: Int, y: Int) = canvas.setPixel(x, y, false)
     override fun getPixel(x: Int, y: Int) = canvas.getPixel(x, y)
     override fun setChar(x: Int, y: Int, character: Char) = canvas.setChar(x, y, character)
+    override fun cursor(x: Int, y: Int) = canvas.cursorPos(x, y)
     override fun scrollUp() = canvas.scrollUp()
-    override fun mouse(): IHostInterface.MouseInfo {
-        return IHostInterface.MouseInfo(mousePos.x, mousePos.y, leftButton, rightButton, middleButton)
-    }
+    override fun mouse() = IHostInterface.MouseInfo(mousePos.x, mousePos.y, leftButton, rightButton, middleButton)
 
     override fun keyboard(): Char? {
         return if (keyboardBuffer.isEmpty())
@@ -386,7 +394,4 @@ class MainWindow(title: String) : JFrame(title), KeyListener, MouseInputListener
             keyboardBuffer.pop()
     }
 
-    override fun blinkCursor(x: Int, y: Int) {
-        canvas.blinkCursor(x, y)
-    }
 }
