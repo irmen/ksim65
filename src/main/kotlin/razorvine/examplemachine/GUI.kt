@@ -175,7 +175,7 @@ class DebugWindow(val vm: VirtualMachine) : JFrame("debugger"), ActionListener {
         buttonPanel.border = BorderFactory.createTitledBorder("Control")
 
         val resetBt = JButton("Reset").also { it.actionCommand = "reset" }
-        val cycleBt = JButton("Cycle").also { it.actionCommand = "cycle" }
+        val cycleBt = JButton("Step").also { it.actionCommand = "step" }
         listOf(resetBt, cycleBt, pauseBt).forEach {
             it.addActionListener(this)
             buttonPanel.add(it)
@@ -192,8 +192,8 @@ class DebugWindow(val vm: VirtualMachine) : JFrame("debugger"), ActionListener {
                 vm.bus.reset()
                 updateCpu(vm.cpu)
             }
-            e.actionCommand == "cycle" -> {
-                vm.bus.clock()
+            e.actionCommand == "step" -> {
+                vm.stepInstruction()
                 updateCpu(vm.cpu)
             }
             e.actionCommand == "pause" -> {

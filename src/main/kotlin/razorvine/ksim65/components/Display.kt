@@ -1,5 +1,6 @@
 package razorvine.ksim65.components
 
+import razorvine.examplemachine.ScreenDefs
 import razorvine.ksim65.IHostInterface
 import kotlin.math.min
 
@@ -67,11 +68,17 @@ class Display(
 
     override operator fun get(address: Address): UByte {
         return when(address-startAddress) {
+            0x00 -> charposX.toShort()
+            0x01 -> charposY.toShort()
             0x02 -> {
                 if(charposY in 0 until charHeight && charposX in 0 until charWidth) {
                     charMatrix[charposY][charposX]
                 } else 0xff
             }
+            0x03 -> (pixelX and 0xff).toShort()
+            0x04 -> (pixelX ushr 8).toShort()
+            0x05 -> (pixelY and 0xff).toShort()
+            0x06 -> (pixelY ushr 8).toShort()
             0x07 -> if(host.getPixel(pixelX, pixelY)) 1 else 0
             0x08 -> cursorX.toShort()
             0x09 -> cursorY.toShort()
@@ -99,8 +106,10 @@ class Display(
             0x05 -> pixelY = (pixelY and 0xff00) or data.toInt()
             0x06 -> pixelY = (pixelY and 0x00ff) or (data.toInt() shl 8)
             0x07 -> {
-                if(data==0.toShort()) host.clearPixel(pixelX, pixelY)
-                else host.setPixel(pixelX, pixelY)
+                if(pixelX in 0 until ScreenDefs.SCREEN_WIDTH && pixelY in 0 until ScreenDefs.SCREEN_HEIGHT) {
+                    if (data == 0.toShort()) host.clearPixel(pixelX, pixelY)
+                    else host.setPixel(pixelX, pixelY)
+                }
             }
             0x08 -> cursorX = min(data.toInt() and 65535, charWidth-1)
             0x09 -> cursorY = min(data.toInt() and 65535, charHeight-1)

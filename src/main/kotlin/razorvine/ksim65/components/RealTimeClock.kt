@@ -50,11 +50,11 @@ class RealTimeClock(startAddress: Address, endAddress: Address) : MemMappedCompo
             0x05 -> LocalTime.now().minute.toShort()
             0x06 -> LocalTime.now().second.toShort()
             0x07 -> {
-                val ms = LocalTime.now().nano / 1000
+                val ms = LocalTime.now().nano / 1000000
                 (ms and 255).toShort()
             }
             0x08 -> {
-                val ms = LocalTime.now().nano / 1000
+                val ms = LocalTime.now().nano / 1000000
                 (ms ushr 8).toShort()
             }
             else -> 0xff

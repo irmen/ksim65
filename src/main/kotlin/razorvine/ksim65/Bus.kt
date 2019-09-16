@@ -49,8 +49,13 @@ class Bus {
      */
     fun read(address: Address): UByte {
         memComponents.forEach {
-            if (address >= it.startAddress && address <= it.endAddress)
-                return it[address]
+            if (address >= it.startAddress && address <= it.endAddress) {
+                val data = it[address]
+                require(data in 0..255) {
+                    "data must be a byte 0..255"
+                }
+                return data
+            }
         }
         return 0xff
     }
@@ -60,7 +65,9 @@ class Bus {
      * Any memory mapped component that listens to the address, will receive the data.
      */
     fun write(address: Address, data: UByte) {
-        require(data in 0..255) { "data must be a byte 0..255" }
+        require(data in 0..255) {
+            "data must be a byte 0..255"
+        }
         memComponents.forEach {
             if (address >= it.startAddress && address <= it.endAddress)
                 it[address] = data

@@ -29,6 +29,7 @@ class VirtualMachine(title: String) {
     init {
         ram[Cpu6502.RESET_vector] = 0x00
         ram[Cpu6502.RESET_vector + 1] = 0x10
+        ram.loadPrg(javaClass.getResource("/vmdemo.prg").toURI())
 
         bus += rtc
         bus += timer
@@ -47,38 +48,26 @@ class VirtualMachine(title: String) {
 
     var paused = false
 
-    fun clock() {
-        if(!paused) {
-            bus.clock()
-            debugWindow.updateCpu(cpu)
+    fun stepInstruction() {
+        while (cpu.instrCycles > 0) bus.clock()
+        bus.clock()
+        while (cpu.instrCycles > 0) bus.clock()
+    }
+
+    fun start() {
+        val timer = java.util.Timer("clock", true)
+        timer.scheduleAtFixedRate(1, 1) {
+            if(!paused) {
+                repeat(10) {
+                    stepInstruction()
+                }
+                debugWindow.updateCpu(cpu)
+            }
         }
     }
 }
 
 fun main(args: Array<String>) {
     val machine = VirtualMachine("KSim65 demo virtual machine - using ksim65 v${Version.version}")
-    val v = 0xd000
-
-    machine.bus[v + 0x08] = 20
-    machine.bus[v + 0x09] = 2
-    val text = ">> Hello this is an example text! 1234567890 <<\n" +
-            "next line 1\n" +
-            "next line 2\n" +
-            "next line 3\rnext line 4\rnext line 5\n" +
-            "a mistakk\be\n\n\n\n\n\n\n\n\n\n"
-    text.forEach {
-        machine.bus[v + 0x0a] = it.toShort()
-    }
-
-    repeat(20) {
-        Thread.sleep(100)
-        "time: ${LocalDateTime.now()}\n".forEach { c ->
-            machine.bus[v + 0x0a] = c.toShort()
-        }
-    }
-
-    val timer = java.util.Timer("clock", true)
-    timer.scheduleAtFixedRate(1, 1) {
-        machine.clock()
-    }
+    machine.start()
 }
