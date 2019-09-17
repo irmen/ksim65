@@ -34,9 +34,9 @@ class Timer(startAddress: Address, endAddress: Address, val cpu: Cpu6502) : MemM
             counter++
             if (counter == interval) {
                 if (nmi)
-                    cpu.nmi(this)
+                    cpu.nmi()
                 else
-                    cpu.irq(this)
+                    cpu.irq()
                 counter = 0
             }
         }

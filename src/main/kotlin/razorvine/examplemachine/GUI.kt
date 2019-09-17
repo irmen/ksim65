@@ -204,8 +204,10 @@ class DebugWindow(val vm: VirtualMachine) : JFrame("debugger"), ActionListener {
 
         val resetBt = JButton("Reset").also { it.actionCommand = "reset" }
         val cycleBt = JButton("Step").also { it.actionCommand = "step" }
+        val irqBt = JButton("IRQ").also { it.actionCommand = "irq" }
+        val nmiBt = JButton("NMI").also { it.actionCommand = "nmi" }
         val quitBt = JButton("Quit").also { it.actionCommand = "quit" }
-        listOf(resetBt, cycleBt, pauseBt, quitBt).forEach {
+        listOf(resetBt, cycleBt, irqBt, nmiBt, pauseBt, quitBt).forEach {
             it.addActionListener(this)
             buttonPanel.add(it)
         }
@@ -235,6 +237,8 @@ class DebugWindow(val vm: VirtualMachine) : JFrame("debugger"), ActionListener {
                 pauseBt.actionCommand = "pause"
                 pauseBt.text = "Pause"
             }
+            "irq" -> vm.cpu.irq()
+            "nmi" -> vm.cpu.nmi()
             "quit" -> {
                 dispatchEvent(WindowEvent(this, WindowEvent.WINDOW_CLOSING))
             }

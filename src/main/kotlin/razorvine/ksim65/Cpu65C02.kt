@@ -637,15 +637,14 @@ class Cpu65C02(stopOnBrk: Boolean = false) : Cpu6502(stopOnBrk) {
 
     override fun iBrk() {
         // handle BRK ('software interrupt') or a real hardware IRQ
-        val interrupt = pendingInterrupt
-        val nmi = interrupt?.first == true
-        if (interrupt != null) {
+        val nmi = pendingInterrupt == Interrupt.NMI
+        if (pendingInterrupt != null) {
             pushStackAddr(regPC - 1)
         } else {
             regPC++
             pushStackAddr(regPC)
         }
-        regP.B = interrupt == null
+        regP.B = pendingInterrupt == null
         pushStack(regP)
         regP.I = true     // interrupts are now disabled
         regP.D = false    // this is different from NMOS 6502

@@ -107,7 +107,11 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
         get() = currentInstruction.mnemonic
 
     // has an interrupt been requested?
-    protected var pendingInterrupt: Pair<Boolean, BusComponent>? = null
+    protected enum class Interrupt {
+        IRQ,
+        NMI
+    }
+    protected var pendingInterrupt: Interrupt? = null
 
     // data byte from the instruction (only set when addr.mode is Accumulator, Immediate or Implied)
     protected var fetchedData: Int = 0
@@ -334,13 +338,13 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
         while (instrCycles > 0) clock()
     }
 
-    fun nmi(source: BusComponent) {
-        pendingInterrupt = Pair(true, source)
+    fun nmi() {
+        pendingInterrupt = Interrupt.NMI
     }
 
-    fun irq(source: BusComponent) {
+    fun irq() {
         if (!regP.I)
-            pendingInterrupt = Pair(false, source)
+            pendingInterrupt = Interrupt.IRQ
     }
 
     fun logState(): String =
@@ -1092,19 +1096,17 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
 
     protected open fun iBrk() {
         // handle BRK ('software interrupt') or a real hardware IRQ
-        val interrupt = pendingInterrupt
-        val nmi = interrupt?.first == true
-        if (interrupt != null) {
+        if (pendingInterrupt != null) {
             pushStackAddr(regPC - 1)
         } else {
             regPC++
             pushStackAddr(regPC)
         }
-        regP.B = interrupt == null
+        regP.B = pendingInterrupt == null
         pushStack(regP)
         regP.I = true     // interrupts are now disabled
         // NMOS 6502 doesn't clear the D flag (CMOS 65C02 version does...)
-        regPC = readWord(if (nmi) NMI_vector else IRQ_vector)
+        regPC = readWord(if (pendingInterrupt==Interrupt.NMI) NMI_vector else IRQ_vector)
         pendingInterrupt = null
     }
 

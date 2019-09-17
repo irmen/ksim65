@@ -6,6 +6,7 @@
 	TIMER	= $d200
 	MOUSE   = $d300
 	KEYBOARD = $d400
+	IRQVEC  = $fffe
 	SCREEN_WIDTH=640
 
 	* = $1000
@@ -13,8 +14,21 @@
 start
 	sei
 	ldx  #$ff
-	txs
-	cli
+	txs		; clear the stack
+	; setup timer irq
+	lda  #<irq
+	sta  IRQVEC
+	lda  #>irq
+	sta  IRQVEC+1
+	lda  #<1000
+	sta  TIMER+1	; every 1000 clock cycles an irq
+	lda  #>1000
+	sta  TIMER+2
+	lda  #0
+	sta  TIMER+3
+	lda  #1
+	sta  TIMER+0
+	cli		; enable irqs
 
 ; ------- print stuff
 	lda  #10
@@ -127,3 +141,50 @@ done	jmp  done
 
 
 character .byte 0
+
+; ---------- irq routine
+;   this one simply read the RTC and prints it on the bottom of the screen.
+irq
+	pha
+	txa
+	pha
+	tya
+	pha
+	; we don't check for BRK flag because we're lazy
+	lda  DISPLAY+0
+	pha
+	lda  DISPLAY+1
+	pha
+	ldy  #29
+	sty  DISPLAY+1
+	ldy  #0
+	sty  DISPLAY+0
+-	lda  _time_msg,y
+	beq  +
+	sta  DISPLAY+2
+	inc  DISPLAY+0
+	iny
+	bne  -
++	; read the clock now
+	ldx  #0
+-	lda  RTC,x
+	clc
+	adc  #32
+	sta  DISPLAY+2
+	inc  DISPLAY+0
+	inx
+	cpx  #9
+	bne  -
+
+	pla
+	sta  DISPLAY+1
+	pla
+	sta  DISPLAY+0
+	pla
+	tay
+	pla
+	tax
+	pla
+	rti
+
+_time_msg	.text  "The time is: ",0
