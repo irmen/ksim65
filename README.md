@@ -24,6 +24,12 @@ Properties of this simulator:
 - passes several extensive unit test suites that verify instruction and cpu flags behavior
 - maximum simulated performance is a 6502 running at ~100 Mhz (on my machine) 
 
+## Virtual machine examples
+
+Two virtual example machines are included.
+The default one starts with ``gradle run`` or run the ``ksim64vm`` command.
+There's another one ``ehBasicMain`` that is configured to run the "enhanced 6502 basic" ROM.
+
 ## Documentation
 
 Still to be written. For now, use the source ;-)

@@ -1,9 +1,6 @@
 package razorvine.ksim65
 
-import razorvine.ksim65.components.Address
-import razorvine.ksim65.components.BusComponent
-import razorvine.ksim65.components.MemMappedComponent
-import razorvine.ksim65.components.UByte
+import razorvine.ksim65.components.*
 
 /**
  * The system bus that connects all other components together.
@@ -72,5 +69,14 @@ class Bus {
             if (address >= it.startAddress && address <= it.endAddress)
                 it[address] = data
         }
+    }
+
+    fun memoryComponentFor(address: Address): MemoryComponent {
+        memComponents.forEach {
+            if (it is MemoryComponent && address >= it.startAddress && address <= it.endAddress) {
+                return it
+            }
+        }
+        throw NoSuchElementException()
     }
 }

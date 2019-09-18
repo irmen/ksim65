@@ -1,12 +1,12 @@
 package razorvine.examplemachine
 
+import razorvine.ksim65.Bus
 import razorvine.ksim65.Cpu6502
 import java.awt.*
 import java.awt.image.BufferedImage
 import javax.imageio.ImageIO
 import javax.swing.event.MouseInputListener
 import razorvine.ksim65.IHostInterface
-import razorvine.ksim65.components.MemoryComponent
 import java.awt.event.*
 import java.util.*
 import javax.swing.*
@@ -22,7 +22,7 @@ object ScreenDefs {
     const val SCREEN_HEIGHT_CHARS = 30
     const val SCREEN_WIDTH = SCREEN_WIDTH_CHARS * 8
     const val SCREEN_HEIGHT = SCREEN_HEIGHT_CHARS * 16
-    const val DISPLAY_PIXEL_SCALING: Double = 1.5
+    const val DISPLAY_PIXEL_SCALING: Double = 1.25
     val BG_COLOR = Color(0, 10, 20)
     val FG_COLOR = Color(200, 255, 230)
     val BORDER_COLOR = Color(20, 30, 40)
@@ -159,7 +159,6 @@ class DebugWindow(val vm: VirtualMachine) : JFrame("debugger"), ActionListener {
     private val pauseBt = JButton("Pause").also { it.actionCommand = "pause" }
 
     init {
-        isFocusable = true
         defaultCloseOperation = EXIT_ON_CLOSE
         preferredSize = Dimension(350, 600)
         val cpuPanel = JPanel(GridBagLayout())
@@ -222,11 +221,11 @@ class DebugWindow(val vm: VirtualMachine) : JFrame("debugger"), ActionListener {
         when(e.actionCommand) {
             "reset" -> {
                 vm.bus.reset()
-                updateCpu(vm.cpu, vm.ram)
+                updateCpu(vm.cpu, vm.bus)
             }
             "step" -> {
                 vm.stepInstruction()
-                updateCpu(vm.cpu, vm.ram)
+                updateCpu(vm.cpu, vm.bus)
             }
             "pause" -> {
                 vm.paused = true
@@ -246,7 +245,7 @@ class DebugWindow(val vm: VirtualMachine) : JFrame("debugger"), ActionListener {
         }
     }
 
-    fun updateCpu(cpu: Cpu6502, mem: MemoryComponent) {
+    fun updateCpu(cpu: Cpu6502, bus: Bus) {
         cyclesTf.text = cpu.totalCycles.toString()
         regAtf.text = cpu.hexB(cpu.regA)
         regXtf.text = cpu.hexB(cpu.regX)
@@ -254,7 +253,8 @@ class DebugWindow(val vm: VirtualMachine) : JFrame("debugger"), ActionListener {
         regPtf.text = "NV-BDIZC\n" + cpu.regP.asByte().toString(2).padStart(8, '0')
         regPCtf.text = cpu.hexW(cpu.regPC)
         regSPtf.text = cpu.hexB(cpu.regSP)
-        disassemTf.text = cpu.disassembleOneInstruction(mem.data, cpu.regPC, mem.startAddress).first.substringAfter(' ').trim()
+        val memory = bus.memoryComponentFor(cpu.regPC)
+        disassemTf.text = cpu.disassembleOneInstruction(memory.data, cpu.regPC, memory.startAddress).first.substringAfter(' ').trim()
     }
 }
 
@@ -327,6 +327,8 @@ class MainWindow(title: String) : JFrame(title), KeyListener, MouseInputListener
         setLocationRelativeTo(null)
         setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, mutableSetOf())
         isVisible = true
+        toFront()
+        requestFocus()
     }
 
     fun start() {

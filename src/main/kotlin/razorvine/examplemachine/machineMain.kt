@@ -18,8 +18,8 @@ class VirtualMachine(title: String) {
     private val rtc = RealTimeClock(0xd100, 0xd108)
     private val timer = Timer(0xd200, 0xd203, cpu)
 
-    private val hostDisplay = MainWindow(title)
     private val debugWindow = DebugWindow(this)
+    private val hostDisplay = MainWindow(title)
     private val display = Display(0xd000, 0xd00a, hostDisplay,
         ScreenDefs.SCREEN_WIDTH_CHARS, ScreenDefs.SCREEN_HEIGHT_CHARS,
         ScreenDefs.SCREEN_WIDTH, ScreenDefs.SCREEN_HEIGHT)
@@ -47,6 +47,7 @@ class VirtualMachine(title: String) {
 
         debugWindow.setLocation(hostDisplay.location.x+hostDisplay.width, hostDisplay.location.y)
         debugWindow.isVisible = true
+        hostDisplay.requestFocus()
     }
 
     var paused = false
@@ -62,10 +63,10 @@ class VirtualMachine(title: String) {
         val startTime = System.currentTimeMillis()
         timer.scheduleAtFixedRate(1, 1) {
             if(!paused) {
-                repeat(20) {
+                repeat(50) {
                     stepInstruction()
                 }
-                debugWindow.updateCpu(cpu, ram)
+                debugWindow.updateCpu(cpu, bus)
                 val duration = System.currentTimeMillis() - startTime
                 val speedKhz = cpu.totalCycles.toDouble() / duration
                 debugWindow.speedKhzTf.text = "%.1f".format(speedKhz)
