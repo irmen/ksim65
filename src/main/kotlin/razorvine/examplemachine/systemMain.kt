@@ -6,6 +6,7 @@ import razorvine.ksim65.Cpu6502
 import razorvine.ksim65.Version
 import razorvine.ksim65.components.*
 import razorvine.ksim65.components.Timer
+import javax.swing.ImageIcon
 
 /**
  * A virtual computer constructed from the various virtual components
@@ -26,6 +27,9 @@ class VirtualMachine(title: String) {
     private val keyboard = Keyboard(0xd400, 0xd400, hostDisplay)
 
     init {
+        hostDisplay.iconImage = ImageIcon(javaClass.getResource("/icon.png")).image
+        debugWindow.iconImage = hostDisplay.iconImage
+
         ram[Cpu6502.RESET_vector] = 0x00
         ram[Cpu6502.RESET_vector + 1] = 0x10
         ram.loadPrg(javaClass.getResourceAsStream("/vmdemo.prg"))
@@ -58,7 +62,7 @@ class VirtualMachine(title: String) {
         val startTime = System.currentTimeMillis()
         timer.scheduleAtFixedRate(1, 1) {
             if(!paused) {
-                repeat(5) {
+                repeat(20) {
                     stepInstruction()
                 }
                 debugWindow.updateCpu(cpu, ram)
