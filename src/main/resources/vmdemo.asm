@@ -41,7 +41,7 @@ start
 	jmp  +
 
 _title1 .text "**** COMMODORE 64 BASIC V2 ****", 10, 10, " 64K RAM SYSTEM  38911 BASIC BYTES FREE", 10, 10, "READY.",10,0
-_text2  .text 10,"Nah, only joking, this is not a weird C-64.",10,"This is a working fantasy virtual 8-bit 6502 machine though!",10
+_text2  .text 10,"Nah, only joking, this is not a weird C-64.",10,"This is a working fantasy 8-bit 6502 machine though!",10
 	.text "Type some stuff on the keyboard, use the mouse (with Left button/Right button)", 10, "to draw/erase pixels.",10,10,0
 _text3	.text "Mouse drawing and keyboard scanning: done in main program loop.",10
 	.text "Time displayed at the bottom of the screen: done in timer IRQ.",10,10,0
@@ -56,7 +56,11 @@ _text3	.text "Mouse drawing and keyboard scanning: done in main program loop.",1
 
 ;--------- draw with mouse
 mousedraw
-	sta  MOUSE+5		; sample position and buttons
+	lda  KEYBOARD
+	beq  +			; no key
+	sta  DISPLAY+$a
+
++	sta  MOUSE+5		; sample position and buttons
 	lda  MOUSE+0
 	sta  DISPLAY+3
 	lda  MOUSE+1

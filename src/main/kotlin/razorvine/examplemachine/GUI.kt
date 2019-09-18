@@ -3,13 +3,14 @@ package razorvine.examplemachine
 import razorvine.ksim65.Cpu6502
 import java.awt.*
 import java.awt.image.BufferedImage
-import java.util.ArrayDeque
 import javax.imageio.ImageIO
 import javax.swing.event.MouseInputListener
 import razorvine.ksim65.IHostInterface
 import razorvine.ksim65.components.MemoryComponent
 import java.awt.event.*
+import java.util.*
 import javax.swing.*
+import javax.swing.Timer
 
 
 /**
@@ -324,6 +325,7 @@ class MainWindow(title: String) : JFrame(title), KeyListener, MouseInputListener
         pack()
         requestFocusInWindow()
         setLocationRelativeTo(null)
+        setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, mutableSetOf())
         isVisible = true
     }
 
@@ -343,8 +345,6 @@ class MainWindow(title: String) : JFrame(title), KeyListener, MouseInputListener
 
     // keyboard events:
     override fun keyTyped(event: KeyEvent) {
-        println(event)
-        println("[${event.keyChar}]")
         keyboardBuffer.add(event.keyChar)
         while (keyboardBuffer.size > 8)
             keyboardBuffer.pop()

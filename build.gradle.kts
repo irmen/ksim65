@@ -59,7 +59,7 @@ tasks.named<Test>("test") {
     maxParallelForks = max(1, Runtime.getRuntime().availableProcessors() / 2)
 }
 
-tasks.withType<KotlinCompile>() {
+tasks.withType<KotlinCompile> {
     kotlinOptions.jvmTarget = "1.8"
 }
 
