@@ -35,66 +35,47 @@ start
 	sta  DISPLAY+8
 	lda  #1
 	sta  DISPLAY+9
-	ldy  #0
--	lda  _title1,y
-	beq  +
-	sta  DISPLAY+10
-	iny
-	bne  -
-	beq  +
+	lda  #<_title1
+	ldy  #>_title1
+	jsr  print
+	jmp  +
 
 _title1 .text "**** COMMODORE 64 BASIC V2 ****", 10, 10, " 64K RAM SYSTEM  38911 BASIC BYTES FREE", 10, 10, "READY.",10,0
+_text2  .text 10,"Nah, only joking, this is not a weird C-64.",10,"This is a working fantasy virtual 8-bit 6502 machine though!",10
+	.text "Type some stuff on the keyboard, use the mouse (with Left button/Right button)", 10, "to draw/erase pixels.",10,10,0
+_text3	.text "Mouse drawing and keyboard scanning: done in main program loop.",10
+	.text "Time displayed at the bottom of the screen: done in timer IRQ.",10,10,0
 
-
-+
-
-; ------- draw pixel line
-pixelline
-	ldx  pix_x
-	stx  DISPLAY+3
-	ldx  pix_x+1
-	stx  DISPLAY+4
-	ldx  pix_y
-	stx  DISPLAY+5
-	ldx  pix_y+1
-	stx  DISPLAY+6
-	lda  #1
-	sta  DISPLAY+7		; plot
-	lda  pix_x
-	clc
-	adc  #2
-	sta  pix_x
-	bcc  +
-	inc  pix_x+1
-+	inc  pix_y
-	bne  +
-	inc  pix_y+1
-+	lda  pix_x+1
-	cmp  #>SCREEN_WIDTH
-	bcc  pixelline
-	bne  stop1
-	lda  pix_x
-	cmp  #<SCREEN_WIDTH
-	bcc  pixelline
-	bcs  stop1
-pix_x	.word 0
-pix_y	.word 0
-
-stop1
++	jsr  delay
+	lda  #<_text2
+	ldy  #>_text2
+	jsr  print
+	lda  #<_text3
+	ldy  #>_text3
+	jsr  print
 
 ;--------- draw with mouse
 mousedraw
-	ldx  MOUSE+0
-	ldy  MOUSE+2
-	stx  DISPLAY+3
-	sty  DISPLAY+5
-	ldx  MOUSE+1
-	ldy  MOUSE+3
-	stx  DISPLAY+4
-	sty  DISPLAY+6
+	sta  MOUSE+5		; sample position and buttons
+	lda  MOUSE+0
+	sta  DISPLAY+3
+	lda  MOUSE+1
+	sta  DISPLAY+4
+	lda  MOUSE+2
+	sta  DISPLAY+5
+	lda  MOUSE+3
+	sta  DISPLAY+6
+	lda  MOUSE+4		; buttons
+	lsr  a
+	bcc  +
 	lda  #1
-	sta  DISPLAY+7		; plot pixel
-	jmp  mousedraw
+	sta  DISPLAY+7		; plot pixel with LMB
+	bne  mousedraw
++	lsr  a
+	bcc  mousedraw
+	lda  #0
+	sta  DISPLAY+7		; erase pixel with RMB
+	beq  mousedraw
 
 
 character .byte 0
@@ -199,6 +180,25 @@ _time_msg	.text  "The current date and time is: ",0
 
 
 ; ----- routines
+delay	ldx  #50
+-	ldy  #0
+-	nop
+	dey
+	bne  -
+	dex
+	bne  --
+	rts
+
+print	sta  _mod+1
+	sty  _mod+2
+	ldy  #0
+_mod	lda  $ffff,y	; modified
+	beq  +
+	sta  DISPLAY+$0a
+	iny
+	bne  _mod
++	rts
+
 textout
 	sta  _mod+1
 	sty  _mod+2

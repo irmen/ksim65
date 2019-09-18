@@ -342,37 +342,46 @@ class MainWindow(title: String) : JFrame(title), KeyListener, MouseInputListener
     }
 
     // keyboard events:
-    override fun keyTyped(p0: KeyEvent) {
-        println(p0)
-        println("[${p0.keyChar}]")
-        keyboardBuffer.add(p0.keyChar)
+    override fun keyTyped(event: KeyEvent) {
+        println(event)
+        println("[${event.keyChar}]")
+        keyboardBuffer.add(event.keyChar)
         while (keyboardBuffer.size > 8)
             keyboardBuffer.pop()
     }
 
-    override fun keyPressed(p0: KeyEvent) {}
-    override fun keyReleased(p0: KeyEvent) {}
+    override fun keyPressed(event: KeyEvent) {}
+    override fun keyReleased(event: KeyEvent) {}
 
     // mouse events:
-    override fun mousePressed(p0: MouseEvent) {}
-
-    override fun mouseReleased(p0: MouseEvent) {}
-    override fun mouseEntered(p0: MouseEvent) {}
-    override fun mouseExited(p0: MouseEvent) {}
-    override fun mouseDragged(p0: MouseEvent) {}
-    override fun mouseClicked(p0: MouseEvent) {
+    override fun mousePressed(event: MouseEvent) {
         val pos = canvas.mousePixelPosition()
         if (pos == null)
             return
         else {
             mousePos = pos
-            leftButton = SwingUtilities.isLeftMouseButton(p0)
-            rightButton = SwingUtilities.isRightMouseButton(p0)
-            middleButton = SwingUtilities.isMiddleMouseButton(p0)
+            leftButton = leftButton or SwingUtilities.isLeftMouseButton(event)
+            rightButton = rightButton or SwingUtilities.isRightMouseButton(event)
+            middleButton = middleButton or SwingUtilities.isMiddleMouseButton(event)
         }
     }
+    override fun mouseReleased(event: MouseEvent) {
+        val pos = canvas.mousePixelPosition()
+        if (pos == null)
+            return
+        else {
+            mousePos = pos
+            leftButton = leftButton xor SwingUtilities.isLeftMouseButton(event)
+            rightButton = rightButton xor SwingUtilities.isRightMouseButton(event)
+            middleButton = middleButton xor SwingUtilities.isMiddleMouseButton(event)
+        }
+    }
+    override fun mouseEntered(event: MouseEvent) {}
+    override fun mouseExited(event: MouseEvent) {}
+    override fun mouseDragged(event: MouseEvent) = mouseMoved(event)
+    override fun mouseClicked(event: MouseEvent) {}
 
-    override fun mouseMoved(p0: MouseEvent) {
+    override fun mouseMoved(event: MouseEvent) {
         val pos = canvas.mousePixelPosition()
         if (pos == null)
             return
