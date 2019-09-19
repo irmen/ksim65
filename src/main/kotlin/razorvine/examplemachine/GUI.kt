@@ -7,6 +7,7 @@ import java.awt.image.BufferedImage
 import javax.imageio.ImageIO
 import javax.swing.event.MouseInputListener
 import razorvine.ksim65.IHostInterface
+import razorvine.ksim65.IVirtualMachine
 import java.awt.event.*
 import java.util.*
 import javax.swing.*
@@ -146,7 +147,7 @@ private class BitmapScreenPanel : JPanel() {
     }
 }
 
-class DebugWindow(val vm: VirtualMachine) : JFrame("debugger"), ActionListener {
+class DebugWindow(val vm: IVirtualMachine) : JFrame("debugger"), ActionListener {
     val cyclesTf = JTextField("00000000000000")
     val speedKhzTf = JTextField("0000000")
     val regAtf = JTextField("000")
@@ -160,7 +161,7 @@ class DebugWindow(val vm: VirtualMachine) : JFrame("debugger"), ActionListener {
 
     init {
         defaultCloseOperation = EXIT_ON_CLOSE
-        preferredSize = Dimension(350, 600)
+        preferredSize = Dimension(350, 500)
         val cpuPanel = JPanel(GridBagLayout())
         cpuPanel.border = BorderFactory.createTitledBorder("CPU: ${vm.cpu.name}")
         val gc = GridBagConstraints()
@@ -323,12 +324,9 @@ class MainWindow(title: String) : JFrame(title), KeyListener, MouseInputListener
         addMouseMotionListener(this)
         addMouseListener(this)
         pack()
-        requestFocusInWindow()
         setLocationRelativeTo(null)
         setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, mutableSetOf())
-        isVisible = true
-        toFront()
-        requestFocus()
+        requestFocusInWindow()
     }
 
     fun start() {

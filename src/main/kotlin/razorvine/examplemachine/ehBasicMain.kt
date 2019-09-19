@@ -33,8 +33,8 @@ class EhBasicMachine(title: String) {
         bus += cpu
         bus.reset()
 
+        hostDisplay.isVisible = true
         hostDisplay.start()
-        hostDisplay.requestFocus()
     }
 
     var paused = false
