@@ -48,7 +48,7 @@ class Display(
     private var charposY = 0
     private var pixelX = 0
     private var pixelY = 0
-    private val charMatrix = Array<ShortArray>(charHeight) { ShortArray(charWidth) }    // matrix[y][x] to access
+    private val charMatrix = Array(charHeight) { ShortArray(charWidth) }    // matrix[y][x] to access
 
     override fun clock() {
         // if the system clock is synced to the display refresh,

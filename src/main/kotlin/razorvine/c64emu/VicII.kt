@@ -33,12 +33,9 @@ class VicII(startAddress: Address, endAddress: Address): MemMappedComponent(star
     }
 
     override fun get(address: Address): UByte {
-        val register = (address - startAddress) and 63
-        // println("VIC GET ${register.toString(16)}")
-        return when(register) {
+        return when(val register = (address - startAddress) and 63) {
             0x11 -> (0b00011011 or ((currentRasterLine and 0b100000000) ushr 1)).toShort()
             0x12 -> {
-                // println("   read raster: $currentRasterLine")
                 (currentRasterLine and 255).toShort()
             }
             0x19 -> interruptStatusRegisterD019.toShort()

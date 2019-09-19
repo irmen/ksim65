@@ -147,16 +147,16 @@ private class BitmapScreenPanel : JPanel() {
     }
 }
 
-class DebugWindow(val vm: IVirtualMachine) : JFrame("debugger"), ActionListener {
-    val cyclesTf = JTextField("00000000000000")
-    val speedKhzTf = JTextField("0000000")
-    val regAtf = JTextField("000")
-    val regXtf = JTextField("000")
-    val regYtf = JTextField("000")
-    val regPCtf = JTextField("00000")
-    val regSPtf = JTextField("000")
-    val regPtf = JTextArea("NV-BDIZC\n000000000")
-    val disassemTf = JTextField("00 00 00   lda   (fffff),x")
+class DebugWindow(private val vm: IVirtualMachine) : JFrame("debugger"), ActionListener {
+    private val cyclesTf = JTextField("00000000000000")
+    internal val speedKhzTf = JTextField("0000000")
+    private val regAtf = JTextField("000")
+    private val regXtf = JTextField("000")
+    private val regYtf = JTextField("000")
+    private val regPCtf = JTextField("00000")
+    private val regSPtf = JTextField("000")
+    private val regPtf = JTextArea("NV-BDIZC\n000000000")
+    private val disassemTf = JTextField("00 00 00   lda   (fffff),x")
     private val pauseBt = JButton("Pause").also { it.actionCommand = "pause" }
 
     init {

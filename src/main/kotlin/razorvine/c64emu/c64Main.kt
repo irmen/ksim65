@@ -17,9 +17,9 @@ import javax.swing.ImageIcon
 class C64Machine(title: String) : IVirtualMachine {
 
     private val romsPath = Paths.get(expandUser("~/.vice/C64"))
-    val chargenData = romsPath.resolve("chargen").toFile().readBytes()
-    val basicData = romsPath.resolve("basic").toFile().readBytes()
-    val kernalData = romsPath.resolve("kernal").toFile().readBytes()
+    private val chargenData = romsPath.resolve("chargen").toFile().readBytes()
+    private val basicData = romsPath.resolve("basic").toFile().readBytes()
+    private val kernalData = romsPath.resolve("kernal").toFile().readBytes()
 
     override val bus = Bus()
     override val cpu = Cpu6502(false)
@@ -50,7 +50,7 @@ class C64Machine(title: String) : IVirtualMachine {
 
     private fun expandUser(path: String): String {
         if(path.startsWith("~" + File.separator)) {
-            return System.getProperty("user.home") + path.substring(1);
+            return System.getProperty("user.home") + path.substring(1)
         } else {
             throw UnsupportedOperationException("home dir expansion not implemented for other users")
         }

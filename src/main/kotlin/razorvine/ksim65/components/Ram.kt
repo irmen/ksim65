@@ -2,7 +2,6 @@ package razorvine.ksim65.components
 
 import java.io.File
 import java.io.InputStream
-import java.net.URL
 
 /**
  * A RAM chip with read/write memory.

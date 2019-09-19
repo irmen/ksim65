@@ -4,8 +4,6 @@ import razorvine.ksim65.components.MemoryComponent
 import java.awt.*
 import java.awt.image.BufferedImage
 import java.awt.event.*
-import java.awt.image.ByteLookupTable
-import java.awt.image.LookupOp
 import java.io.CharConversionException
 import java.util.*
 import javax.swing.*
@@ -108,18 +106,18 @@ private class BitmapScreenPanel(val chargenData: ByteArray, val ram: MemoryCompo
     private fun drawColoredChar(x: Int, y: Int, char: Int, color: Int) {
         var cached = coloredCharacters[Pair(char, color)]
         if(cached==null) {
-            cached = normalCharacters.get(char)
+            cached = normalCharacters[char]
             val colored = g2d.deviceConfiguration.createCompatibleImage(8, 8, BufferedImage.BITMASK)
             val sourceRaster = cached.raster
             val coloredRaster = colored.raster
             val pixelArray = IntArray(4)
             val javaColor = ScreenDefs.colorPalette[color]
             val coloredPixel = listOf(javaColor.red, javaColor.green, javaColor.blue, javaColor.alpha).toIntArray()
-            for(y in 0..7) {
-                for(x in 0..7) {
-                    val source = sourceRaster.getPixel(x, y, pixelArray)
+            for(pixelY in 0..7) {
+                for(pixelX in 0..7) {
+                    val source = sourceRaster.getPixel(pixelX, pixelY, pixelArray)
                     if(source[0]!=0) {
-                        coloredRaster.setPixel(x, y, coloredPixel)
+                        coloredRaster.setPixel(pixelX, pixelY, coloredPixel)
                     }
                 }
             }
@@ -132,7 +130,7 @@ private class BitmapScreenPanel(val chargenData: ByteArray, val ram: MemoryCompo
 
 class MainWindow(title: String, chargenData: ByteArray, val ram: MemoryComponent) : JFrame(title), KeyListener {
     private val canvas = BitmapScreenPanel(chargenData, ram)
-    val keyboardBuffer = ArrayDeque<Char>()
+    private val keyboardBuffer = ArrayDeque<Char>()
     private var borderTop: JPanel
     private var borderBottom: JPanel
     private var borderLeft: JPanel
@@ -212,19 +210,15 @@ class MainWindow(title: String, chargenData: ByteArray, val ram: MemoryComponent
                 var kbbLen = ram[0xc6]
                 while(kbbLen<=10 && keyboardBuffer.isNotEmpty()) {
                     try {
-                        val char = keyboardBuffer.pop()
-                        // print("CHAR: '$char' ${char.toShort()} -> ")
-                        val petscii = when(char) {
+                        val petscii = when(val char = keyboardBuffer.pop()) {
                             '\n' -> 13      // enter
                             '\b' -> 20         // backspace ('delete')
                             else -> Petscii.encodePetscii(char.toString(), true)[0]
                         }
-                        // println("$petscii")
                         ram[0x277 + kbbLen] = petscii
                         kbbLen++
                     } catch(ccx: CharConversionException) {
                         // ignore character
-                        // println("ignored")
                     }
                 }
                 ram[0xc6] = kbbLen
