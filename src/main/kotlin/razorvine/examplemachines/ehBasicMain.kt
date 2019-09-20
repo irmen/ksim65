@@ -1,4 +1,4 @@
-package razorvine.examplemachine
+package razorvine.examplemachines
 
 import kotlin.concurrent.scheduleAtFixedRate
 import razorvine.ksim65.Bus
@@ -23,6 +23,7 @@ class EhBasicMachine(title: String): IVirtualMachine {
         ScreenDefs.SCREEN_WIDTH_CHARS, ScreenDefs.SCREEN_HEIGHT_CHARS,
         ScreenDefs.SCREEN_WIDTH, ScreenDefs.SCREEN_HEIGHT)
     private val keyboard = Keyboard(0xd400, 0xd400, hostDisplay)
+    private var paused = false
 
     init {
         hostDisplay.iconImage = ImageIcon(javaClass.getResource("/icon.png")).image
@@ -38,9 +39,12 @@ class EhBasicMachine(title: String): IVirtualMachine {
         hostDisplay.start()
     }
 
-    override var paused = false
+    override fun pause(paused: Boolean) {
+        this.paused = paused
+    }
 
-    override fun stepInstruction() {
+    override fun step() {
+        // step a full single instruction
         while (cpu.instrCycles > 0) bus.clock()
         bus.clock()
         while (cpu.instrCycles > 0) bus.clock()
@@ -51,7 +55,7 @@ class EhBasicMachine(title: String): IVirtualMachine {
         timer.scheduleAtFixedRate(1, 1) {
             if(!paused) {
                 repeat(500) {
-                    stepInstruction()
+                    step()
                 }
             }
         }

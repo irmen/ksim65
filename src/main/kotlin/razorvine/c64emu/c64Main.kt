@@ -1,6 +1,6 @@
 package razorvine.c64emu
 
-import razorvine.examplemachine.DebugWindow
+import razorvine.examplemachines.DebugWindow
 import kotlin.concurrent.scheduleAtFixedRate
 import razorvine.ksim65.Bus
 import razorvine.ksim65.Cpu6502
@@ -30,6 +30,7 @@ class C64Machine(title: String) : IVirtualMachine {
 
     private val debugWindow = DebugWindow(this)
     private val hostDisplay = MainWindow(title, chargenData, ram)
+    private var paused = false
 
     init {
         hostDisplay.iconImage = ImageIcon(javaClass.getResource("/icon.png")).image
@@ -56,9 +57,13 @@ class C64Machine(title: String) : IVirtualMachine {
         }
     }
 
-    override var paused = false
 
-    override fun stepInstruction() {
+    override fun pause(paused: Boolean) {
+        this.paused = paused
+    }
+
+    override fun step() {
+        // step a single full instruction
         while (cpu.instrCycles > 0) bus.clock()
         bus.clock()
         while (cpu.instrCycles > 0) bus.clock()
@@ -70,7 +75,7 @@ class C64Machine(title: String) : IVirtualMachine {
         timer.scheduleAtFixedRate(1, 1) {
             if(!paused) {
                 repeat(400) {
-                    stepInstruction()
+                    step()
                     if(vic.currentRasterLine == 255) {
                         // we force an irq here ourselves rather than fully emulating the VIC-II's raster IRQ
                         // or the CIA timer IRQ/NMI.

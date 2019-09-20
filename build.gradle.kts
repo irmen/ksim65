@@ -42,7 +42,7 @@ dependencies {
 
 application {
     applicationName = "ksim65vm"
-    mainClassName = "razorvine.examplemachine.MachineMainKt"
+    mainClassName = "razorvine.examplemachines.MachineMainKt"
 }
 
 tasks.named<Test>("test") {

@@ -4,6 +4,10 @@ import razorvine.ksim65.components.Address
 import razorvine.ksim65.components.MemMappedComponent
 import razorvine.ksim65.components.UByte
 
+/**
+ * Minimal simulation of the VIC-II graphics chip
+ * It only has some logic to keep track of the raster line
+ */
 class VicII(startAddress: Address, endAddress: Address): MemMappedComponent(startAddress, endAddress) {
     private var ramBuffer = Array<UByte>(endAddress - startAddress + 1) { 0 }
     private var rasterIrqLine = 0

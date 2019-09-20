@@ -1,6 +1,6 @@
 package razorvine.ksim65.components
 
-import razorvine.examplemachine.ScreenDefs
+import razorvine.examplemachines.ScreenDefs
 import razorvine.ksim65.IHostInterface
 import kotlin.math.min
 

@@ -1,6 +1,7 @@
 package razorvine.c64emu
 
 import razorvine.ksim65.components.MemoryComponent
+import razorvine.ksim65.components.UByte
 import java.awt.*
 import java.awt.image.BufferedImage
 import java.awt.event.*
@@ -19,7 +20,7 @@ object ScreenDefs {
     const val SCREEN_HEIGHT_CHARS = 25
     const val SCREEN_WIDTH = SCREEN_WIDTH_CHARS * 8
     const val SCREEN_HEIGHT = SCREEN_HEIGHT_CHARS * 8
-    const val DISPLAY_PIXEL_SCALING: Double = 2.0
+    const val DISPLAY_PIXEL_SCALING: Double = 3.0
 
     val colorPalette = listOf(         // this is Pepto's Commodore-64 palette  http://www.pepto.de/projects/colorvic/
         Color(0x000000),  // 0 = black
@@ -130,7 +131,7 @@ private class BitmapScreenPanel(val chargenData: ByteArray, val ram: MemoryCompo
 
 class MainWindow(title: String, chargenData: ByteArray, val ram: MemoryComponent) : JFrame(title), KeyListener {
     private val canvas = BitmapScreenPanel(chargenData, ram)
-    private val keyboardBuffer = ArrayDeque<Char>()
+    private val keyboardBuffer = ArrayDeque<KeyEvent>()
     private var borderTop: JPanel
     private var borderBottom: JPanel
     private var borderLeft: JPanel
@@ -210,13 +211,11 @@ class MainWindow(title: String, chargenData: ByteArray, val ram: MemoryComponent
                 var kbbLen = ram[0xc6]
                 while(kbbLen<=10 && keyboardBuffer.isNotEmpty()) {
                     try {
-                        val petscii = when(val char = keyboardBuffer.pop()) {
-                            '\n' -> 13      // enter
-                            '\b' -> 20         // backspace ('delete')
-                            else -> Petscii.encodePetscii(char.toString(), true)[0]
+                        val petscii = keyEventToPetscii(keyboardBuffer.pop())
+                        if(petscii > 0) {
+                            ram[0x277 + kbbLen] = petscii
+                            kbbLen++
                         }
-                        ram[0x277 + kbbLen] = petscii
-                        kbbLen++
                     } catch(ccx: CharConversionException) {
                         // ignore character
                     }
@@ -228,14 +227,136 @@ class MainWindow(title: String, chargenData: ByteArray, val ram: MemoryComponent
         repaintTimer.start()
     }
 
-    // keyboard events:
-    override fun keyTyped(event: KeyEvent) {
-        // println("KEY TYPED:  $event   '${event.keyChar}'")
-        keyboardBuffer.add(event.keyChar)
-        while (keyboardBuffer.size > 8)
-            keyboardBuffer.pop()
+    private fun keyEventToPetscii(ke: KeyEvent): UByte {
+        if(ke.isActionKey) {
+            // function keys, cursor keys etc.
+            if(ke.id == KeyEvent.KEY_PRESSED) {
+                return when (ke.keyCode) {
+                    KeyEvent.VK_F1 -> 0x85
+                    KeyEvent.VK_F2 -> 0x86
+                    KeyEvent.VK_F3 -> 0x87
+                    KeyEvent.VK_F4 -> 0x88
+                    KeyEvent.VK_F5 -> 0x89
+                    KeyEvent.VK_F6 -> 0x8a
+                    KeyEvent.VK_F7 -> 0x8b
+                    KeyEvent.VK_F8 -> 0x8c
+                    KeyEvent.VK_UP -> 0x91
+                    KeyEvent.VK_DOWN -> 0x11
+                    KeyEvent.VK_LEFT -> 0x9d
+                    KeyEvent.VK_RIGHT -> 0x1d
+                    KeyEvent.VK_HOME -> {
+                        if(ke.modifiersEx and KeyEvent.SHIFT_DOWN_MASK != 0)
+                            0x93  // clear
+                        else
+                            0x13  // home
+                    }
+                    KeyEvent.VK_INSERT -> 0x94  //insert
+                    else -> 0   // no mapped key
+                }
+            }
+        } else {
+            if(ke.id == KeyEvent.KEY_PRESSED) {
+                return when(ke.keyChar) {
+                    '\u001b' -> {
+                        if(ke.isShiftDown) 0x83
+                        else 0x03
+                    }        // break
+                    '\n' -> 0x0d      // enter
+                    '\b' -> 0x14      // backspace ('delete')
+                    '1' -> {
+                        when {
+                            ke.isControlDown -> 0x90    // black
+                            ke.isAltDown -> 0x81        // orange
+                            else -> '1'.toShort()
+                        }
+                    }
+                    '2' -> {
+                        when {
+                            ke.isControlDown -> 0x05    // white
+                            ke.isAltDown -> 0x95        // brown
+                            else -> '2'.toShort()
+                        }
+                    }
+                    '3' -> {
+                        when {
+                            ke.isControlDown -> 0x1c    // red
+                            ke.isAltDown -> 0x96        // pink
+                            else -> '3'.toShort()
+                        }
+                    }
+                    '4' -> {
+                        when {
+                            ke.isControlDown -> 0x9f    // cyan
+                            ke.isAltDown -> 0x97        // dark grey
+                            else -> '4'.toShort()
+                        }
+                    }
+                    '5' -> {
+                        when {
+                            ke.isControlDown -> 0x9c    // purple
+                            ke.isAltDown -> 0x98        // grey
+                            else -> '5'.toShort()
+                        }
+                    }
+                    '6' -> {
+                        when {
+                            ke.isControlDown -> 0x1e    // green
+                            ke.isAltDown -> 0x99        // light green
+                            else -> '6'.toShort()
+                        }
+                    }
+                    '7' -> {
+                        when {
+                            ke.isControlDown -> 0x1f    // blue
+                            ke.isAltDown -> 0x9a        // light blue
+                            else -> '7'.toShort()
+                        }
+                    }
+                    '8' -> {
+                        when {
+                            ke.isControlDown -> 0x9e    // yellow
+                            ke.isAltDown -> 0x9b        // light grey
+                            else -> '8'.toShort()
+                        }
+                    }
+                    '9' -> {
+                        when {
+                            ke.isControlDown -> 0x12    // reverse on
+                            else -> '9'.toShort()
+                        }
+                    }
+                    '0' -> {
+                        when {
+                            ke.isControlDown -> 0x92    // reverse off
+                            else -> '0'.toShort()
+                        }
+                    }
+                    '`' -> 0x5f    // left arrow
+                    '\\' -> 0x5e  // up arrow
+                    '|' -> 0x7e  // pi
+                    '}' -> 0x5c  // pound
+                    else -> Petscii.encodePetscii(ke.keyChar.toString(), true)[0]
+                }
+            }
+            else if(ke.id == KeyEvent.KEY_RELEASED) {
+                if(ke.keyCode==KeyEvent.VK_SHIFT && ke.modifiersEx and KeyEvent.CTRL_DOWN_MASK != 0) {
+                    return 0x0e  // lo+up charset
+                }
+                else if(ke.keyCode==KeyEvent.VK_CONTROL && ke.modifiersEx and KeyEvent.SHIFT_DOWN_MASK != 0) {
+                    return 0x0e  // lo+up charset
+                }
+            }
+        }
+        return 0  // no mapped key
     }
 
-    override fun keyPressed(event: KeyEvent) {}
-    override fun keyReleased(event: KeyEvent) {}
+    // keyboard events:
+    override fun keyTyped(event: KeyEvent) {}
+
+    override fun keyPressed(event: KeyEvent) {
+        keyboardBuffer += event
+    }
+    override fun keyReleased(event: KeyEvent) {
+        keyboardBuffer += event
+    }
 }

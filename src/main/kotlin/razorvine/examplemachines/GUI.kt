@@ -1,4 +1,4 @@
-package razorvine.examplemachine
+package razorvine.examplemachines
 
 import razorvine.ksim65.Bus
 import razorvine.ksim65.Cpu6502
@@ -225,16 +225,16 @@ class DebugWindow(private val vm: IVirtualMachine) : JFrame("debugger"), ActionL
                 updateCpu(vm.cpu, vm.bus)
             }
             "step" -> {
-                vm.stepInstruction()
+                vm.step()
                 updateCpu(vm.cpu, vm.bus)
             }
             "pause" -> {
-                vm.paused = true
+                vm.pause(true)
                 pauseBt.actionCommand = "continue"
                 pauseBt.text = "Cont."
             }
             "continue" -> {
-                vm.paused = false
+                vm.pause(false)
                 pauseBt.actionCommand = "pause"
                 pauseBt.text = "Pause"
             }
@@ -262,11 +262,11 @@ class DebugWindow(private val vm: IVirtualMachine) : JFrame("debugger"), ActionL
 
 class MainWindow(title: String) : JFrame(title), KeyListener, MouseInputListener, IHostInterface {
     private val canvas = BitmapScreenPanel()
-    val keyboardBuffer = ArrayDeque<Char>()
-    var mousePos = Point(0, 0)
-    var leftButton = false
-    var rightButton = false
-    var middleButton = false
+    private val keyboardBuffer = ArrayDeque<Char>()
+    private var mousePos = Point(0, 0)
+    private var leftButton = false
+    private var rightButton = false
+    private var middleButton = false
 
     init {
         val borderWidth = 16
