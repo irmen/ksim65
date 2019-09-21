@@ -15,7 +15,6 @@ import javax.swing.ImageIcon
  * The virtual representation of the Commodore-64
  */
 class C64Machine(title: String) : IVirtualMachine {
-
     private val romsPath = Paths.get(expandUser("~/.vice/C64"))
     private val chargenData = romsPath.resolve("chargen").toFile().readBytes()
     private val basicData = romsPath.resolve("basic").toFile().readBytes()
@@ -29,7 +28,7 @@ class C64Machine(title: String) : IVirtualMachine {
     val kernalRom = Rom(0xe000, 0xffff).also { it.load(kernalData) }
 
     private val debugWindow = DebugWindow(this)
-    private val hostDisplay = MainWindow(title, chargenData, ram)
+    private val hostDisplay = MainC64Window(title, chargenData, ram)
     private var paused = false
 
     init {
@@ -58,6 +57,8 @@ class C64Machine(title: String) : IVirtualMachine {
     }
 
 
+    override fun getZeroAndStackPages(): Array<UByte> = ram.getPages(0, 2)
+
     override fun pause(paused: Boolean) {
         this.paused = paused
     }
@@ -70,9 +71,11 @@ class C64Machine(title: String) : IVirtualMachine {
     }
 
     fun start() {
-        val timer = java.util.Timer("clock", true)
-        val startTime = System.currentTimeMillis()
-        timer.scheduleAtFixedRate(1, 1) {
+        javax.swing.Timer(10) {
+            debugWindow.updateCpu(cpu, bus)
+        }.start()
+
+        java.util.Timer("cpu-clock", true).scheduleAtFixedRate(1, 1) {
             if(!paused) {
                 repeat(400) {
                     step()
@@ -82,10 +85,6 @@ class C64Machine(title: String) : IVirtualMachine {
                         cpu.irq()
                     }
                 }
-                debugWindow.updateCpu(cpu, bus)
-                val duration = System.currentTimeMillis() - startTime
-                val speedKhz = cpu.totalCycles.toDouble() / duration
-                debugWindow.speedKhzTf.text = "%.1f".format(speedKhz)
             }
         }
     }

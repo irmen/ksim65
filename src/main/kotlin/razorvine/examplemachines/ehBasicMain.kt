@@ -3,7 +3,6 @@ package razorvine.examplemachines
 import kotlin.concurrent.scheduleAtFixedRate
 import razorvine.ksim65.Bus
 import razorvine.ksim65.Cpu6502
-import razorvine.ksim65.IVirtualMachine
 import razorvine.ksim65.Version
 import razorvine.ksim65.components.*
 import javax.swing.ImageIcon
@@ -12,9 +11,9 @@ import javax.swing.ImageIcon
  * A virtual computer constructed from the various virtual components,
  * running the 6502 Enhanced Basic ROM.
  */
-class EhBasicMachine(title: String): IVirtualMachine {
-    override val bus = Bus()
-    override val cpu = Cpu6502(false)
+class EhBasicMachine(title: String) {
+    val bus = Bus()
+    val cpu = Cpu6502(false)
     val ram = Ram(0x0000, 0xbfff)
     val rom = Rom(0xc000, 0xffff).also { it.load(javaClass.getResourceAsStream("/ehbasic_C000.bin").readAllBytes()) }
 
@@ -39,23 +38,15 @@ class EhBasicMachine(title: String): IVirtualMachine {
         hostDisplay.start()
     }
 
-    override fun pause(paused: Boolean) {
-        this.paused = paused
-    }
-
-    override fun step() {
-        // step a full single instruction
-        while (cpu.instrCycles > 0) bus.clock()
-        bus.clock()
-        while (cpu.instrCycles > 0) bus.clock()
-    }
-
     fun start() {
-        val timer = java.util.Timer("clock", true)
-        timer.scheduleAtFixedRate(1, 1) {
+        val cpuTimer = java.util.Timer("cpu-clock", true)
+        cpuTimer.scheduleAtFixedRate(1, 1) {
             if(!paused) {
                 repeat(500) {
-                    step()
+                    // step a full single instruction
+                    while (cpu.instrCycles > 0) bus.clock()
+                    bus.clock()
+                    while (cpu.instrCycles > 0) bus.clock()
                 }
             }
         }

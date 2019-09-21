@@ -149,7 +149,7 @@ private class BitmapScreenPanel : JPanel() {
 
 class DebugWindow(private val vm: IVirtualMachine) : JFrame("debugger"), ActionListener {
     private val cyclesTf = JTextField("00000000000000")
-    internal val speedKhzTf = JTextField("0000000")
+    private val speedKhzTf = JTextField("0000000")
     private val regAtf = JTextField("000")
     private val regXtf = JTextField("000")
     private val regYtf = JTextField("000")
@@ -158,14 +158,27 @@ class DebugWindow(private val vm: IVirtualMachine) : JFrame("debugger"), ActionL
     private val regPtf = JTextArea("NV-BDIZC\n000000000")
     private val disassemTf = JTextField("00 00 00   lda   (fffff),x")
     private val pauseBt = JButton("Pause").also { it.actionCommand = "pause" }
+    private val zeropageTf = JTextArea(8, 102).also {
+        it.border = BorderFactory.createEtchedBorder()
+        it.isEnabled = false
+        it.disabledTextColor = Color.DARK_GRAY
+        it.font = Font(Font.MONOSPACED, Font.PLAIN, 12)
+    }
+    private val stackpageTf = JTextArea(8, 102).also {
+        it.border = BorderFactory.createEtchedBorder()
+        it.isEnabled=false
+        it.disabledTextColor = Color.DARK_GRAY
+        it.font = Font(Font.MONOSPACED, Font.PLAIN, 12)
+    }
+    private val startTime = System.currentTimeMillis()
 
     init {
+        contentPane.layout = GridBagLayout()
         defaultCloseOperation = EXIT_ON_CLOSE
-        preferredSize = Dimension(350, 500)
         val cpuPanel = JPanel(GridBagLayout())
         cpuPanel.border = BorderFactory.createTitledBorder("CPU: ${vm.cpu.name}")
         val gc = GridBagConstraints()
-        gc.insets = Insets(4, 4, 4, 4)
+        gc.insets = Insets(2, 2, 2, 2)
         gc.anchor = GridBagConstraints.EAST
         gc.gridx = 0
         gc.gridy = 0
@@ -178,42 +191,54 @@ class DebugWindow(private val vm: IVirtualMachine) : JFrame("debugger"), ActionL
         val regPClb = JLabel("PC")
         val regPlb = JLabel("Status")
         val disassemLb = JLabel("Instruction")
-        listOf(cyclesLb, speedKhzLb, regAlb, regXlb, regYlb, regSPlb, regPClb, regPlb, disassemLb).forEach {
+        listOf(cyclesLb, speedKhzLb, regAlb, regXlb, regYlb, regSPlb, regPClb, disassemLb, regPlb).forEach {
             cpuPanel.add(it, gc)
             gc.gridy++
         }
         gc.anchor = GridBagConstraints.WEST
         gc.gridx = 1
         gc.gridy = 0
-        listOf(cyclesTf, speedKhzTf, regAtf, regXtf, regYtf, regSPtf, regPCtf, regPtf, disassemTf).forEach {
+        listOf(cyclesTf, speedKhzTf, regAtf, regXtf, regYtf, regSPtf, regPCtf, disassemTf, regPtf).forEach {
             it.font = Font(Font.MONOSPACED, Font.PLAIN, 14)
-            it.isEditable = false
+            it.disabledTextColor = Color.DARK_GRAY
+            it.isEnabled = false
             if(it is JTextField) {
                 it.columns = it.text.length
             } else if(it is JTextArea) {
-                it.background = this.background
                 it.border = BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY),
                     BorderFactory.createEmptyBorder(2,2,2,2))
             }
             cpuPanel.add(it, gc)
             gc.gridy++
         }
-        add(cpuPanel, BorderLayout.NORTH)
 
         val buttonPanel = JPanel(FlowLayout())
         buttonPanel.border = BorderFactory.createTitledBorder("Control")
 
         val resetBt = JButton("Reset").also { it.actionCommand = "reset" }
-        val cycleBt = JButton("Step").also { it.actionCommand = "step" }
+        val stepBt = JButton("Step").also { it.actionCommand = "step" }
         val irqBt = JButton("IRQ").also { it.actionCommand = "irq" }
         val nmiBt = JButton("NMI").also { it.actionCommand = "nmi" }
         val quitBt = JButton("Quit").also { it.actionCommand = "quit" }
-        listOf(resetBt, cycleBt, irqBt, nmiBt, pauseBt, quitBt).forEach {
+        listOf(resetBt, irqBt, nmiBt, pauseBt, stepBt, quitBt).forEach {
             it.addActionListener(this)
             buttonPanel.add(it)
         }
 
-        add(buttonPanel, BorderLayout.CENTER)
+        val zeropagePanel = JPanel()
+        zeropagePanel.layout = BoxLayout(zeropagePanel, BoxLayout.Y_AXIS)
+        zeropagePanel.border = BorderFactory.createTitledBorder("Zeropage and Stack")
+        zeropagePanel.add(zeropageTf)
+        zeropagePanel.add(stackpageTf)
+
+        gc.gridx=0
+        gc.gridy=0
+        gc.fill=GridBagConstraints.BOTH
+        contentPane.add(cpuPanel, gc)
+        gc.gridy++
+        contentPane.add(zeropagePanel, gc)
+        gc.gridy++
+        contentPane.add(buttonPanel, gc)
 
         pack()
     }
@@ -231,7 +256,7 @@ class DebugWindow(private val vm: IVirtualMachine) : JFrame("debugger"), ActionL
             "pause" -> {
                 vm.pause(true)
                 pauseBt.actionCommand = "continue"
-                pauseBt.text = "Cont."
+                pauseBt.text = "Continue"
             }
             "continue" -> {
                 vm.pause(false)
@@ -256,6 +281,27 @@ class DebugWindow(private val vm: IVirtualMachine) : JFrame("debugger"), ActionL
         regSPtf.text = cpu.hexB(cpu.regSP)
         val memory = bus.memoryComponentFor(cpu.regPC)
         disassemTf.text = cpu.disassembleOneInstruction(memory.data, cpu.regPC, memory.startAddress).first.substringAfter(' ').trim()
+        val pages = vm.getZeroAndStackPages()
+        if(pages.isNotEmpty()) {
+            val zpLines = (0..0xff step 32).map { location ->
+                " ${'$'}${location.toString(16).padStart(2, '0')}  " + (
+                        (0..31).joinToString(" ") { lineoffset ->
+                            pages[location + lineoffset].toString(16).padStart(2, '0')
+                        })
+            }
+            val stackLines = (0x100..0x1ff step 32).map { location ->
+                "${'$'}${location.toString(16).padStart(2, '0')}  " + (
+                        (0..31).joinToString(" ") { lineoffset ->
+                            pages[location + lineoffset].toString(16).padStart(2, '0')
+                        })
+            }
+            zeropageTf.text = zpLines.joinToString ("\n")
+            stackpageTf.text = stackLines.joinToString ("\n")
+        }
+
+        val spentTime = System.currentTimeMillis() - startTime
+        val speedKhz = cpu.totalCycles.toDouble() / spentTime
+        speedKhzTf.text = "%.1f".format(speedKhz)
     }
 }
 
@@ -323,9 +369,10 @@ class MainWindow(title: String) : JFrame(title), KeyListener, MouseInputListener
         addKeyListener(this)
         addMouseMotionListener(this)
         addMouseListener(this)
+        setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, mutableSetOf())
         pack()
         setLocationRelativeTo(null)
-        setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, mutableSetOf())
+        location = Point(location.x/2, location.y)
         requestFocusInWindow()
     }
 

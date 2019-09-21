@@ -129,7 +129,7 @@ private class BitmapScreenPanel(val chargenData: ByteArray, val ram: MemoryCompo
     }
 }
 
-class MainWindow(title: String, chargenData: ByteArray, val ram: MemoryComponent) : JFrame(title), KeyListener {
+class MainC64Window(title: String, chargenData: ByteArray, val ram: MemoryComponent) : JFrame(title), KeyListener {
     private val canvas = BitmapScreenPanel(chargenData, ram)
     private val keyboardBuffer = ArrayDeque<KeyEvent>()
     private var borderTop: JPanel
@@ -192,6 +192,7 @@ class MainWindow(title: String, chargenData: ByteArray, val ram: MemoryComponent
         addKeyListener(this)
         pack()
         setLocationRelativeTo(null)
+        location = Point(location.x/2, location.y)
         setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, mutableSetOf())
         setFocusTraversalKeys(KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS, mutableSetOf())
         requestFocusInWindow()

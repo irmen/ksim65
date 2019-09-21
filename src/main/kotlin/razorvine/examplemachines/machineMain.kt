@@ -51,6 +51,8 @@ class VirtualMachine(title: String) : IVirtualMachine {
         hostDisplay.start()
     }
 
+    override fun getZeroAndStackPages(): Array<UByte> = ram.getPages(0, 2)
+
     override fun pause(paused: Boolean) {
         this.paused = paused
     }
@@ -63,17 +65,14 @@ class VirtualMachine(title: String) : IVirtualMachine {
     }
 
     fun start() {
-        val timer = java.util.Timer("clock", true)
-        val startTime = System.currentTimeMillis()
-        timer.scheduleAtFixedRate(1, 1) {
+        javax.swing.Timer(10) {
+            debugWindow.updateCpu(cpu, bus)
+        }.start()
+        java.util.Timer("cpu-clock", true).scheduleAtFixedRate(1, 1) {
             if(!paused) {
                 repeat(50) {
                     step()
                 }
-                debugWindow.updateCpu(cpu, bus)
-                val duration = System.currentTimeMillis() - startTime
-                val speedKhz = cpu.totalCycles.toDouble() / duration
-                debugWindow.speedKhzTf.text = "%.1f".format(speedKhz)
             }
         }
     }

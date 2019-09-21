@@ -65,4 +65,6 @@ abstract class MemoryComponent(startAddress: Address, endAddress: Address) :
     init {
         require(startAddress and 0xff == 0 && endAddress and 0xff == 0xff) {"address range must span complete page(s)"}
     }
+
+    fun getPages(page: Int, numPages: Int): Array<UByte> = data.copyOfRange(page*256, (page+numPages)*256)
 }
