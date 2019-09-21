@@ -57,6 +57,5 @@ class VicII(startAddress: Address, endAddress: Address): MemMappedComponent(star
             }
             0x12 -> rasterIrqLine = (rasterIrqLine and 0xff00) or data.toInt()
         }
-        // println("VIC SET ${register.toString(16)} = ${data.toString(16)}  (rasterIrqLine= $rasterIrqLine)")
     }
 }

@@ -47,6 +47,7 @@ private class BitmapScreenPanel(val chargenData: ByteArray, val ram: MemoryCompo
     private val image = BufferedImage(ScreenDefs.SCREEN_WIDTH, ScreenDefs.SCREEN_HEIGHT, BufferedImage.TYPE_INT_ARGB)
     private val g2d = image.graphics as Graphics2D
     private val normalCharacters = loadCharacters(false)
+    private val shiftedCharacters = loadCharacters(true)
 
     init {
         val size = Dimension(
@@ -91,23 +92,24 @@ private class BitmapScreenPanel(val chargenData: ByteArray, val ram: MemoryCompo
     private fun redrawCharacters() {
         val screen = 0x0400
         val colors = 0xd800
+        val shifted = (ram[0xd018].toInt() and 0b00000010) != 0
         g2d.background = ScreenDefs.colorPalette[ram[0xd021].toInt()]
         g2d.clearRect(0, 0, ScreenDefs.SCREEN_WIDTH, ScreenDefs.SCREEN_HEIGHT)
         for(y in 0 until ScreenDefs.SCREEN_HEIGHT_CHARS) {
             for(x in 0 until ScreenDefs.SCREEN_WIDTH_CHARS) {
                 val char = ram[screen + x + y*ScreenDefs.SCREEN_WIDTH_CHARS].toInt()
                 val color = ram[colors + x + y*ScreenDefs.SCREEN_WIDTH_CHARS].toInt()
-                drawColoredChar(x, y, char, color and 15)
+                drawColoredChar(x, y, char, color and 15, shifted)
             }
         }
     }
 
-    private val coloredCharacters = mutableMapOf<Pair<Int, Int>, BufferedImage>()
+    private val coloredCharacters = mutableMapOf<Triple<Int, Int, Boolean>, BufferedImage>()
 
-    private fun drawColoredChar(x: Int, y: Int, char: Int, color: Int) {
-        var cached = coloredCharacters[Pair(char, color)]
+    private fun drawColoredChar(x: Int, y: Int, char: Int, color: Int, shifted: Boolean) {
+        var cached = coloredCharacters[Triple(char, color, shifted)]
         if(cached==null) {
-            cached = normalCharacters[char]
+            cached = if(shifted) shiftedCharacters[char] else normalCharacters[char]
             val colored = g2d.deviceConfiguration.createCompatibleImage(8, 8, BufferedImage.BITMASK)
             val sourceRaster = cached.raster
             val coloredRaster = colored.raster
@@ -122,7 +124,7 @@ private class BitmapScreenPanel(val chargenData: ByteArray, val ram: MemoryCompo
                     }
                 }
             }
-            coloredCharacters[Pair(char, color)] = colored
+            coloredCharacters[Triple(char, color, shifted)] = colored
             cached = colored
         }
         g2d.drawImage(cached, x * 8, y * 8, null)
@@ -321,30 +323,64 @@ class MainC64Window(title: String, chargenData: ByteArray, val ram: MemoryCompon
                         }
                     }
                     '9' -> {
-                        when {
-                            ke.isControlDown -> 0x12    // reverse on
-                            else -> '9'.toShort()
-                        }
+                        if (ke.isControlDown) 0x12    // reverse on
+                        else '9'.toShort()
                     }
                     '0' -> {
-                        when {
-                            ke.isControlDown -> 0x92    // reverse off
-                            else -> '0'.toShort()
-                        }
+                        if (ke.isControlDown) 0x92    // reverse off
+                        else '0'.toShort()
                     }
                     '`' -> 0x5f    // left arrow
                     '\\' -> 0x5e  // up arrow
                     '|' -> 0x7e  // pi
                     '}' -> 0x5c  // pound
-                    else -> Petscii.encodePetscii(ke.keyChar.toString(), true)[0]
+                    else -> {
+                        if(ke.isAltDown) {
+                            // commodore+key petscii symbol
+                            return when(ke.keyCode) {
+                                KeyEvent.VK_A -> 0xb0
+                                KeyEvent.VK_B -> 0xbf
+                                KeyEvent.VK_C -> 0xbc
+                                KeyEvent.VK_D -> 0xac
+                                KeyEvent.VK_E -> 0xb1
+                                KeyEvent.VK_F -> 0xbb
+                                KeyEvent.VK_G -> 0xa5
+                                KeyEvent.VK_H -> 0xb4
+                                KeyEvent.VK_I -> 0xa2
+                                KeyEvent.VK_J -> 0xb5
+                                KeyEvent.VK_K -> 0xa1
+                                KeyEvent.VK_L -> 0xb6
+                                KeyEvent.VK_M -> 0xa7
+                                KeyEvent.VK_N -> 0xaa
+                                KeyEvent.VK_O -> 0xb9
+                                KeyEvent.VK_P -> 0xaf
+                                KeyEvent.VK_Q -> 0xab
+                                KeyEvent.VK_R -> 0xb2
+                                KeyEvent.VK_S -> 0xae
+                                KeyEvent.VK_T -> 0xa3
+                                KeyEvent.VK_U -> 0xb8
+                                KeyEvent.VK_V -> 0xbe
+                                KeyEvent.VK_W -> 0xb3
+                                KeyEvent.VK_X -> 0xbd
+                                KeyEvent.VK_Y -> 0xb7
+                                KeyEvent.VK_Z -> 0xad
+                                else -> 0 // not mapped
+                            }
+                        } else {
+                            Petscii.encodePetscii(ke.keyChar.toString(), true)[0]
+                        }
+                    }
                 }
             }
             else if(ke.id == KeyEvent.KEY_RELEASED) {
-                if(ke.keyCode==KeyEvent.VK_SHIFT && ke.modifiersEx and KeyEvent.CTRL_DOWN_MASK != 0) {
-                    return 0x0e  // lo+up charset
-                }
-                else if(ke.keyCode==KeyEvent.VK_CONTROL && ke.modifiersEx and KeyEvent.SHIFT_DOWN_MASK != 0) {
-                    return 0x0e  // lo+up charset
+                if((ke.keyCode==KeyEvent.VK_SHIFT && ke.modifiersEx and KeyEvent.ALT_DOWN_MASK != 0) ||
+                   (ke.keyCode==KeyEvent.VK_ALT && ke.modifiersEx and KeyEvent.SHIFT_DOWN_MASK != 0)) {
+                    // shift+alt is mapped to shift+commodore key, to toggle charsets
+                    val charSet = ram[0xd018].toInt() and 0b00000010
+                    return if(charSet==0)
+                        0x0e        // lo/up charset
+                    else
+                        0x8e        // up/gfx charset
                 }
             }
         }
