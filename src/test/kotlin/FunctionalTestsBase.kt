@@ -45,7 +45,7 @@ abstract class FunctionalTestsBase {
         ram.loadPrg("src/test/kotlin/6502testsuite/$testprogram")
         bus.reset()
         cpu.regSP = 0xfd
-        cpu.regP.fromByte(0b00100100)
+        cpu.regP.fromInt(0b00100100)
         try {
             while (cpu.totalCycles < 50000000L) {
                 bus.clock()

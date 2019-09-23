@@ -15,7 +15,7 @@ class EhBasicMachine(title: String) {
     val bus = Bus()
     val cpu = Cpu6502(false)
     val ram = Ram(0x0000, 0xbfff)
-    val rom = Rom(0xc000, 0xffff).also { it.load(javaClass.getResourceAsStream("/ehbasic_C000.bin").readAllBytes()) }
+    val rom = Rom(0xc000, 0xffff).also { it.load(javaClass.getResourceAsStream("/ehbasic_C000.bin").readBytes()) }
 
     private val hostDisplay = MainWindow(title)
     private val display = Display(0xd000, 0xd00a, hostDisplay,

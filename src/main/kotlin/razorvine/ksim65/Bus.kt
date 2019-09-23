@@ -71,12 +71,8 @@ class Bus {
         }
     }
 
-    fun memoryComponentFor(address: Address): MemoryComponent {
-        memComponents.forEach {
-            if (it is MemoryComponent && address >= it.startAddress && address <= it.endAddress) {
-                return it
-            }
-        }
-        throw NoSuchElementException()
-    }
+    fun memoryComponentFor(address: Address): MemoryComponent =
+        memComponents.first {
+            it is MemoryComponent && address >= it.startAddress && address <= it.endAddress
+        } as MemoryComponent
 }

@@ -24,7 +24,7 @@ class Test6502CpuBasics {
         assertEquals(0, cpu.regY)
         assertEquals(0, cpu.currentOpcode)
         assertEquals(Cpu6502.StatusRegister(C = false, Z = false, I = true, D = false, B = false, V = false, N = false), cpu.regP)
-        assertEquals(0b00100100, cpu.regP.asByte())
+        assertEquals(0b00100100, cpu.regP.asInt())
     }
 
     @Test
@@ -42,7 +42,7 @@ class Test6502CpuBasics {
         assertEquals(0, cpu.regY)
         assertEquals(0, cpu.currentOpcode)
         assertEquals(Cpu6502.StatusRegister(C = false, Z = false, I = true, D = false, B = false, V = false, N = false), cpu.regP)
-        assertEquals(0b00100100, cpu.regP.asByte())
+        assertEquals(0b00100100, cpu.regP.asInt())
     }
 
     @Test

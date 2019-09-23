@@ -32,7 +32,7 @@ class Ram(startAddress: Address, endAddress: Address) : MemoryComponent(startAdd
      * Load a c64-style prg program. This file type has the load address as the first two bytes.
      */
     fun loadPrg(stream: InputStream) {
-        val bytes = stream.readAllBytes()
+        val bytes = stream.readBytes()
         val loadAddress = (bytes[0].toInt() or (bytes[1].toInt() shl 8)) and 65535
         val baseAddress = loadAddress - startAddress
         bytes.drop(2).forEachIndexed { index, byte ->

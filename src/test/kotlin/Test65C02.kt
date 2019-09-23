@@ -798,9 +798,9 @@ class Test65C02 : TestCommon6502() {
         // $0000 RMB0 $43
         writeMem(memory, 0x0000, listOf(0x07, 0x43))
         val expected = 0b01110101
-        mpu.regP.fromByte(expected)
+        mpu.regP.fromInt(expected)
         mpu.step()
-        assertEquals(expected, mpu.regP.asByte().toInt())
+        assertEquals(expected, mpu.regP.asInt())
     }
 
     // RMB1
@@ -823,9 +823,9 @@ class Test65C02 : TestCommon6502() {
         // $0000 RMB1 $43
         writeMem(memory, 0x0000, listOf(0x17, 0x43))
         val expected = 0b01110101
-        mpu.regP.fromByte(expected)
+        mpu.regP.fromInt(expected)
         mpu.step()
-        assertEquals(expected, mpu.regP.asByte().toInt())
+        assertEquals(expected, mpu.regP.asInt())
     }
 
     // RMB2
@@ -838,8 +838,8 @@ class Test65C02 : TestCommon6502() {
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
         assertEquals(5 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
-        val expected = 0b11111011
-        assertEquals(expected, memory[0x0043].toInt())
+        val expected = 0b11111011.toShort()
+        assertEquals(expected, memory[0x0043])
 
     }
 
@@ -849,9 +849,9 @@ class Test65C02 : TestCommon6502() {
         // $0000 RMB2 $43
         writeMem(memory, 0x0000, listOf(0x27, 0x43))
         val expected = 0b01110101
-        mpu.regP.fromByte(expected)
+        mpu.regP.fromInt(expected)
         mpu.step()
-        assertEquals(expected, mpu.regP.asByte().toInt())
+        assertEquals(expected, mpu.regP.asInt())
     }
 
     // RMB3
@@ -874,9 +874,9 @@ class Test65C02 : TestCommon6502() {
         // $0000 RMB3 $43
         writeMem(memory, 0x0000, listOf(0x37, 0x43))
         val expected = 0b01110101
-        mpu.regP.fromByte(expected)
+        mpu.regP.fromInt(expected)
         mpu.step()
-        assertEquals(expected, mpu.regP.asByte().toInt())
+        assertEquals(expected, mpu.regP.asInt())
     }
 
     // RMB4
@@ -899,9 +899,9 @@ class Test65C02 : TestCommon6502() {
         // $0000 RMB4 $43
         writeMem(memory, 0x0000, listOf(0x47, 0x43))
         val expected = 0b01110101
-        mpu.regP.fromByte(expected)
+        mpu.regP.fromInt(expected)
         mpu.step()
-        assertEquals(expected, mpu.regP.asByte().toInt())
+        assertEquals(expected, mpu.regP.asInt())
     }
 
     // RMB5
@@ -924,9 +924,9 @@ class Test65C02 : TestCommon6502() {
         // $0000 RMB5 $43
         writeMem(memory, 0x0000, listOf(0x57, 0x43))
         val expected = 0b01110101
-        mpu.regP.fromByte(expected)
+        mpu.regP.fromInt(expected)
         mpu.step()
-        assertEquals(expected, mpu.regP.asByte().toInt())
+        assertEquals(expected, mpu.regP.asInt())
     }
 
     // RMB6
@@ -939,8 +939,8 @@ class Test65C02 : TestCommon6502() {
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
         assertEquals(5 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
-        val expected = 0b10111111
-        assertEquals(expected, memory[0x0043].toInt())
+        val expected = 0b10111111.toShort()
+        assertEquals(expected, memory[0x0043])
     }
 
     @Test
@@ -949,9 +949,9 @@ class Test65C02 : TestCommon6502() {
         // $0000 RMB6 $43
         writeMem(memory, 0x0000, listOf(0x67, 0x43))
         val expected = 0b01110101
-        mpu.regP.fromByte(expected)
+        mpu.regP.fromInt(expected)
         mpu.step()
-        assertEquals(expected, mpu.regP.asByte().toInt())
+        assertEquals(expected, mpu.regP.asInt())
     }
 
     // RMB7
@@ -975,9 +975,9 @@ class Test65C02 : TestCommon6502() {
         // $0000 RMB7 $43
         writeMem(memory, 0x0000, listOf(0x77, 0x43))
         val expected = 0b01110101
-        mpu.regP.fromByte(expected)
+        mpu.regP.fromInt(expected)
         mpu.step()
-        assertEquals(expected, mpu.regP.asByte().toInt())
+        assertEquals(expected, mpu.regP.asInt())
     }
 
     // STA Zero Page, Indirect
@@ -985,7 +985,7 @@ class Test65C02 : TestCommon6502() {
     @Test
     fun test_sta_zp_ind_stores_a_leaves_a_and_n_flag_unchanged() {
         val flags = 0xFF and fNEGATIVE.inv()
-        mpu.regP.fromByte(flags)
+        mpu.regP.fromInt(flags)
         mpu.regA = 0xFF
         // $0000 STA ($0010)
         // $0010 Vector to $FEED
@@ -997,13 +997,13 @@ class Test65C02 : TestCommon6502() {
         assertEquals(5 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
         assertEquals(0xFF, memory[0xFEED])
         assertEquals(0xFF, mpu.regA)
-        assertEquals(flags, mpu.regP.asByte().toInt())
+        assertEquals(flags, mpu.regP.asInt())
     }
 
     @Test
     fun test_sta_zp_ind_stores_a_leaves_a_and_z_flag_unchanged() {
         val flags = 0xFF and fZERO.inv()
-        mpu.regP.fromByte(flags)
+        mpu.regP.fromInt(flags)
         mpu.regA = 0x00
         // $0000 STA ($0010)
         // $0010 Vector to $FEED
@@ -1015,7 +1015,7 @@ class Test65C02 : TestCommon6502() {
         assertEquals(5 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
         assertEquals(0x00, memory[0xFEED])
         assertEquals(0x00, mpu.regA)
-        assertEquals(flags, mpu.regP.asByte().toInt())
+        assertEquals(flags, mpu.regP.asInt())
     }
 
     // SMB0
@@ -1028,8 +1028,8 @@ class Test65C02 : TestCommon6502() {
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
         assertEquals(5 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
-        val expected = 0b00000001
-        assertEquals(expected, memory[0x0043].toInt())
+        val expected = 0b00000001.toShort()
+        assertEquals(expected, memory[0x0043])
     }
 
     @Test
@@ -1038,9 +1038,9 @@ class Test65C02 : TestCommon6502() {
         // $0000 SMB0 $43
         writeMem(memory, 0x0000, listOf(0x87, 0x43))
         val expected = 0b11101100
-        mpu.regP.fromByte(expected)
+        mpu.regP.fromInt(expected)
         mpu.step()
-        assertEquals(expected, mpu.regP.asByte().toInt())
+        assertEquals(expected, mpu.regP.asInt())
     }
 
     // SMB1
@@ -1063,9 +1063,9 @@ class Test65C02 : TestCommon6502() {
         // $0000 SMB1 $43
         writeMem(memory, 0x0000, listOf(0x97, 0x43))
         val expected = 0b11101100
-        mpu.regP.fromByte(expected)
+        mpu.regP.fromInt(expected)
         mpu.step()
-        assertEquals(expected, mpu.regP.asByte().toInt())
+        assertEquals(expected, mpu.regP.asInt())
     }
 
     // SMB2
@@ -1089,9 +1089,9 @@ class Test65C02 : TestCommon6502() {
         // $0000 SMB2 $43
         writeMem(memory, 0x0000, listOf(0xA7, 0x43))
         val expected = 0b11101100
-        mpu.regP.fromByte(expected)
+        mpu.regP.fromInt(expected)
         mpu.step()
-        assertEquals(expected, mpu.regP.asByte().toInt())
+        assertEquals(expected, mpu.regP.asInt())
     }
 
     // SMB3
@@ -1115,9 +1115,9 @@ class Test65C02 : TestCommon6502() {
         // $0000 SMB3 $43
         writeMem(memory, 0x0000, listOf(0xB7, 0x43))
         val expected = 0b11101100
-        mpu.regP.fromByte(expected)
+        mpu.regP.fromInt(expected)
         mpu.step()
-        assertEquals(expected, mpu.regP.asByte().toInt())
+        assertEquals(expected, mpu.regP.asInt())
     }
 
     // SMB4
@@ -1141,9 +1141,9 @@ class Test65C02 : TestCommon6502() {
         // $0000 SMB4 $43
         writeMem(memory, 0x0000, listOf(0xC7, 0x43))
         val expected = 0b11101100
-        mpu.regP.fromByte(expected)
+        mpu.regP.fromInt(expected)
         mpu.step()
-        assertEquals(expected, mpu.regP.asByte().toInt())
+        assertEquals(expected, mpu.regP.asInt())
     }
 
     // SMB5
@@ -1166,9 +1166,9 @@ class Test65C02 : TestCommon6502() {
         // $0000 SMB5 $43
         writeMem(memory, 0x0000, listOf(0xD7, 0x43))
         val expected = 0b11101100
-        mpu.regP.fromByte(expected)
+        mpu.regP.fromInt(expected)
         mpu.step()
-        assertEquals(expected, mpu.regP.asByte().toInt())
+        assertEquals(expected, mpu.regP.asInt())
     }
 
     // SMB6
@@ -1191,9 +1191,9 @@ class Test65C02 : TestCommon6502() {
         // $0000 SMB6 $43
         writeMem(memory, 0x0000, listOf(0xE7, 0x43))
         val expected = 0b11101100
-        mpu.regP.fromByte(expected)
+        mpu.regP.fromInt(expected)
         mpu.step()
-        assertEquals(expected, mpu.regP.asByte().toInt())
+        assertEquals(expected, mpu.regP.asInt())
     }
 
     // SMB7
@@ -1216,9 +1216,9 @@ class Test65C02 : TestCommon6502() {
         // $0000 SMB7 $43
         writeMem(memory, 0x0000, listOf(0xF7, 0x43))
         val expected = 0b11101100
-        mpu.regP.fromByte(expected)
+        mpu.regP.fromInt(expected)
         mpu.step()
-        assertEquals(expected, mpu.regP.asByte().toInt())
+        assertEquals(expected, mpu.regP.asInt())
     }
 
     // SBC Zero Page, Indirect

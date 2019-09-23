@@ -2099,7 +2099,7 @@ abstract class TestCommon6502 {
         assertEquals(0xC0, memory[0x1FF])  // PCH
         assertEquals(0x02, memory[0x1FE])  // PCL
         assertEquals(fBREAK or fUNUSED, memory[0x1FD].toInt(), "Status on stack should have no I flag")
-        assertEquals(fBREAK or fUNUSED or fINTERRUPT, mpu.regP.asByte().toInt())
+        assertEquals(fBREAK or fUNUSED or fINTERRUPT, mpu.regP.asInt())
     }
 
     // BVC
@@ -4122,7 +4122,7 @@ abstract class TestCommon6502 {
     fun test_php_pushes_processor_status_and_updates_sp() {
         for (flags in 0 until 0x100) {
             mpu.reset()
-            mpu.regP.fromByte(flags or fBREAK or fUNUSED)
+            mpu.regP.fromInt(flags or fBREAK or fUNUSED)
             // $0000 PHP
             memory[0x0000] = 0x08
             mpu.step()
@@ -4156,7 +4156,7 @@ abstract class TestCommon6502 {
         mpu.regSP = 0xFE
         mpu.step()
         assertEquals(0x0001, mpu.regPC)
-        assertEquals(0xBA, mpu.regP.asByte())
+        assertEquals(0xBA, mpu.regP.asInt())
         assertEquals(0xFF, mpu.regSP)
     }
 
@@ -4847,7 +4847,7 @@ abstract class TestCommon6502 {
         mpu.regSP = 0xFC
         mpu.step()
         assertEquals(0xFF, mpu.regSP)
-        assertEquals(0xFC, mpu.regP.asByte())
+        assertEquals(0xFC, mpu.regP.asInt())
         assertEquals(0xC003, mpu.regPC)
     }
 
@@ -5505,7 +5505,7 @@ abstract class TestCommon6502 {
     @Test
     fun test_sta_absolute_stores_a_leaves_a_and_n_flag_unchanged() {
         val flags = 0xFF and fNEGATIVE.inv()
-        mpu.regP.fromByte(flags)
+        mpu.regP.fromInt(flags)
         mpu.regA = 0xFF
         // $0000 STA $ABCD
         writeMem(memory, 0x0000, listOf(0x8D, 0xCD, 0xAB))
@@ -5514,13 +5514,13 @@ abstract class TestCommon6502 {
         assertEquals(0x0003, mpu.regPC)
         assertEquals(0xFF, memory[0xABCD])
         assertEquals(0xFF, mpu.regA)
-        assertEquals(flags, mpu.regP.asByte().toInt())
+        assertEquals(flags, mpu.regP.asInt())
     }
 
     @Test
     fun test_sta_absolute_stores_a_leaves_a_and_z_flag_unchanged() {
         val flags = 0xFF and fZERO.inv()
-        mpu.regP.fromByte(flags)
+        mpu.regP.fromInt(flags)
         mpu.regA = 0x00
         // $0000 STA $ABCD
         writeMem(memory, 0x0000, listOf(0x8D, 0xCD, 0xAB))
@@ -5529,7 +5529,7 @@ abstract class TestCommon6502 {
         assertEquals(0x0003, mpu.regPC)
         assertEquals(0x00, memory[0xABCD])
         assertEquals(0x00, mpu.regA)
-        assertEquals(flags, mpu.regP.asByte().toInt())
+        assertEquals(flags, mpu.regP.asInt())
     }
 
     // STA Zero Page
@@ -5537,7 +5537,7 @@ abstract class TestCommon6502 {
     @Test
     fun test_sta_zp_stores_a_leaves_a_and_n_flag_unchanged() {
         val flags = 0xFF and fNEGATIVE.inv()
-        mpu.regP.fromByte(flags)
+        mpu.regP.fromInt(flags)
         mpu.regA = 0xFF
         // $0000 STA $0010
         writeMem(memory, 0x0000, listOf(0x85, 0x10))
@@ -5546,13 +5546,13 @@ abstract class TestCommon6502 {
         assertEquals(0x0002, mpu.regPC)
         assertEquals(0xFF, memory[0x0010])
         assertEquals(0xFF, mpu.regA)
-        assertEquals(flags, mpu.regP.asByte().toInt())
+        assertEquals(flags, mpu.regP.asInt())
     }
 
     @Test
     fun test_sta_zp_stores_a_leaves_a_and_z_flag_unchanged() {
         val flags = 0xFF and fZERO.inv()
-        mpu.regP.fromByte(flags)
+        mpu.regP.fromInt(flags)
         mpu.regA = 0x00
         // $0000 STA $0010
         writeMem(memory, 0x0000, listOf(0x85, 0x10))
@@ -5561,7 +5561,7 @@ abstract class TestCommon6502 {
         assertEquals(0x0002, mpu.regPC)
         assertEquals(0x00, memory[0x0010])
         assertEquals(0x00, mpu.regA)
-        assertEquals(flags, mpu.regP.asByte().toInt())
+        assertEquals(flags, mpu.regP.asInt())
     }
 
     // STA Absolute, X-Indexed
@@ -5569,7 +5569,7 @@ abstract class TestCommon6502 {
     @Test
     fun test_sta_abs_x_indexed_stores_a_leaves_a_and_n_flag_unchanged() {
         val flags = 0xFF and fNEGATIVE.inv()
-        mpu.regP.fromByte(flags)
+        mpu.regP.fromInt(flags)
         mpu.regA = 0xFF
         mpu.regX = 0x03
         // $0000 STA $ABCD,X
@@ -5579,13 +5579,13 @@ abstract class TestCommon6502 {
         assertEquals(0x0003, mpu.regPC)
         assertEquals(0xFF, memory[0xABCD + mpu.regX])
         assertEquals(0xFF, mpu.regA)
-        assertEquals(flags, mpu.regP.asByte().toInt())
+        assertEquals(flags, mpu.regP.asInt())
     }
 
     @Test
     fun test_sta_abs_x_indexed_stores_a_leaves_a_and_z_flag_unchanged() {
         val flags = 0xFF and fZERO.inv()
-        mpu.regP.fromByte(flags)
+        mpu.regP.fromInt(flags)
         mpu.regA = 0x00
         mpu.regX = 0x03
         // $0000 STA $ABCD,X
@@ -5595,7 +5595,7 @@ abstract class TestCommon6502 {
         assertEquals(0x0003, mpu.regPC)
         assertEquals(0x00, memory[0xABCD + mpu.regX])
         assertEquals(0x00, mpu.regA)
-        assertEquals(flags, mpu.regP.asByte().toInt())
+        assertEquals(flags, mpu.regP.asInt())
     }
 
     // STA Absolute, Y-Indexed
@@ -5603,7 +5603,7 @@ abstract class TestCommon6502 {
     @Test
     fun test_sta_abs_y_indexed_stores_a_leaves_a_and_n_flag_unchanged() {
         val flags = 0xFF and fNEGATIVE.inv()
-        mpu.regP.fromByte(flags)
+        mpu.regP.fromInt(flags)
         mpu.regA = 0xFF
         mpu.regY = 0x03
         // $0000 STA $ABCD,Y
@@ -5613,13 +5613,13 @@ abstract class TestCommon6502 {
         assertEquals(0x0003, mpu.regPC)
         assertEquals(0xFF, memory[0xABCD + mpu.regY])
         assertEquals(0xFF, mpu.regA)
-        assertEquals(flags, mpu.regP.asByte().toInt())
+        assertEquals(flags, mpu.regP.asInt())
     }
 
     @Test
     fun test_sta_abs_y_indexed_stores_a_leaves_a_and_z_flag_unchanged() {
         val flags = 0xFF and fZERO.inv()
-        mpu.regP.fromByte(flags)
+        mpu.regP.fromInt(flags)
         mpu.regA = 0x00
         mpu.regY = 0x03
         // $0000 STA $ABCD,Y
@@ -5629,7 +5629,7 @@ abstract class TestCommon6502 {
         assertEquals(0x0003, mpu.regPC)
         assertEquals(0x00, memory[0xABCD + mpu.regY])
         assertEquals(0x00, mpu.regA)
-        assertEquals(flags, mpu.regP.asByte().toInt())
+        assertEquals(flags, mpu.regP.asInt())
     }
 
     // STA Indirect, Indexed (X)
@@ -5637,7 +5637,7 @@ abstract class TestCommon6502 {
     @Test
     fun test_sta_ind_indexed_x_stores_a_leaves_a_and_n_flag_unchanged() {
         val flags = 0xFF and fNEGATIVE.inv()
-        mpu.regP.fromByte(flags)
+        mpu.regP.fromInt(flags)
         mpu.regA = 0xFF
         mpu.regX = 0x03
         // $0000 STA ($0010,X)
@@ -5649,13 +5649,13 @@ abstract class TestCommon6502 {
         assertEquals(0x0002, mpu.regPC)
         assertEquals(0xFF, memory[0xFEED])
         assertEquals(0xFF, mpu.regA)
-        assertEquals(flags, mpu.regP.asByte().toInt())
+        assertEquals(flags, mpu.regP.asInt())
     }
 
     @Test
     fun test_sta_ind_indexed_x_stores_a_leaves_a_and_z_flag_unchanged() {
         val flags = 0xFF and fZERO.inv()
-        mpu.regP.fromByte(flags)
+        mpu.regP.fromInt(flags)
         mpu.regA = 0x00
         mpu.regX = 0x03
         // $0000 STA ($0010,X)
@@ -5667,7 +5667,7 @@ abstract class TestCommon6502 {
         assertEquals(0x0002, mpu.regPC)
         assertEquals(0x00, memory[0xFEED])
         assertEquals(0x00, mpu.regA)
-        assertEquals(flags, mpu.regP.asByte().toInt())
+        assertEquals(flags, mpu.regP.asInt())
     }
 
     // STA Indexed, Indirect (Y)
@@ -5675,7 +5675,7 @@ abstract class TestCommon6502 {
     @Test
     fun test_sta_indexed_ind_y_stores_a_leaves_a_and_n_flag_unchanged() {
         val flags = 0xFF and fNEGATIVE.inv()
-        mpu.regP.fromByte(flags)
+        mpu.regP.fromInt(flags)
         mpu.regA = 0xFF
         mpu.regY = 0x03
         // $0000 STA ($0010),Y
@@ -5687,13 +5687,13 @@ abstract class TestCommon6502 {
         assertEquals(0x0002, mpu.regPC)
         assertEquals(0xFF, memory[0xFEED + mpu.regY])
         assertEquals(0xFF, mpu.regA)
-        assertEquals(flags, mpu.regP.asByte().toInt())
+        assertEquals(flags, mpu.regP.asInt())
     }
 
     @Test
     fun test_sta_indexed_ind_y_stores_a_leaves_a_and_z_flag_unchanged() {
         val flags = 0xFF and fZERO.inv()
-        mpu.regP.fromByte(flags)
+        mpu.regP.fromInt(flags)
         mpu.regA = 0x00
         mpu.regY = 0x03
         // $0000 STA ($0010),Y
@@ -5705,7 +5705,7 @@ abstract class TestCommon6502 {
         assertEquals(0x0002, mpu.regPC)
         assertEquals(0x00, memory[0xFEED + mpu.regY])
         assertEquals(0x00, mpu.regA)
-        assertEquals(flags, mpu.regP.asByte().toInt())
+        assertEquals(flags, mpu.regP.asInt())
     }
 
     // STA Zero Page, X-Indexed
@@ -5713,7 +5713,7 @@ abstract class TestCommon6502 {
     @Test
     fun test_sta_zp_x_indexed_stores_a_leaves_a_and_n_flag_unchanged() {
         val flags = 0xFF and fNEGATIVE.inv()
-        mpu.regP.fromByte(flags)
+        mpu.regP.fromInt(flags)
         mpu.regA = 0xFF
         mpu.regX = 0x03
         // $0000 STA $0010,X
@@ -5723,13 +5723,13 @@ abstract class TestCommon6502 {
         assertEquals(0x0002, mpu.regPC)
         assertEquals(0xFF, memory[0x0010 + mpu.regX])
         assertEquals(0xFF, mpu.regA)
-        assertEquals(flags, mpu.regP.asByte().toInt())
+        assertEquals(flags, mpu.regP.asInt())
     }
 
     @Test
     fun test_sta_zp_x_indexed_stores_a_leaves_a_and_z_flag_unchanged() {
         val flags = 0xFF and fZERO.inv()
-        mpu.regP.fromByte(flags)
+        mpu.regP.fromInt(flags)
         mpu.regA = 0x00
         mpu.regX = 0x03
         // $0000 STA $0010,X
@@ -5739,7 +5739,7 @@ abstract class TestCommon6502 {
         assertEquals(0x0002, mpu.regPC)
         assertEquals(0x00, memory[0x0010 + mpu.regX])
         assertEquals(0x00, mpu.regA)
-        assertEquals(flags, mpu.regP.asByte().toInt())
+        assertEquals(flags, mpu.regP.asInt())
     }
 
     // STX Absolute
@@ -5747,7 +5747,7 @@ abstract class TestCommon6502 {
     @Test
     fun test_stx_absolute_stores_x_leaves_x_and_n_flag_unchanged() {
         val flags = 0xFF and fNEGATIVE.inv()
-        mpu.regP.fromByte(flags)
+        mpu.regP.fromInt(flags)
         mpu.regX = 0xFF
         // $0000 STX $ABCD
         writeMem(memory, 0x0000, listOf(0x8E, 0xCD, 0xAB))
@@ -5756,13 +5756,13 @@ abstract class TestCommon6502 {
         assertEquals(0x0003, mpu.regPC)
         assertEquals(0xFF, memory[0xABCD])
         assertEquals(0xFF, mpu.regX)
-        assertEquals(flags, mpu.regP.asByte().toInt())
+        assertEquals(flags, mpu.regP.asInt())
     }
 
     @Test
     fun test_stx_absolute_stores_x_leaves_x_and_z_flag_unchanged() {
         val flags = 0xFF and fZERO.inv()
-        mpu.regP.fromByte(flags)
+        mpu.regP.fromInt(flags)
         mpu.regX = 0x00
         // $0000 STX $ABCD
         writeMem(memory, 0x0000, listOf(0x8E, 0xCD, 0xAB))
@@ -5771,7 +5771,7 @@ abstract class TestCommon6502 {
         assertEquals(0x0003, mpu.regPC)
         assertEquals(0x00, memory[0xABCD])
         assertEquals(0x00, mpu.regX)
-        assertEquals(flags, mpu.regP.asByte().toInt())
+        assertEquals(flags, mpu.regP.asInt())
     }
 
     // STX Zero Page
@@ -5779,7 +5779,7 @@ abstract class TestCommon6502 {
     @Test
     fun test_stx_zp_stores_x_leaves_x_and_n_flag_unchanged() {
         val flags = 0xFF and fNEGATIVE.inv()
-        mpu.regP.fromByte(flags)
+        mpu.regP.fromInt(flags)
         mpu.regX = 0xFF
         // $0000 STX $0010
         writeMem(memory, 0x0000, listOf(0x86, 0x10))
@@ -5788,13 +5788,13 @@ abstract class TestCommon6502 {
         assertEquals(0x0002, mpu.regPC)
         assertEquals(0xFF, memory[0x0010])
         assertEquals(0xFF, mpu.regX)
-        assertEquals(flags, mpu.regP.asByte().toInt())
+        assertEquals(flags, mpu.regP.asInt())
     }
 
     @Test
     fun test_stx_zp_stores_x_leaves_x_and_z_flag_unchanged() {
         val flags = 0xFF and fZERO.inv()
-        mpu.regP.fromByte(flags)
+        mpu.regP.fromInt(flags)
         mpu.regX = 0x00
         // $0000 STX $0010
         writeMem(memory, 0x0000, listOf(0x86, 0x10))
@@ -5803,7 +5803,7 @@ abstract class TestCommon6502 {
         assertEquals(0x0002, mpu.regPC)
         assertEquals(0x00, memory[0x0010])
         assertEquals(0x00, mpu.regX)
-        assertEquals(flags, mpu.regP.asByte().toInt())
+        assertEquals(flags, mpu.regP.asInt())
     }
 
     // STX Zero Page, Y-Indexed
@@ -5811,7 +5811,7 @@ abstract class TestCommon6502 {
     @Test
     fun test_stx_zp_y_indexed_stores_x_leaves_x_and_n_flag_unchanged() {
         val flags = 0xFF and fNEGATIVE.inv()
-        mpu.regP.fromByte(flags)
+        mpu.regP.fromInt(flags)
         mpu.regX = 0xFF
         mpu.regY = 0x03
         // $0000 STX $0010,Y
@@ -5821,13 +5821,13 @@ abstract class TestCommon6502 {
         assertEquals(0x0002, mpu.regPC)
         assertEquals(0xFF, memory[0x0010 + mpu.regY])
         assertEquals(0xFF, mpu.regX)
-        assertEquals(flags, mpu.regP.asByte().toInt())
+        assertEquals(flags, mpu.regP.asInt())
     }
 
     @Test
     fun test_stx_zp_y_indexed_stores_x_leaves_x_and_z_flag_unchanged() {
         val flags = 0xFF and fZERO.inv()
-        mpu.regP.fromByte(flags)
+        mpu.regP.fromInt(flags)
         mpu.regX = 0x00
         mpu.regY = 0x03
         // $0000 STX $0010,Y
@@ -5837,7 +5837,7 @@ abstract class TestCommon6502 {
         assertEquals(0x0002, mpu.regPC)
         assertEquals(0x00, memory[0x0010 + mpu.regY])
         assertEquals(0x00, mpu.regX)
-        assertEquals(flags, mpu.regP.asByte().toInt())
+        assertEquals(flags, mpu.regP.asInt())
     }
 
     // STY Absolute
@@ -5845,7 +5845,7 @@ abstract class TestCommon6502 {
     @Test
     fun test_sty_absolute_stores_y_leaves_y_and_n_flag_unchanged() {
         val flags = 0xFF and fNEGATIVE.inv()
-        mpu.regP.fromByte(flags)
+        mpu.regP.fromInt(flags)
         mpu.regY = 0xFF
         // $0000 STY $ABCD
         writeMem(memory, 0x0000, listOf(0x8C, 0xCD, 0xAB))
@@ -5854,13 +5854,13 @@ abstract class TestCommon6502 {
         assertEquals(0x0003, mpu.regPC)
         assertEquals(0xFF, memory[0xABCD])
         assertEquals(0xFF, mpu.regY)
-        assertEquals(flags, mpu.regP.asByte().toInt())
+        assertEquals(flags, mpu.regP.asInt())
     }
 
     @Test
     fun test_sty_absolute_stores_y_leaves_y_and_z_flag_unchanged() {
         val flags = 0xFF and fZERO.inv()
-        mpu.regP.fromByte(flags)
+        mpu.regP.fromInt(flags)
         mpu.regY = 0x00
         // $0000 STY $ABCD
         writeMem(memory, 0x0000, listOf(0x8C, 0xCD, 0xAB))
@@ -5869,7 +5869,7 @@ abstract class TestCommon6502 {
         assertEquals(0x0003, mpu.regPC)
         assertEquals(0x00, memory[0xABCD])
         assertEquals(0x00, mpu.regY)
-        assertEquals(flags, mpu.regP.asByte().toInt())
+        assertEquals(flags, mpu.regP.asInt())
     }
 
     // STY Zero Page
@@ -5877,7 +5877,7 @@ abstract class TestCommon6502 {
     @Test
     fun test_sty_zp_stores_y_leaves_y_and_n_flag_unchanged() {
         val flags = 0xFF and fNEGATIVE.inv()
-        mpu.regP.fromByte(flags)
+        mpu.regP.fromInt(flags)
         mpu.regY = 0xFF
         // $0000 STY $0010
         writeMem(memory, 0x0000, listOf(0x84, 0x10))
@@ -5886,13 +5886,13 @@ abstract class TestCommon6502 {
         assertEquals(0x0002, mpu.regPC)
         assertEquals(0xFF, memory[0x0010])
         assertEquals(0xFF, mpu.regY)
-        assertEquals(flags, mpu.regP.asByte().toInt())
+        assertEquals(flags, mpu.regP.asInt())
     }
 
     @Test
     fun test_sty_zp_stores_y_leaves_y_and_z_flag_unchanged() {
         val flags = 0xFF and fZERO.inv()
-        mpu.regP.fromByte(flags)
+        mpu.regP.fromInt(flags)
         mpu.regY = 0x00
         // $0000 STY $0010
         writeMem(memory, 0x0000, listOf(0x84, 0x10))
@@ -5901,7 +5901,7 @@ abstract class TestCommon6502 {
         assertEquals(0x0002, mpu.regPC)
         assertEquals(0x00, memory[0x0010])
         assertEquals(0x00, mpu.regY)
-        assertEquals(flags, mpu.regP.asByte().toInt())
+        assertEquals(flags, mpu.regP.asInt())
     }
 
     // STY Zero Page, X-Indexed
@@ -5909,7 +5909,7 @@ abstract class TestCommon6502 {
     @Test
     fun test_sty_zp_x_indexed_stores_y_leaves_y_and_n_flag_unchanged() {
         val flags = 0xFF and fNEGATIVE.inv()
-        mpu.regP.fromByte(flags)
+        mpu.regP.fromInt(flags)
         mpu.regY = 0xFF
         mpu.regX = 0x03
         // $0000 STY $0010,X
@@ -5919,13 +5919,13 @@ abstract class TestCommon6502 {
         assertEquals(0x0002, mpu.regPC)
         assertEquals(0xFF, memory[0x0010 + mpu.regX])
         assertEquals(0xFF, mpu.regY)
-        assertEquals(flags, mpu.regP.asByte().toInt())
+        assertEquals(flags, mpu.regP.asInt())
     }
 
     @Test
     fun test_sty_zp_x_indexed_stores_y_leaves_y_and_z_flag_unchanged() {
         val flags = 0xFF and fZERO.inv()
-        mpu.regP.fromByte(flags)
+        mpu.regP.fromInt(flags)
         mpu.regY = 0x00
         mpu.regX = 0x03
         // $0000 STY $0010,X
@@ -5935,7 +5935,7 @@ abstract class TestCommon6502 {
         assertEquals(0x0002, mpu.regPC)
         assertEquals(0x00, memory[0x0010 + mpu.regX])
         assertEquals(0x00, mpu.regY)
-        assertEquals(flags, mpu.regP.asByte().toInt())
+        assertEquals(flags, mpu.regP.asInt())
     }
 
     // TAX

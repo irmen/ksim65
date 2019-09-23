@@ -53,7 +53,7 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
         var V: Boolean = false,
         var N: Boolean = false
     ) {
-        fun asByte(): UByte {
+        fun asInt(): Int {
             return (0b00100000 or
                     (if (N) 0b10000000 else 0) or
                     (if (V) 0b01000000 else 0) or
@@ -62,10 +62,10 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
                     (if (I) 0b00000100 else 0) or
                     (if (Z) 0b00000010 else 0) or
                     (if (C) 0b00000001 else 0)
-                    ).toShort()
+                    )
         }
 
-        fun fromByte(byte: Int) {
+        fun fromInt(byte: Int) {
             N = (byte and 0b10000000) != 0
             V = (byte and 0b01000000) != 0
             B = (byte and 0b00010000) != 0
@@ -76,20 +76,31 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
         }
 
         override fun toString(): String {
-            return asByte().toString(2).padStart(8, '0')
+            return asInt().toString(2).padStart(8, '0')
         }
 
-        override fun hashCode(): Int = asByte().toInt()
+        override fun hashCode(): Int = asInt()
 
         override fun equals(other: Any?): Boolean {
             if (other !is StatusRegister)
                 return false
-            return asByte() == other.asByte()
+            return asInt() == other.asInt()
         }
     }
 
     protected class Instruction(val mnemonic: String, val mode: AddrMode, val cycles: Int)
 
+    class BreakpointResult(val newPC: Address?, val newOpcode: Int?)
+
+    class State (
+        val A: UByte,
+        val X: UByte,
+        val Y: UByte,
+        val SP: Address,
+        val P: StatusRegister,
+        val PC: Address,
+        val cycles: Long
+    )
 
     var regA: Int = 0
     var regX: Int = 0
@@ -106,6 +117,17 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
     val currentMnemonic: String
         get() = currentInstruction.mnemonic
 
+    @Synchronized fun snapshot(): State {
+        val status = StatusRegister().also { it.fromInt(regP.asInt()) }
+        return State(regA.toShort(),
+            regX.toShort(),
+            regY.toShort(),
+            regSP,
+            status,
+            regPC,
+            totalCycles)
+    }
+
     // has an interrupt been requested?
     protected enum class Interrupt {
         IRQ,
@@ -118,8 +140,6 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
 
     // all other addressing modes yield a fetched memory address
     protected var fetchedAddress: Address = 0
-
-    class BreakpointResult(val newPC: Address?, val newOpcode: Int?)
 
     private val breakpoints = mutableMapOf<Address, (cpu: Cpu6502, pc: Address) -> BreakpointResult>()
 
@@ -395,7 +415,7 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
     }
 
     protected fun pushStack(status: StatusRegister) {
-        pushStack(status.asByte().toInt())
+        pushStack(status.asInt())
     }
 
     protected fun pushStack(data: Int) {
@@ -1282,7 +1302,7 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
     }
 
     protected fun iPlp() {
-        regP.fromByte(popStack())
+        regP.fromInt(popStack())
         regP.B = true  // break is always 1 except when pushing on stack
     }
 
@@ -1321,7 +1341,7 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
     }
 
     protected fun iRti() {
-        regP.fromByte(popStack())
+        regP.fromInt(popStack())
         regP.B = true  // break is always 1 except when pushing on stack
         regPC = popStackAddr()
     }
