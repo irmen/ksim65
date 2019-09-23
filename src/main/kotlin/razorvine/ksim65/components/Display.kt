@@ -5,7 +5,7 @@ import razorvine.ksim65.IHostInterface
 import kotlin.math.min
 
 /**
- * Text mode and graphics (bitmap) mode display.
+ * Monochrome Text mode and graphics (bitmap) mode display.
  * Note that the character matrix and pixel matrix are NOT memory mapped,
  * this display device is controlled by sending char/pixel commands to it.
  * Also, the blinking cursor is 'hardware controlled' (by the host display),
@@ -53,6 +53,8 @@ class Display(
     override fun clock() {
         // if the system clock is synced to the display refresh,
         // you *could* add a Vertical Blank interrupt here.
+        // It's usually better to rely on a (real time) timer instead for that,
+        // to avoid having the Vertical blank tied to the simulation speed
     }
 
     override fun reset() {

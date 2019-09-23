@@ -230,6 +230,14 @@ class MainC64Window(title: String, chargenData: ByteArray, val ram: MemoryCompon
         repaintTimer.start()
     }
 
+    /**
+     * Map a key to the corresponding PETSCII character,
+     * that is inserted directly into the C64's character buffer.
+     * This avoids having to deal with the 'real' keyboard matrix,
+     * but it can't map keys like RUN/STOP and RESTORE properly.
+     *
+     * TODO: replace this by the real keyboard matrix including RUN/STOP and RESTORE handling.
+     */
     private fun keyEventToPetscii(ke: KeyEvent): UByte {
         if(ke.isActionKey) {
             // function keys, cursor keys etc.

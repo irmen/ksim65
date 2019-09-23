@@ -26,6 +26,7 @@ class C64Machine(title: String) : IVirtualMachine {
     val vic = VicII(0xd000, 0xd3ff)
     val basicRom = Rom(0xa000, 0xbfff).also { it.load(basicData) }
     val kernalRom = Rom(0xe000, 0xffff).also { it.load(kernalData) }
+    // TODO: implement the two CIAs to add timer and joystick support, and the keyboard matrix.
 
     private val debugWindow = DebugWindow(this)
     private val hostDisplay = MainC64Window(title, chargenData, ram)

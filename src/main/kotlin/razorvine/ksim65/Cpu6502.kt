@@ -189,26 +189,22 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
         val spacing3 = "  "
         val location = address-baseAddress
         val byte = memory[location]
-        var line = "\$${hexW(location+baseAddress)}  ${hexB(byte)} "
+        val line = "\$${hexW(location+baseAddress)}  ${hexB(byte)} "
         val opcode = instructions[byte.toInt()]
         return when (opcode.mode) {
             AddrMode.Acc -> {
-                line += "$spacing1 ${opcode.mnemonic}  a"
-                Pair(line, 1)
+                Pair(line + "$spacing1 ${opcode.mnemonic}  a", 1)
             }
             AddrMode.Imp -> {
-                line += "$spacing1 ${opcode.mnemonic}"
-                Pair(line, 1)
+                Pair(line + "$spacing1 ${opcode.mnemonic}", 1)
             }
             AddrMode.Imm -> {
                 val value = memory[location+1]
-                line += "${hexB(value)} $spacing2 ${opcode.mnemonic}  #\$${hexB(value)}"
-                Pair(line, 2)
+                Pair(line + "${hexB(value)} $spacing2 ${opcode.mnemonic}  #\$${hexB(value)}", 2)
             }
             AddrMode.Zp -> {
                 val zpAddr = memory[location+1]
-                line += "${hexB(zpAddr)} $spacing2 ${opcode.mnemonic}  \$${hexB(zpAddr)}"
-                Pair(line, 2)
+                Pair(line + "${hexB(zpAddr)} $spacing2 ${opcode.mnemonic}  \$${hexB(zpAddr)}", 2)
             }
             AddrMode.Zpr -> {
                 // addressing mode used by the 65C02, put here for convenience
@@ -219,32 +215,27 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
                         location + 3 + rel + baseAddress
                     else
                         location + 3 - (256 - rel) + baseAddress
-                line += "${hexB(zpAddr)} ${hexB(rel)} $spacing3 ${opcode.mnemonic}  \$${hexB(zpAddr)}, \$${hexW(target, true)}"
-                Pair(line, 3)
+                Pair(line + "${hexB(zpAddr)} ${hexB(rel)} $spacing3 ${opcode.mnemonic}  \$${hexB(zpAddr)}, \$${hexW(target, true)}", 3)
             }
             AddrMode.Izp -> {
                 // addressing mode used by the 65C02, put here for convenience
                 val zpAddr = memory[location+1]
-                line += "${hexB(zpAddr)} $spacing2 ${opcode.mnemonic}  \$(${hexB(zpAddr)})"
-                Pair(line, 2)
+                Pair(line + "${hexB(zpAddr)} $spacing2 ${opcode.mnemonic}  \$(${hexB(zpAddr)})", 2)
             }
             AddrMode.IaX -> {
                 // addressing mode used by the 65C02, put here for convenience
                 val lo = memory[location+1]
                 val hi = memory[location+2]
                 val absAddr = lo.toInt() or (hi.toInt() shl 8)
-                line += "${hexB(lo)} ${hexB(hi)} $spacing3 ${opcode.mnemonic}  \$(${hexW(absAddr)},x)"
-                Pair(line, 3)
+                Pair(line + "${hexB(lo)} ${hexB(hi)} $spacing3 ${opcode.mnemonic}  \$(${hexW(absAddr)},x)", 3)
             }
             AddrMode.ZpX -> {
                 val zpAddr = memory[location+1]
-                line += "${hexB(zpAddr)} $spacing2 ${opcode.mnemonic}  \$${hexB(zpAddr)},x"
-                Pair(line, 2)
+                Pair(line + "${hexB(zpAddr)} $spacing2 ${opcode.mnemonic}  \$${hexB(zpAddr)},x", 2)
             }
             AddrMode.ZpY -> {
                 val zpAddr = memory[location+1]
-                line += "${hexB(zpAddr)} $spacing2 ${opcode.mnemonic}  \$${hexB(zpAddr)},y"
-                Pair(line, 2)
+                Pair(line + "${hexB(zpAddr)} $spacing2 ${opcode.mnemonic}  \$${hexB(zpAddr)},y", 2)
             }
             AddrMode.Rel -> {
                 val rel = memory[location+1]
@@ -253,46 +244,39 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
                         location + 2 + rel + baseAddress
                     else
                         location + 2 - (256 - rel) + baseAddress
-                line += "${hexB(rel)} $spacing2 ${opcode.mnemonic}  \$${hexW(target, true)}"
-                Pair(line, 2)
+                Pair(line + "${hexB(rel)} $spacing2 ${opcode.mnemonic}  \$${hexW(target, true)}", 2)
             }
             AddrMode.Abs -> {
                 val lo = memory[location+1]
                 val hi = memory[location+2]
                 val absAddr = lo.toInt() or (hi.toInt() shl 8)
-                line += "${hexB(lo)} ${hexB(hi)} $spacing3 ${opcode.mnemonic}  \$${hexW(absAddr)}"
-                Pair(line, 3)
+                Pair(line + "${hexB(lo)} ${hexB(hi)} $spacing3 ${opcode.mnemonic}  \$${hexW(absAddr)}", 3)
             }
             AddrMode.AbsX -> {
                 val lo = memory[location+1]
                 val hi = memory[location+2]
                 val absAddr = lo.toInt() or (hi.toInt() shl 8)
-                line += "${hexB(lo)} ${hexB(hi)} $spacing3 ${opcode.mnemonic}  \$${hexW(absAddr)},x"
-                Pair(line, 3)
+                Pair(line + "${hexB(lo)} ${hexB(hi)} $spacing3 ${opcode.mnemonic}  \$${hexW(absAddr)},x", 3)
             }
             AddrMode.AbsY -> {
                 val lo = memory[location+1]
                 val hi = memory[location+2]
                 val absAddr = lo.toInt() or (hi.toInt() shl 8)
-                line += "${hexB(lo)} ${hexB(hi)} $spacing3 ${opcode.mnemonic}  \$${hexW(absAddr)},y"
-                Pair(line, 3)
+                Pair(line + "${hexB(lo)} ${hexB(hi)} $spacing3 ${opcode.mnemonic}  \$${hexW(absAddr)},y", 3)
             }
             AddrMode.Ind -> {
                 val lo = memory[location+1]
                 val hi = memory[location+2]
                 val indirectAddr = lo.toInt() or (hi.toInt() shl 8)
-                line += "${hexB(lo)} ${hexB(hi)} $spacing3 ${opcode.mnemonic}  (\$${hexW(indirectAddr)})"
-                Pair(line, 3)
+                Pair(line + "${hexB(lo)} ${hexB(hi)} $spacing3 ${opcode.mnemonic}  (\$${hexW(indirectAddr)})", 3)
             }
             AddrMode.IzX -> {
                 val zpAddr = memory[location+1]
-                line += "${hexB(zpAddr)} $spacing2 ${opcode.mnemonic}  (\$${hexB(zpAddr)},x)"
-                Pair(line, 2)
+                Pair(line + "${hexB(zpAddr)} $spacing2 ${opcode.mnemonic}  (\$${hexB(zpAddr)},x)", 2)
             }
             AddrMode.IzY -> {
                 val zpAddr = memory[location+1]
-                line += "${hexB(zpAddr)} $spacing2 ${opcode.mnemonic}  (\$${hexB(zpAddr)}),y"
-                Pair(line, 2)
+                Pair(line + "${hexB(zpAddr)} $spacing2 ${opcode.mnemonic}  (\$${hexB(zpAddr)}),y", 2)
             }
         }
     }

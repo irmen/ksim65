@@ -8,49 +8,45 @@ import razorvine.ksim65.components.*
  *
  * It distributes reset and clock signals to every connected component.
  * Data bytes can be read from the bus or written to the bus. It's distributed to the corresponding component(s).
+ *
+ * NOTE: currently the bus address mapping is STATIC: there is no possibility for Bank-switching.
+ *       (such as what the C-64 has; the ability to swap ROMs in and out of the address space).
  */
 class Bus {
 
-    private val components = mutableListOf<BusComponent>()
+    private val allComponents = mutableListOf<BusComponent>()
     private val memComponents = mutableListOf<MemMappedComponent>()
 
-    fun reset() {
-        components.forEach { it.reset() }
-        memComponents.forEach { it.reset() }
-    }
+    fun reset() = allComponents.forEach { it.reset() }
+    fun clock() = allComponents.forEach { it.clock() }
 
-    fun clock() {
-        components.forEach { it.clock() }
-        memComponents.forEach { it.clock() }
-    }
-
-    operator fun plusAssign(memcomponent: MemMappedComponent) = add(memcomponent)
+    operator fun plusAssign(memComponent: MemMappedComponent) = add(memComponent)
     operator fun plusAssign(component: BusComponent) = add(component)
     operator fun get(address: Address): UByte = read(address)
     operator fun set(address: Address, data: UByte) = write(address, data)
 
 
     fun add(component: BusComponent) {
-        components.add(component)
+        allComponents.add(component)
         component.bus = this
     }
 
-    fun add(component: MemMappedComponent) {
-        memComponents.add(component)
-        component.bus = this
+    fun add(memComponent: MemMappedComponent) {
+        memComponents.add(memComponent)
+        allComponents.add(memComponent)
+        memComponent.bus = this
     }
 
     /**
      * Read a data byte at the given address.
-     * The first memory mapped component that listens to that address, will respond.
+     * The first registered memory mapped component that listens to that address, will respond.
+     * If no component is available, some CPUs generate a BUS ERROR but we return 0xff instead.
      */
     fun read(address: Address): UByte {
         memComponents.forEach {
             if (address >= it.startAddress && address <= it.endAddress) {
                 val data = it[address]
-                require(data in 0..255) {
-                    "data must be a byte 0..255"
-                }
+                require(data in 0..255) { "data at address $address must be a byte 0..255" }
                 return data
             }
         }
@@ -59,20 +55,16 @@ class Bus {
 
     /**
      * Write a data byte to the given address.
-     * Any memory mapped component that listens to the address, will receive the data.
+     * All memory mapped components that are mapped to the address, will receive the data.
      */
     fun write(address: Address, data: UByte) {
-        require(data in 0..255) {
-            "data must be a byte 0..255"
-        }
+        require(data in 0..255) { "data written to address $address must be a byte 0..255" }
         memComponents.forEach {
             if (address >= it.startAddress && address <= it.endAddress)
                 it[address] = data
         }
     }
 
-    fun memoryComponentFor(address: Address): MemoryComponent =
-        memComponents.first {
-            it is MemoryComponent && address >= it.startAddress && address <= it.endAddress
-        } as MemoryComponent
+    fun memoryComponentFor(address: Address) =
+        memComponents.first { it is MemoryComponent && address >= it.startAddress && address <= it.endAddress } as MemoryComponent
 }
