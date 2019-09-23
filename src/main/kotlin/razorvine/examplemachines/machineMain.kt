@@ -7,6 +7,7 @@ import razorvine.ksim65.IVirtualMachine
 import razorvine.ksim65.Version
 import razorvine.ksim65.components.*
 import razorvine.ksim65.components.Timer
+import java.io.File
 import javax.swing.ImageIcon
 
 /**
@@ -52,6 +53,13 @@ class VirtualMachine(title: String) : IVirtualMachine {
     }
 
     override fun getZeroAndStackPages(): Array<UByte> = ram.getPages(0, 2)
+
+    override fun loadFileInRam(file: File, loadAddress: Address?) {
+        if(file.extension=="prg" && loadAddress==null)
+            ram.loadPrg(file.inputStream())
+        else
+            ram.load(file.readBytes(), loadAddress!!)
+    }
 
     override fun pause(paused: Boolean) {
         this.paused = paused

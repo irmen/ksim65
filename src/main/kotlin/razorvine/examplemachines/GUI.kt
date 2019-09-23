@@ -9,6 +9,8 @@ import javax.swing.event.MouseInputListener
 import razorvine.ksim65.IHostInterface
 import razorvine.ksim65.IVirtualMachine
 import java.awt.event.*
+import java.io.File
+import java.lang.Integer.parseInt
 import java.util.*
 import javax.swing.*
 import javax.swing.Timer
@@ -215,12 +217,13 @@ class DebugWindow(private val vm: IVirtualMachine) : JFrame("debugger"), ActionL
         val buttonPanel = JPanel(FlowLayout())
         buttonPanel.border = BorderFactory.createTitledBorder("Control")
 
+        val loadBt = JButton("Load program").also { it.actionCommand = "load" }
         val resetBt = JButton("Reset").also { it.actionCommand = "reset" }
         val stepBt = JButton("Step").also { it.actionCommand = "step" }
         val irqBt = JButton("IRQ").also { it.actionCommand = "irq" }
         val nmiBt = JButton("NMI").also { it.actionCommand = "nmi" }
         val quitBt = JButton("Quit").also { it.actionCommand = "quit" }
-        listOf(resetBt, irqBt, nmiBt, pauseBt, stepBt, quitBt).forEach {
+        listOf(loadBt, resetBt, irqBt, nmiBt, pauseBt, stepBt, quitBt).forEach {
             it.addActionListener(this)
             buttonPanel.add(it)
         }
@@ -245,6 +248,32 @@ class DebugWindow(private val vm: IVirtualMachine) : JFrame("debugger"), ActionL
 
     override fun actionPerformed(e: ActionEvent) {
         when(e.actionCommand) {
+            "load" -> {
+                val chooser = JFileChooser()
+                chooser.dialogTitle = "Choose binary program or .prg to load"
+                chooser.currentDirectory = File(".")
+                chooser.isMultiSelectionEnabled = false
+                val result = chooser.showOpenDialog(this)
+                if(result==JFileChooser.APPROVE_OPTION) {
+                    if(chooser.selectedFile.extension=="prg") {
+                        vm.loadFileInRam(chooser.selectedFile, null)
+                    } else {
+                        val addressStr = JOptionPane.showInputDialog(
+                            this,
+                            "The selected file isn't a .prg.\nSpecify memory load address (hexadecimal) manually.",
+                            "Load address",
+                            JOptionPane.QUESTION_MESSAGE,
+                            null,
+                            null,
+                            "$"
+                        ) as String
+
+                        val loadAddress = parseInt(addressStr.removePrefix("$"), 16)
+                        vm.loadFileInRam(chooser.selectedFile, loadAddress)
+                    }
+                }
+
+            }
             "reset" -> {
                 vm.bus.reset()
                 updateCpu(vm.cpu, vm.bus)

@@ -93,7 +93,7 @@ private class BitmapScreenPanel(val chargenData: ByteArray, val ram: MemoryCompo
         val screen = 0x0400
         val colors = 0xd800
         val shifted = (ram[0xd018].toInt() and 0b00000010) != 0
-        g2d.background = ScreenDefs.colorPalette[ram[0xd021].toInt()]
+        g2d.background = ScreenDefs.colorPalette[ram[0xd021].toInt() and 15]
         g2d.clearRect(0, 0, ScreenDefs.SCREEN_WIDTH, ScreenDefs.SCREEN_HEIGHT)
         for(y in 0 until ScreenDefs.SCREEN_HEIGHT_CHARS) {
             for(x in 0 until ScreenDefs.SCREEN_WIDTH_CHARS) {
@@ -236,7 +236,7 @@ class MainC64Window(title: String, chargenData: ByteArray, val ram: MemoryCompon
      * This avoids having to deal with the 'real' keyboard matrix,
      * but it can't map keys like RUN/STOP and RESTORE properly.
      *
-     * TODO: replace this by the real keyboard matrix including RUN/STOP and RESTORE handling.
+     * TODO: replace this by the real keyboard matrix.
      */
     private fun keyEventToPetscii(ke: KeyEvent): UByte {
         if(ke.isActionKey) {

@@ -24,9 +24,12 @@ class C64Machine(title: String) : IVirtualMachine {
     override val cpu = Cpu6502(false)
     val ram = Ram(0x0000, 0xffff)
     val vic = VicII(0xd000, 0xd3ff)
+    val cia1 = Cia(1, 0xdc00, 0xdcff)
+    val cia2 = Cia(2, 0xdd00, 0xddff)
     val basicRom = Rom(0xa000, 0xbfff).also { it.load(basicData) }
     val kernalRom = Rom(0xe000, 0xffff).also { it.load(kernalData) }
     // TODO: implement the two CIAs to add timer and joystick support, and the keyboard matrix.
+    // TODO: implement something so that RND(0) actually works in basic.
 
     private val debugWindow = DebugWindow(this)
     private val hostDisplay = MainC64Window(title, chargenData, ram)
@@ -40,6 +43,8 @@ class C64Machine(title: String) : IVirtualMachine {
         bus += basicRom
         bus += kernalRom
         bus += vic
+        bus += cia1
+        bus += cia2
         bus += ram
         bus += cpu
         bus.reset()
@@ -57,6 +62,12 @@ class C64Machine(title: String) : IVirtualMachine {
         }
     }
 
+    override fun loadFileInRam(file: File, loadAddress: Address?) {
+        if(file.extension=="prg" && loadAddress==null)
+            ram.loadPrg(file.inputStream())
+        else
+            ram.load(file.readBytes(), loadAddress!!)
+    }
 
     override fun getZeroAndStackPages(): Array<UByte> = ram.getPages(0, 2)
 
