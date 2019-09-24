@@ -28,11 +28,11 @@ class C64Machine(title: String) : IVirtualMachine {
     val cia2 = Cia(2, 0xdd00, 0xddff)
     val basicRom = Rom(0xa000, 0xbfff).also { it.load(basicData) }
     val kernalRom = Rom(0xe000, 0xffff).also { it.load(kernalData) }
-    // TODO: implement the two CIAs to add timer and joystick support, and the keyboard matrix.
-    // TODO: implement something so that RND(0) actually works in basic.
+    // TODO: implement the two CIAs to add timer and joystick support.
+    // TODO: implement something so that RND(0) actually works in basic. (cia timer?)
 
     private val debugWindow = DebugWindow(this)
-    private val hostDisplay = MainC64Window(title, chargenData, ram)
+    private val hostDisplay = MainC64Window(title, chargenData, ram, cia1)
     private var paused = false
 
     init {
