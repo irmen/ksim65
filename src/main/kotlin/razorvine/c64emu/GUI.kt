@@ -77,14 +77,22 @@ private class BitmapScreenPanel(val chargenData: ByteArray, val ram: MemoryCompo
 
     override fun paint(graphics: Graphics?) {
         redrawCharacters()
-        val g2d = graphics as Graphics2D?
-        g2d!!.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF)
+        val g2d = graphics as Graphics2D
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF)
         g2d.setRenderingHint(RenderingHints.KEY_DITHERING, RenderingHints.VALUE_DITHER_DISABLE)
         g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC)
         g2d.drawImage(
             image, 0, 0, (image.width * ScreenDefs.DISPLAY_PIXEL_SCALING).toInt(),
             (image.height * ScreenDefs.DISPLAY_PIXEL_SCALING).toInt(), null
         )
+
+        // simulate a slight scan line effect
+        g2d.color = Color(0, 0, 0, 25)
+        for (y in ScreenDefs.DISPLAY_PIXEL_SCALING.toInt() - 1
+                until (ScreenDefs.SCREEN_HEIGHT * ScreenDefs.DISPLAY_PIXEL_SCALING).toInt()
+                step ScreenDefs.DISPLAY_PIXEL_SCALING.toInt()) {
+            g2d.drawLine(0, y, ScreenDefs.SCREEN_WIDTH * ScreenDefs.DISPLAY_PIXEL_SCALING.toInt(), y)
+        }
     }
 
     private fun redrawCharacters() {
