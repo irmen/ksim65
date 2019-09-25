@@ -32,7 +32,7 @@ class C64Machine(title: String) : IVirtualMachine {
     // TODO: implement something so that RND(0) actually works in basic. (cia timer?)
 
     private val debugWindow = DebugWindow(this)
-    private val hostDisplay = MainC64Window(title, chargenData, ram, cia1)
+    private val hostDisplay = MainC64Window(title, chargenData, ram, cpu, cia1)
     private var paused = false
 
     init {
