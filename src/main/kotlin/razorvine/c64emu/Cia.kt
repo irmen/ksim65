@@ -8,10 +8,52 @@ import java.awt.event.KeyEvent
 /**
  * Minimal simulation of the MOS 6526 CIA chip.
  * Depending on what CIA it is (1 or 2), some registers do different things on the C64.
+ * TODO implement at least Timer A, so that RND(0) starts working.
  */
 class Cia(val number: Int, startAddress: Address, endAddress: Address) : MemMappedComponent(startAddress, endAddress) {
     private var ramBuffer = Array<UByte>(endAddress - startAddress + 1) { 0x00 }
     private var pra = 0xff
+
+    class TimeOfDay {
+        private var updatedAt = 0L
+        private var startedAt = 0L
+        private var userStartTime = 0.0
+        private var running = false
+        var hours = 0
+        var minutes = 0
+        var seconds = 0
+        var tenths = 0
+
+        fun start() {
+            if(!running) {
+                updatedAt = System.currentTimeMillis()
+                startedAt = updatedAt
+                userStartTime = hours * 3600 + minutes * 60 + seconds + tenths / 10.0
+                running = true
+            }
+        }
+
+        fun stop() {
+            running = false
+        }
+
+        fun update() {
+            val currentTime = System.currentTimeMillis()
+            if (running && updatedAt != currentTime) {
+                updatedAt = currentTime
+                var elapsedSeconds = (currentTime.toDouble() - startedAt)/1000.0 + userStartTime
+                hours = (elapsedSeconds / 3600).toInt()
+                elapsedSeconds -= hours * 3600
+                minutes = (elapsedSeconds / 60).toInt()
+                elapsedSeconds -= minutes * 60
+                seconds = (elapsedSeconds).toInt()
+                elapsedSeconds -= seconds
+                tenths = (elapsedSeconds * 10).toInt()
+            }
+        }
+    }
+
+    private var tod = TimeOfDay()
 
     private data class HostKeyPress(val code: Int, val rightSide: Boolean, val numpad: Boolean)
 
@@ -22,12 +64,14 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address) : MemMapp
     }
 
     override fun clock() {
-        // TODO: TOD timer, timer A and B countdowns, IRQ triggering.
+        // TODO: timer A and B countdowns, IRQ triggering.
+        tod.update()
     }
 
     override fun reset() {
         hostKeyPresses.clear()
-        // TODO: reset TOD timer, timer A and B
+        tod.stop()
+        // TODO: reset timer A and B
     }
 
     override fun get(address: Address): UByte {
@@ -43,10 +87,10 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address) : MemMapp
 
         val register = (address - startAddress) and 15
         if (number == 1) {
-            return if (register == 0x01) {
+            if (register == 0x01) {
                 // register 1 on CIA#1 is the keyboard data port
                 // if bit is cleared in PRA, contains keys pressed in that column of the matrix
-                when (pra) {
+                return when (pra) {
                     0b00000000 -> {
                         // check if any keys are pressed at all (by checking all columns at once)
                         if (hostKeyPresses.isEmpty()) 0xff.toShort() else 0x00.toShort()
@@ -187,8 +231,40 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address) : MemMapp
             } else ramBuffer[register]
         }
 
-        // CIA #2 is not emulated yet
-        return ramBuffer[register]
+
+        return when (register) {
+            0x08 -> {
+                tod.start()
+                (tod.tenths and 0x0f).toShort()
+            }
+            0x09 -> {
+                toBCD(tod.seconds)
+            }
+            0x0a -> {
+                toBCD(tod.minutes)
+            }
+            0x0b -> {
+                val hours = toBCD(tod.hours)
+                if(tod.hours>=12)
+                    (hours.toInt() or 0x10000000).toShort()
+                else
+                    hours
+            }
+            else -> ramBuffer[register]
+        }
+    }
+
+    private fun toBCD(data: Int): UByte {
+        val tens = data / 10
+        val ones = data - tens*10
+        return ((tens shl 4) or ones).toShort()
+    }
+
+    private fun fromBCD(bcd: UByte): Int {
+        val ibcd = bcd.toInt()
+        val tens = ibcd ushr 4
+        val ones = ibcd and 0x0f
+        return tens*10 + ones
     }
 
     override fun set(address: Address, data: UByte) {
@@ -202,7 +278,18 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address) : MemMapp
                 }
             }
         }
-        // CIA #2 is not emulated yet
+
+        when (register) {
+            0x08 -> { tod.tenths = data.toInt() and 0x0f }
+            0x09 -> { tod.seconds = fromBCD(data) }
+            0x0a -> { tod.minutes = fromBCD(data) }
+            0x0b -> {
+                tod.stop()
+                tod.hours = fromBCD(data)
+                if(data >= 12)
+                    tod.hours = tod.hours or 0b10000000
+            }
+        }
     }
 
     fun hostKeyPressed(event: KeyEvent) {

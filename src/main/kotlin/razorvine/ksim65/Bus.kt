@@ -46,7 +46,7 @@ class Bus {
         memComponents.forEach {
             if (address >= it.startAddress && address <= it.endAddress) {
                 val data = it[address]
-                require(data in 0..255) { "data at address $address must be a byte 0..255" }
+                require(data in 0..255) { "data at address $address must be a byte 0..255, but is $data" }
                 return data
             }
         }
