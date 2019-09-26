@@ -8,10 +8,11 @@ import java.awt.event.KeyEvent
 /**
  * Minimal simulation of the MOS 6526 CIA chip.
  * Depending on what CIA it is (1 or 2), some registers do different things on the C64.
- * TODO implement at least Timer A, so that RND(0) starts working.
+ * This implementation provides a working keyboard matrix, TOD clock, and the essentials of the timer A and B.
+ * TODO: timer IRQ triggering, more timer control bits.
  */
 class Cia(val number: Int, startAddress: Address, endAddress: Address) : MemMappedComponent(startAddress, endAddress) {
-    private var ramBuffer = Array<UByte>(endAddress - startAddress + 1) { 0x00 }
+    private var ramBuffer = Array<UByte>(endAddress - startAddress + 1) { 0 }
     private var pra = 0xff
 
     class TimeOfDay {
@@ -54,6 +55,10 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address) : MemMapp
     }
 
     private var tod = TimeOfDay()
+    private var timerAset = 0
+    private var timerBset = 0
+    private var timerAactual = 0
+    private var timerBactual = 0
 
     private data class HostKeyPress(val code: Int, val rightSide: Boolean=false, val numpad: Boolean=false)
 
@@ -64,18 +69,31 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address) : MemMapp
     }
 
     override fun clock() {
-        // TODO: timer A and B countdowns, IRQ triggering.
         tod.update()
+        if(ramBuffer[0x0e].toInt() and 1 != 0) {
+            timerAactual--
+            if(timerAactual<0)
+                timerAactual = if(ramBuffer[0x0e].toInt() and 0b1000 != 0) 0 else timerAset
+        }
+        if(ramBuffer[0x0f].toInt() and 1 != 0) {
+            timerBactual--
+            if(timerBactual<0)
+                timerBactual = if(ramBuffer[0x0f].toInt() and 0b1000 != 0) 0 else timerBset
+        }
     }
 
     override fun reset() {
         hostKeyPresses.clear()
         tod.stop()
-        // TODO: reset timer A and B
+        ramBuffer.fill(0)
+        timerAactual = 0
+        timerAset = 0
+        timerBactual = 0
+        timerBset = 0
     }
 
     override fun get(address: Address): UByte {
-        fun scanColumn(keys: List<HostKeyPress>): UByte {
+        fun scanColumn(vararg keys: HostKeyPress): UByte {
             var bits = 0b10000000
             var presses = 0
             for (key in keys) {
@@ -86,145 +104,130 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address) : MemMapp
         }
 
         val register = (address - startAddress) and 15
-        if (number == 1) {
-            if (register == 0x01) {
-                // register 1 on CIA#1 is the keyboard data port
-                // if bit is cleared in PRA, contains keys pressed in that column of the matrix
-                return when (pra) {
-                    0b00000000 -> {
-                        // check if any keys are pressed at all (by checking all columns at once)
-                        if (hostKeyPresses.isEmpty()) 0xff.toShort() else 0x00.toShort()
-                    }
-                    0b11111110 -> {
-                        // read column 0
-                        scanColumn(
-                            listOf(
-                                HostKeyPress(KeyEvent.VK_DOWN),
-                                HostKeyPress(KeyEvent.VK_F5),
-                                HostKeyPress(KeyEvent.VK_F3),
-                                HostKeyPress(KeyEvent.VK_F1),
-                                HostKeyPress(KeyEvent.VK_F7),
-                                HostKeyPress(KeyEvent.VK_RIGHT),
-                                HostKeyPress(KeyEvent.VK_ENTER),
-                                HostKeyPress(KeyEvent.VK_BACK_SPACE)
-                            )
-                        )
-                    }
-                    0b11111101 -> {
-                        // read column 1
-                        scanColumn(
-                            listOf(
-                                HostKeyPress(KeyEvent.VK_SHIFT),     // left shift
-                                HostKeyPress(KeyEvent.VK_E),
-                                HostKeyPress(KeyEvent.VK_S),
-                                HostKeyPress(KeyEvent.VK_Z),
-                                HostKeyPress(KeyEvent.VK_4),
-                                HostKeyPress(KeyEvent.VK_A),
-                                HostKeyPress(KeyEvent.VK_W),
-                                HostKeyPress(KeyEvent.VK_3)
-                            )
-                        )
-                    }
-                    0b11111011 -> {
-                        // read column 2
-                        scanColumn(
-                            listOf(
-                                HostKeyPress(KeyEvent.VK_X),
-                                HostKeyPress(KeyEvent.VK_T),
-                                HostKeyPress(KeyEvent.VK_F),
-                                HostKeyPress(KeyEvent.VK_C),
-                                HostKeyPress(KeyEvent.VK_6),
-                                HostKeyPress(KeyEvent.VK_D),
-                                HostKeyPress(KeyEvent.VK_R),
-                                HostKeyPress(KeyEvent.VK_5)
-                            )
-                        )
-                    }
-                    0b11110111 -> {
-                        // read column 3
-                        scanColumn(
-                            listOf(
-                                HostKeyPress(KeyEvent.VK_V),
-                                HostKeyPress(KeyEvent.VK_U),
-                                HostKeyPress(KeyEvent.VK_H),
-                                HostKeyPress(KeyEvent.VK_B),
-                                HostKeyPress(KeyEvent.VK_8),
-                                HostKeyPress(KeyEvent.VK_G),
-                                HostKeyPress(KeyEvent.VK_Y),
-                                HostKeyPress(KeyEvent.VK_7)
-                            )
-                        )
-                    }
-                    0b11101111 -> {
-                        // read column 4
-                        scanColumn(
-                            listOf(
-                                HostKeyPress(KeyEvent.VK_N),
-                                HostKeyPress(KeyEvent.VK_O),
-                                HostKeyPress(KeyEvent.VK_K),
-                                HostKeyPress(KeyEvent.VK_M),
-                                HostKeyPress(KeyEvent.VK_0),
-                                HostKeyPress(KeyEvent.VK_J),
-                                HostKeyPress(KeyEvent.VK_I),
-                                HostKeyPress(KeyEvent.VK_9)
-                            )
-                        )
-                    }
-                    0b11011111 -> {
-                        // read column 5
-                        scanColumn(
-                            listOf(
-                                HostKeyPress(KeyEvent.VK_COMMA),
-                                HostKeyPress(KeyEvent.VK_AT),
-                                HostKeyPress(KeyEvent.VK_COLON),
-                                HostKeyPress(KeyEvent.VK_PERIOD),
-                                HostKeyPress(KeyEvent.VK_MINUS),
-                                HostKeyPress(KeyEvent.VK_L),
-                                HostKeyPress(KeyEvent.VK_P),
-                                HostKeyPress(KeyEvent.VK_PLUS)
-                            )
-                        )
-                    }
-                    0b10111111 -> {
-                        // read column 6
-                        scanColumn(
-                            listOf(
-                                HostKeyPress(KeyEvent.VK_SLASH),
-                                HostKeyPress(KeyEvent.VK_CIRCUMFLEX),
-                                HostKeyPress(KeyEvent.VK_EQUALS),
-                                HostKeyPress(KeyEvent.VK_SHIFT, rightSide = true), // right shift
-                                HostKeyPress(KeyEvent.VK_HOME),
-                                HostKeyPress(KeyEvent.VK_SEMICOLON),
-                                HostKeyPress(KeyEvent.VK_ASTERISK),
-                                HostKeyPress(KeyEvent.VK_DEAD_TILDE)     // pound sign
-                            )
-                        )
-                    }
-                    0b01111111 -> {
-                        // read column 7
-                        scanColumn(
-                            listOf(
-                                HostKeyPress(KeyEvent.VK_ESCAPE),
-                                HostKeyPress(KeyEvent.VK_Q),
-                                HostKeyPress(KeyEvent.VK_ALT),
-                                HostKeyPress(KeyEvent.VK_SPACE),
-                                HostKeyPress(KeyEvent.VK_2),
-                                HostKeyPress(KeyEvent.VK_CONTROL),
-                                HostKeyPress(KeyEvent.VK_BACK_QUOTE),
-                                HostKeyPress(KeyEvent.VK_1)
-                            )
-                        )
-                    }
-                    else -> {
-                        // invalid column selection
-                        0xff
-                    }
+        if (number == 1 && register == 0x01) {
+            // register 1 on CIA#1 is the keyboard data port
+            // if bit is cleared in PRA, contains keys pressed in that column of the matrix
+            return when (pra) {
+                0b00000000 -> {
+                    // check if any keys are pressed at all (by checking all columns at once)
+                    if (hostKeyPresses.isEmpty()) 0xff.toShort() else 0x00.toShort()
                 }
-            } else ramBuffer[register]
-        }
-
+                0b11111110 -> {
+                    // read column 0
+                    scanColumn(
+                            HostKeyPress(KeyEvent.VK_DOWN),
+                            HostKeyPress(KeyEvent.VK_F5),
+                            HostKeyPress(KeyEvent.VK_F3),
+                            HostKeyPress(KeyEvent.VK_F1),
+                            HostKeyPress(KeyEvent.VK_F7),
+                            HostKeyPress(KeyEvent.VK_RIGHT),
+                            HostKeyPress(KeyEvent.VK_ENTER),
+                            HostKeyPress(KeyEvent.VK_BACK_SPACE)
+                    )
+                }
+                0b11111101 -> {
+                    // read column 1
+                    scanColumn(
+                            HostKeyPress(KeyEvent.VK_SHIFT),     // left shift
+                            HostKeyPress(KeyEvent.VK_E),
+                            HostKeyPress(KeyEvent.VK_S),
+                            HostKeyPress(KeyEvent.VK_Z),
+                            HostKeyPress(KeyEvent.VK_4),
+                            HostKeyPress(KeyEvent.VK_A),
+                            HostKeyPress(KeyEvent.VK_W),
+                            HostKeyPress(KeyEvent.VK_3)
+                    )
+                }
+                0b11111011 -> {
+                    // read column 2
+                    scanColumn(
+                            HostKeyPress(KeyEvent.VK_X),
+                            HostKeyPress(KeyEvent.VK_T),
+                            HostKeyPress(KeyEvent.VK_F),
+                            HostKeyPress(KeyEvent.VK_C),
+                            HostKeyPress(KeyEvent.VK_6),
+                            HostKeyPress(KeyEvent.VK_D),
+                            HostKeyPress(KeyEvent.VK_R),
+                            HostKeyPress(KeyEvent.VK_5)
+                    )
+                }
+                0b11110111 -> {
+                    // read column 3
+                    scanColumn(
+                            HostKeyPress(KeyEvent.VK_V),
+                            HostKeyPress(KeyEvent.VK_U),
+                            HostKeyPress(KeyEvent.VK_H),
+                            HostKeyPress(KeyEvent.VK_B),
+                            HostKeyPress(KeyEvent.VK_8),
+                            HostKeyPress(KeyEvent.VK_G),
+                            HostKeyPress(KeyEvent.VK_Y),
+                            HostKeyPress(KeyEvent.VK_7)
+                    )
+                }
+                0b11101111 -> {
+                    // read column 4
+                    scanColumn(
+                            HostKeyPress(KeyEvent.VK_N),
+                            HostKeyPress(KeyEvent.VK_O),
+                            HostKeyPress(KeyEvent.VK_K),
+                            HostKeyPress(KeyEvent.VK_M),
+                            HostKeyPress(KeyEvent.VK_0),
+                            HostKeyPress(KeyEvent.VK_J),
+                            HostKeyPress(KeyEvent.VK_I),
+                            HostKeyPress(KeyEvent.VK_9)
+                    )
+                }
+                0b11011111 -> {
+                    // read column 5
+                    scanColumn(
+                            HostKeyPress(KeyEvent.VK_COMMA),
+                            HostKeyPress(KeyEvent.VK_AT),
+                            HostKeyPress(KeyEvent.VK_COLON),
+                            HostKeyPress(KeyEvent.VK_PERIOD),
+                            HostKeyPress(KeyEvent.VK_MINUS),
+                            HostKeyPress(KeyEvent.VK_L),
+                            HostKeyPress(KeyEvent.VK_P),
+                            HostKeyPress(KeyEvent.VK_PLUS)
+                    )
+                }
+                0b10111111 -> {
+                    // read column 6
+                    scanColumn(
+                            HostKeyPress(KeyEvent.VK_SLASH),
+                            HostKeyPress(KeyEvent.VK_CIRCUMFLEX),
+                            HostKeyPress(KeyEvent.VK_EQUALS),
+                            HostKeyPress(KeyEvent.VK_SHIFT, rightSide = true), // right shift
+                            HostKeyPress(KeyEvent.VK_HOME),
+                            HostKeyPress(KeyEvent.VK_SEMICOLON),
+                            HostKeyPress(KeyEvent.VK_ASTERISK),
+                            HostKeyPress(KeyEvent.VK_DEAD_TILDE)     // pound sign
+                    )
+                }
+                0b01111111 -> {
+                    // read column 7
+                    scanColumn(
+                            HostKeyPress(KeyEvent.VK_ESCAPE),
+                            HostKeyPress(KeyEvent.VK_Q),
+                            HostKeyPress(KeyEvent.VK_ALT),
+                            HostKeyPress(KeyEvent.VK_SPACE),
+                            HostKeyPress(KeyEvent.VK_2),
+                            HostKeyPress(KeyEvent.VK_CONTROL),
+                            HostKeyPress(KeyEvent.VK_BACK_QUOTE),
+                            HostKeyPress(KeyEvent.VK_1)
+                    )
+                }
+                else -> {
+                    // invalid column selection
+                    0xff
+                }
+            }
+        } else ramBuffer[register]
 
         return when (register) {
+            0x04 -> (timerAactual and 0xff).toShort()
+            0x05 -> (timerAactual ushr 8).toShort()
+            0x06 -> (timerBactual and 0xff).toShort()
+            0x07 -> (timerBactual ushr 8).toShort()
             0x08 -> {
                 tod.start()
                 (tod.tenths and 0x0f).toShort()
@@ -262,31 +265,46 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address) : MemMapp
     override fun set(address: Address, data: UByte) {
         val register = (address - startAddress) and 15
         ramBuffer[register] = data
-        if (number == 1) {
-            when (register) {
-                0x00 -> {
-                    // PRA data port A (select keyboard matrix column)
-                    pra = data.toInt()
-                }
-            }
+        if (number == 1 && register == 0x00) {
+            // PRA data port A (select keyboard matrix column)
+            pra = data.toInt()
         }
 
         when (register) {
-            0x08 -> {
-                tod.tenths = data.toInt() and 0x0f
+            0x04 -> {
+                if(ramBuffer[0x0e].toInt() and 0b10000000 == 0) {
+                    timerAset = (timerAset and 0xff00) or data.toInt()
+                    timerAactual = timerAset
+                }
             }
-            0x09 -> {
-                tod.seconds = fromBCD(data)
+            0x05 -> {
+                if(ramBuffer[0x0e].toInt() and 0b10000000 == 0) {
+                    timerAset = (timerAset and 0x00ff) or (data.toInt() shl 8)
+                    timerAactual = timerAset
+                }
             }
-            0x0a -> {
-                tod.minutes = fromBCD(data)
+            0x06 -> {
+                if(ramBuffer[0x0f].toInt() and 0b10000000 == 0) {
+                    timerBset = (timerBset and 0xff00) or data.toInt()
+                    timerBactual = timerBset
+                }
             }
+            0x07 -> {
+                if(ramBuffer[0x0f].toInt() and 0b10000000 == 0) {
+                    timerBset = (timerBset and 0x00ff) or (data.toInt() shl 8)
+                    timerBactual = timerBset
+                }
+            }
+            0x08 -> tod.tenths = data.toInt() and 0x0f
+            0x09 -> tod.seconds = fromBCD(data)
+            0x0a -> tod.minutes = fromBCD(data)
             0x0b -> {
                 tod.stop()
                 tod.hours = fromBCD(data)
                 if (data >= 12)
                     tod.hours = tod.hours or 0b10000000
             }
+            // the timer A and B control registers are simply provided by the rambuffer for now.
         }
     }
 
