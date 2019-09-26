@@ -8,6 +8,8 @@ import razorvine.ksim65.IVirtualMachine
 import razorvine.ksim65.Version
 import razorvine.ksim65.components.*
 import java.io.File
+import java.io.FileNotFoundException
+import java.nio.file.Path
 import java.nio.file.Paths
 import javax.swing.ImageIcon
 
@@ -15,7 +17,7 @@ import javax.swing.ImageIcon
  * The virtual representation of the Commodore-64
  */
 class C64Machine(title: String) : IVirtualMachine {
-    private val romsPath = Paths.get(expandUser("~/.vice/C64"))
+    private val romsPath = determineRomPath()
     private val chargenData = romsPath.resolve("chargen").toFile().readBytes()
     private val basicData = romsPath.resolve("basic").toFile().readBytes()
     private val kernalData = romsPath.resolve("kernal").toFile().readBytes()
@@ -52,11 +54,22 @@ class C64Machine(title: String) : IVirtualMachine {
         hostDisplay.start()
     }
 
+    private fun determineRomPath(): Path {
+        val candidates = listOf("./roms", "~/roms/c64", "~/roms", "~/.vice/C64")
+        candidates.forEach {
+            val path = Paths.get(expandUser(it))
+            if(path.toFile().isDirectory)
+                return path
+        }
+        throw FileNotFoundException("no roms directory found, tried: $candidates")
+    }
+
     private fun expandUser(path: String): String {
-        if(path.startsWith("~" + File.separator)) {
-            return System.getProperty("user.home") + path.substring(1)
-        } else {
-            throw UnsupportedOperationException("home dir expansion not implemented for other users")
+        return when {
+            path.startsWith("~/") -> System.getProperty("user.home") + path.substring(1)
+            path.startsWith("~" + File.separatorChar) -> System.getProperty("user.home") + path.substring(1)
+            path.startsWith("~") -> throw UnsupportedOperationException("home dir expansion not implemented for other users")
+            else -> path
         }
     }
 

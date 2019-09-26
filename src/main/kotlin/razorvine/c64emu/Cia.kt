@@ -25,7 +25,7 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address) : MemMapp
         var tenths = 0
 
         fun start() {
-            if(!running) {
+            if (!running) {
                 updatedAt = System.currentTimeMillis()
                 startedAt = updatedAt
                 userStartTime = hours * 3600 + minutes * 60 + seconds + tenths / 10.0
@@ -41,7 +41,7 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address) : MemMapp
             val currentTime = System.currentTimeMillis()
             if (running && updatedAt != currentTime) {
                 updatedAt = currentTime
-                var elapsedSeconds = (currentTime.toDouble() - startedAt)/1000.0 + userStartTime
+                var elapsedSeconds = (currentTime.toDouble() - startedAt) / 1000.0 + userStartTime
                 hours = (elapsedSeconds / 3600).toInt()
                 elapsedSeconds -= hours * 3600
                 minutes = (elapsedSeconds / 60).toInt()
@@ -55,7 +55,7 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address) : MemMapp
 
     private var tod = TimeOfDay()
 
-    private data class HostKeyPress(val code: Int, val rightSide: Boolean, val numpad: Boolean)
+    private data class HostKeyPress(val code: Int, val rightSide: Boolean=false, val numpad: Boolean=false)
 
     private val hostKeyPresses = mutableSetOf<HostKeyPress>()
 
@@ -99,14 +99,14 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address) : MemMapp
                         // read column 0
                         scanColumn(
                             listOf(
-                                HostKeyPress(KeyEvent.VK_DOWN, rightSide = false, numpad = false),
-                                HostKeyPress(KeyEvent.VK_F5, rightSide = false, numpad = false),
-                                HostKeyPress(KeyEvent.VK_F3, rightSide = false, numpad = false),
-                                HostKeyPress(KeyEvent.VK_F1, rightSide = false, numpad = false),
-                                HostKeyPress(KeyEvent.VK_F7, rightSide = false, numpad = false),
-                                HostKeyPress(KeyEvent.VK_RIGHT, rightSide = false, numpad = false),
-                                HostKeyPress(KeyEvent.VK_ENTER, rightSide = false, numpad = false),
-                                HostKeyPress(KeyEvent.VK_BACK_SPACE, rightSide = false, numpad = false)
+                                HostKeyPress(KeyEvent.VK_DOWN),
+                                HostKeyPress(KeyEvent.VK_F5),
+                                HostKeyPress(KeyEvent.VK_F3),
+                                HostKeyPress(KeyEvent.VK_F1),
+                                HostKeyPress(KeyEvent.VK_F7),
+                                HostKeyPress(KeyEvent.VK_RIGHT),
+                                HostKeyPress(KeyEvent.VK_ENTER),
+                                HostKeyPress(KeyEvent.VK_BACK_SPACE)
                             )
                         )
                     }
@@ -114,14 +114,14 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address) : MemMapp
                         // read column 1
                         scanColumn(
                             listOf(
-                                HostKeyPress(KeyEvent.VK_SHIFT, rightSide = false, numpad = false),     // left shift
-                                HostKeyPress(KeyEvent.VK_E, rightSide = false, numpad = false),
-                                HostKeyPress(KeyEvent.VK_S, rightSide = false, numpad = false),
-                                HostKeyPress(KeyEvent.VK_Z, rightSide = false, numpad = false),
-                                HostKeyPress(KeyEvent.VK_4, rightSide = false, numpad = false),
-                                HostKeyPress(KeyEvent.VK_A, rightSide = false, numpad = false),
-                                HostKeyPress(KeyEvent.VK_W, rightSide = false, numpad = false),
-                                HostKeyPress(KeyEvent.VK_3, rightSide = false, numpad = false)
+                                HostKeyPress(KeyEvent.VK_SHIFT),     // left shift
+                                HostKeyPress(KeyEvent.VK_E),
+                                HostKeyPress(KeyEvent.VK_S),
+                                HostKeyPress(KeyEvent.VK_Z),
+                                HostKeyPress(KeyEvent.VK_4),
+                                HostKeyPress(KeyEvent.VK_A),
+                                HostKeyPress(KeyEvent.VK_W),
+                                HostKeyPress(KeyEvent.VK_3)
                             )
                         )
                     }
@@ -129,14 +129,14 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address) : MemMapp
                         // read column 2
                         scanColumn(
                             listOf(
-                                HostKeyPress(KeyEvent.VK_X, rightSide = false, numpad = false),
-                                HostKeyPress(KeyEvent.VK_T, rightSide = false, numpad = false),
-                                HostKeyPress(KeyEvent.VK_F, rightSide = false, numpad = false),
-                                HostKeyPress(KeyEvent.VK_C, rightSide = false, numpad = false),
-                                HostKeyPress(KeyEvent.VK_6, rightSide = false, numpad = false),
-                                HostKeyPress(KeyEvent.VK_D, rightSide = false, numpad = false),
-                                HostKeyPress(KeyEvent.VK_R, rightSide = false, numpad = false),
-                                HostKeyPress(KeyEvent.VK_5, rightSide = false, numpad = false)
+                                HostKeyPress(KeyEvent.VK_X),
+                                HostKeyPress(KeyEvent.VK_T),
+                                HostKeyPress(KeyEvent.VK_F),
+                                HostKeyPress(KeyEvent.VK_C),
+                                HostKeyPress(KeyEvent.VK_6),
+                                HostKeyPress(KeyEvent.VK_D),
+                                HostKeyPress(KeyEvent.VK_R),
+                                HostKeyPress(KeyEvent.VK_5)
                             )
                         )
                     }
@@ -144,14 +144,14 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address) : MemMapp
                         // read column 3
                         scanColumn(
                             listOf(
-                                HostKeyPress(KeyEvent.VK_V, rightSide = false, numpad = false),
-                                HostKeyPress(KeyEvent.VK_U, rightSide = false, numpad = false),
-                                HostKeyPress(KeyEvent.VK_H, rightSide = false, numpad = false),
-                                HostKeyPress(KeyEvent.VK_B, rightSide = false, numpad = false),
-                                HostKeyPress(KeyEvent.VK_8, rightSide = false, numpad = false),
-                                HostKeyPress(KeyEvent.VK_G, rightSide = false, numpad = false),
-                                HostKeyPress(KeyEvent.VK_Y, rightSide = false, numpad = false),
-                                HostKeyPress(KeyEvent.VK_7, rightSide = false, numpad = false)
+                                HostKeyPress(KeyEvent.VK_V),
+                                HostKeyPress(KeyEvent.VK_U),
+                                HostKeyPress(KeyEvent.VK_H),
+                                HostKeyPress(KeyEvent.VK_B),
+                                HostKeyPress(KeyEvent.VK_8),
+                                HostKeyPress(KeyEvent.VK_G),
+                                HostKeyPress(KeyEvent.VK_Y),
+                                HostKeyPress(KeyEvent.VK_7)
                             )
                         )
                     }
@@ -159,14 +159,14 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address) : MemMapp
                         // read column 4
                         scanColumn(
                             listOf(
-                                HostKeyPress(KeyEvent.VK_N, rightSide = false, numpad = false),
-                                HostKeyPress(KeyEvent.VK_O, rightSide = false, numpad = false),
-                                HostKeyPress(KeyEvent.VK_K, rightSide = false, numpad = false),
-                                HostKeyPress(KeyEvent.VK_M, rightSide = false, numpad = false),
-                                HostKeyPress(KeyEvent.VK_0, rightSide = false, numpad = false),
-                                HostKeyPress(KeyEvent.VK_J, rightSide = false, numpad = false),
-                                HostKeyPress(KeyEvent.VK_I, rightSide = false, numpad = false),
-                                HostKeyPress(KeyEvent.VK_9, rightSide = false, numpad = false)
+                                HostKeyPress(KeyEvent.VK_N),
+                                HostKeyPress(KeyEvent.VK_O),
+                                HostKeyPress(KeyEvent.VK_K),
+                                HostKeyPress(KeyEvent.VK_M),
+                                HostKeyPress(KeyEvent.VK_0),
+                                HostKeyPress(KeyEvent.VK_J),
+                                HostKeyPress(KeyEvent.VK_I),
+                                HostKeyPress(KeyEvent.VK_9)
                             )
                         )
                     }
@@ -174,14 +174,14 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address) : MemMapp
                         // read column 5
                         scanColumn(
                             listOf(
-                                HostKeyPress(KeyEvent.VK_COMMA, rightSide = false, numpad = false),
-                                HostKeyPress(KeyEvent.VK_AT, rightSide = false, numpad = false),
-                                HostKeyPress(KeyEvent.VK_COLON, rightSide = false, numpad = false),
-                                HostKeyPress(KeyEvent.VK_PERIOD, rightSide = false, numpad = false),
-                                HostKeyPress(KeyEvent.VK_MINUS, rightSide = false, numpad = false),
-                                HostKeyPress(KeyEvent.VK_L, rightSide = false, numpad = false),
-                                HostKeyPress(KeyEvent.VK_P, rightSide = false, numpad = false),
-                                HostKeyPress(KeyEvent.VK_PLUS, rightSide = false, numpad = false)
+                                HostKeyPress(KeyEvent.VK_COMMA),
+                                HostKeyPress(KeyEvent.VK_AT),
+                                HostKeyPress(KeyEvent.VK_COLON),
+                                HostKeyPress(KeyEvent.VK_PERIOD),
+                                HostKeyPress(KeyEvent.VK_MINUS),
+                                HostKeyPress(KeyEvent.VK_L),
+                                HostKeyPress(KeyEvent.VK_P),
+                                HostKeyPress(KeyEvent.VK_PLUS)
                             )
                         )
                     }
@@ -189,22 +189,14 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address) : MemMapp
                         // read column 6
                         scanColumn(
                             listOf(
-                                HostKeyPress(KeyEvent.VK_SLASH, rightSide = false, numpad = false),
-                                HostKeyPress(KeyEvent.VK_CIRCUMFLEX, rightSide = false, numpad = false),
-                                HostKeyPress(KeyEvent.VK_EQUALS, rightSide = false, numpad = false),
-                                HostKeyPress(
-                                    KeyEvent.VK_SHIFT,
-                                    rightSide = true,
-                                    numpad = false
-                                ),              // right shift
-                                HostKeyPress(KeyEvent.VK_HOME, rightSide = false, numpad = false),
-                                HostKeyPress(KeyEvent.VK_SEMICOLON, rightSide = false, numpad = false),
-                                HostKeyPress(KeyEvent.VK_ASTERISK, rightSide = false, numpad = false),
-                                HostKeyPress(
-                                    KeyEvent.VK_DEAD_TILDE,
-                                    rightSide = false,
-                                    numpad = false
-                                )     // pound sign
+                                HostKeyPress(KeyEvent.VK_SLASH),
+                                HostKeyPress(KeyEvent.VK_CIRCUMFLEX),
+                                HostKeyPress(KeyEvent.VK_EQUALS),
+                                HostKeyPress(KeyEvent.VK_SHIFT, rightSide = true), // right shift
+                                HostKeyPress(KeyEvent.VK_HOME),
+                                HostKeyPress(KeyEvent.VK_SEMICOLON),
+                                HostKeyPress(KeyEvent.VK_ASTERISK),
+                                HostKeyPress(KeyEvent.VK_DEAD_TILDE)     // pound sign
                             )
                         )
                     }
@@ -212,14 +204,14 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address) : MemMapp
                         // read column 7
                         scanColumn(
                             listOf(
-                                HostKeyPress(KeyEvent.VK_ESCAPE, rightSide = false, numpad = false),
-                                HostKeyPress(KeyEvent.VK_Q, rightSide = false, numpad = false),
-                                HostKeyPress(KeyEvent.VK_ALT, rightSide = false, numpad = false),
-                                HostKeyPress(KeyEvent.VK_SPACE, rightSide = false, numpad = false),
-                                HostKeyPress(KeyEvent.VK_2, rightSide = false, numpad = false),
-                                HostKeyPress(KeyEvent.VK_CONTROL, rightSide = false, numpad = false),
-                                HostKeyPress(KeyEvent.VK_BACK_QUOTE, rightSide = false, numpad = false),
-                                HostKeyPress(KeyEvent.VK_1, rightSide = false, numpad = false)
+                                HostKeyPress(KeyEvent.VK_ESCAPE),
+                                HostKeyPress(KeyEvent.VK_Q),
+                                HostKeyPress(KeyEvent.VK_ALT),
+                                HostKeyPress(KeyEvent.VK_SPACE),
+                                HostKeyPress(KeyEvent.VK_2),
+                                HostKeyPress(KeyEvent.VK_CONTROL),
+                                HostKeyPress(KeyEvent.VK_BACK_QUOTE),
+                                HostKeyPress(KeyEvent.VK_1)
                             )
                         )
                     }
@@ -245,7 +237,7 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address) : MemMapp
             }
             0x0b -> {
                 val hours = toBCD(tod.hours)
-                if(tod.hours>=12)
+                if (tod.hours >= 12)
                     (hours.toInt() or 0x10000000).toShort()
                 else
                     hours
@@ -256,7 +248,7 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address) : MemMapp
 
     private fun toBCD(data: Int): UByte {
         val tens = data / 10
-        val ones = data - tens*10
+        val ones = data - tens * 10
         return ((tens shl 4) or ones).toShort()
     }
 
@@ -264,7 +256,7 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address) : MemMapp
         val ibcd = bcd.toInt()
         val tens = ibcd ushr 4
         val ones = ibcd and 0x0f
-        return tens*10 + ones
+        return tens * 10 + ones
     }
 
     override fun set(address: Address, data: UByte) {
@@ -280,13 +272,19 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address) : MemMapp
         }
 
         when (register) {
-            0x08 -> { tod.tenths = data.toInt() and 0x0f }
-            0x09 -> { tod.seconds = fromBCD(data) }
-            0x0a -> { tod.minutes = fromBCD(data) }
+            0x08 -> {
+                tod.tenths = data.toInt() and 0x0f
+            }
+            0x09 -> {
+                tod.seconds = fromBCD(data)
+            }
+            0x0a -> {
+                tod.minutes = fromBCD(data)
+            }
             0x0b -> {
                 tod.stop()
                 tod.hours = fromBCD(data)
-                if(data >= 12)
+                if (data >= 12)
                     tod.hours = tod.hours or 0b10000000
             }
         }
@@ -321,99 +319,58 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address) : MemMapp
         when {
             event.keyChar == '@' -> {
                 unregister(KeyEvent.VK_SHIFT)
-                register(event.id, HostKeyPress(KeyEvent.VK_AT, rightSide = false, numpad = false))
+                register(event.id, HostKeyPress(KeyEvent.VK_AT))
             }
             event.keyChar == '^' -> {
                 unregister(KeyEvent.VK_SHIFT)
-                register(event.id, HostKeyPress(KeyEvent.VK_CIRCUMFLEX, rightSide = false, numpad = false))
-            }
-            event.keyChar == '&' -> {
-                register(event.id, shift, HostKeyPress(KeyEvent.VK_6, rightSide = false, numpad = false))
+                register(event.id, HostKeyPress(KeyEvent.VK_CIRCUMFLEX))
             }
             event.keyChar == '*' -> {
                 unregister(KeyEvent.VK_SHIFT)
-                register(event.id, HostKeyPress(KeyEvent.VK_ASTERISK, rightSide = false, numpad = false))
-            }
-            event.keyChar == '(' -> {
-                register(event.id, shift, HostKeyPress(KeyEvent.VK_8, rightSide = false, numpad = false))
-            }
-            event.keyChar == ')' -> {
-                register(event.id, shift, HostKeyPress(KeyEvent.VK_9, rightSide = false, numpad = false))
-            }
-            event.keyChar == '[' -> {
-                register(event.id, shift, HostKeyPress(KeyEvent.VK_COLON, rightSide = false, numpad = false))
-            }
-            event.keyChar == ']' -> {
-                register(event.id, shift, HostKeyPress(KeyEvent.VK_SEMICOLON, rightSide = false, numpad = false))
+                register(event.id, HostKeyPress(KeyEvent.VK_ASTERISK))
             }
             event.keyChar == '+' -> {
                 unregister(KeyEvent.VK_SHIFT)
-                register(event.id, HostKeyPress(KeyEvent.VK_PLUS, rightSide = false, numpad = false))
-            }
-            event.keyChar == '"' -> {
-                register(event.id, HostKeyPress(KeyEvent.VK_2, rightSide = false, numpad = false))
+                register(event.id, HostKeyPress(KeyEvent.VK_PLUS))
             }
             event.keyChar == ':' -> {
                 unregister(KeyEvent.VK_SHIFT)
-                register(event.id, HostKeyPress(KeyEvent.VK_COLON, rightSide = false, numpad = false))
+                register(event.id, HostKeyPress(KeyEvent.VK_COLON))
             }
             event.keyChar == '~' -> {
                 unregister(KeyEvent.VK_SHIFT)
-                register(event.id, HostKeyPress(KeyEvent.VK_DEAD_TILDE, rightSide = false, numpad = false))
+                register(event.id, HostKeyPress(KeyEvent.VK_DEAD_TILDE))
             }
-            event.keyChar == '\'' -> {
-                register(event.id, shift, HostKeyPress(KeyEvent.VK_7, rightSide = false, numpad = false))
-            }
-            else -> when (event.keyCode) {
-                KeyEvent.VK_CONTROL, KeyEvent.VK_TAB -> {
-                    // both controls and the tab key map to the 'single left control'
-                    register(event.id, HostKeyPress(KeyEvent.VK_CONTROL, rightSide = false, numpad = false))
+            event.keyChar == '&' -> register(event.id, shift, HostKeyPress(KeyEvent.VK_6))
+            event.keyChar == '(' -> register(event.id, shift, HostKeyPress(KeyEvent.VK_8))
+            event.keyChar == ')' -> register(event.id, shift, HostKeyPress(KeyEvent.VK_9))
+            event.keyChar == '[' -> register(event.id, shift, HostKeyPress(KeyEvent.VK_COLON))
+            event.keyChar == ']' -> register(event.id, shift, HostKeyPress(KeyEvent.VK_SEMICOLON))
+            event.keyChar == '"' -> register(event.id, HostKeyPress(KeyEvent.VK_2))
+            event.keyChar == '\'' -> register(event.id, shift, HostKeyPress(KeyEvent.VK_7))
+            else ->
+                // F2 = shift+F1
+                // F4 = shift+F3
+                // F6 = shift+F5
+                // F8 = shift+F7
+                // insert = shift+backspace(del)
+                // up = shift+down
+                // left = shift+right
+                // just map the key as usual
+                // both alts map to the 'commodore key' (same left alt)
+                // both controls and the tab key map to the 'single left control'
+                when (event.keyCode) {
+                    KeyEvent.VK_CONTROL, KeyEvent.VK_TAB -> register(event.id, HostKeyPress(KeyEvent.VK_CONTROL))
+                    KeyEvent.VK_ALT, KeyEvent.VK_ALT_GRAPH -> register(event.id, HostKeyPress(KeyEvent.VK_ALT))
+                    KeyEvent.VK_F2 -> register(event.id, shift, HostKeyPress(KeyEvent.VK_F1))
+                    KeyEvent.VK_F4 -> register(event.id, shift, HostKeyPress(KeyEvent.VK_F3))
+                    KeyEvent.VK_F6 -> register(event.id, shift, HostKeyPress(KeyEvent.VK_F5))
+                    KeyEvent.VK_F8 -> register(event.id, shift, HostKeyPress(KeyEvent.VK_F7))
+                    KeyEvent.VK_INSERT -> register(event.id, shift, HostKeyPress(KeyEvent.VK_BACK_SPACE))
+                    KeyEvent.VK_UP -> register(event.id, shift, HostKeyPress(KeyEvent.VK_DOWN))
+                    KeyEvent.VK_LEFT -> register(event.id, shift, HostKeyPress(KeyEvent.VK_RIGHT))
+                    else -> register(event.id, HostKeyPress(event.keyCode, rightSide, numpad))
                 }
-                KeyEvent.VK_ALT, KeyEvent.VK_ALT_GRAPH -> {
-                    // both alts map to the 'commodore key' (same left alt)
-                    register(event.id, HostKeyPress(KeyEvent.VK_ALT, rightSide = false, numpad = false))
-                }
-                KeyEvent.VK_F2 -> {
-                    // F2 = shift+F1
-                    val func = HostKeyPress(KeyEvent.VK_F1, rightSide = false, numpad = false)
-                    register(event.id, shift, func)
-                }
-                KeyEvent.VK_F4 -> {
-                    // F4 = shift+F3
-                    val func = HostKeyPress(KeyEvent.VK_F3, rightSide = false, numpad = false)
-                    register(event.id, shift, func)
-                }
-                KeyEvent.VK_F6 -> {
-                    // F6 = shift+F5
-                    val func = HostKeyPress(KeyEvent.VK_F5, rightSide = false, numpad = false)
-                    register(event.id, shift, func)
-                }
-                KeyEvent.VK_F8 -> {
-                    // F8 = shift+F7
-                    val func = HostKeyPress(KeyEvent.VK_F7, rightSide = false, numpad = false)
-                    register(event.id, shift, func)
-                }
-                KeyEvent.VK_INSERT -> {
-                    // insert = shift+backspace(del)
-                    val backspace = HostKeyPress(KeyEvent.VK_BACK_SPACE, rightSide = false, numpad = false)
-                    register(event.id, shift, backspace)
-                }
-                KeyEvent.VK_UP -> {
-                    // up = shift+down
-                    val cursor = HostKeyPress(KeyEvent.VK_DOWN, rightSide = false, numpad = false)
-                    register(event.id, shift, cursor)
-                }
-                KeyEvent.VK_LEFT -> {
-                    // left = shift+right
-                    val cursor = HostKeyPress(KeyEvent.VK_RIGHT, rightSide = false, numpad = false)
-                    register(event.id, shift, cursor)
-                }
-                else -> {
-                    // just map the key as usual
-                    val hostkey = HostKeyPress(event.keyCode, rightSide, numpad)
-                    register(event.id, hostkey)
-                }
-            }
         }
     }
 }
