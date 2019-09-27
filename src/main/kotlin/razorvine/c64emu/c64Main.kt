@@ -1,7 +1,6 @@
 package razorvine.c64emu
 
 import razorvine.examplemachines.DebugWindow
-import kotlin.concurrent.scheduleAtFixedRate
 import razorvine.ksim65.Bus
 import razorvine.ksim65.Cpu6502
 import razorvine.ksim65.IVirtualMachine
@@ -98,9 +97,16 @@ class C64Machine(title: String) : IVirtualMachine {
             debugWindow.updateCpu(cpu, bus)
         }.start()
 
-        java.util.Timer("cpu-clock", true).scheduleAtFixedRate(1, 1) {
-            if(!paused) {
-                repeat(400) {
+        // busy waiting loop, averaging cpu speed to ~1 Mhz:
+        var numInstructionsteps = 600
+        val targetSpeedKhz = 1000
+        while (true) {
+            if (paused) {
+                Thread.sleep(100)
+            } else {
+                cpu.startSpeedMeasureInterval()
+                Thread.sleep(0, 1000)
+                repeat(numInstructionsteps) {
                     step()
                     if(vic.currentRasterLine == 255) {
                         // we force an irq here ourselves rather than fully emulating the VIC-II's raster IRQ
@@ -108,6 +114,11 @@ class C64Machine(title: String) : IVirtualMachine {
                         cpu.irq()
                     }
                 }
+                val speed = cpu.measureAvgIntervalSpeedKhz()
+                if (speed < targetSpeedKhz - 50)
+                    numInstructionsteps++
+                else if (speed > targetSpeedKhz + 50)
+                    numInstructionsteps--
             }
         }
     }

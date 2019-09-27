@@ -1,9 +1,7 @@
-import org.gradle.api.internal.plugins.UnixStartScriptGenerator
-import org.gradle.api.internal.plugins.WindowsStartScriptGenerator
 import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import java.util.*
 import kotlin.math.max
-import java.util.Properties
 
 
 plugins {

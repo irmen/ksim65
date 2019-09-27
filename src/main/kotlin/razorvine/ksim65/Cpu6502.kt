@@ -13,8 +13,11 @@ import razorvine.ksim65.components.UByte
 open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
     open val name = "6502"
     var tracing: ((state:String) -> Unit)? = null
-    var totalCycles: Long = 0
+    var totalCycles = 0L
         protected set
+    private var speedMeasureCycles = 0L
+    private var speedMeasureStart = System.nanoTime()
+    private var resetTime = System.nanoTime()
 
     class InstructionError(msg: String) : RuntimeException(msg)
 
@@ -23,25 +26,6 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
         const val RESET_vector = 0xfffc
         const val IRQ_vector = 0xfffe
         const val resetCycles = 8
-    }
-
-    protected enum class AddrMode {
-        Imp,
-        Acc,
-        Imm,
-        Zp,
-        Zpr,        // special addressing mode used by the 65C02
-        ZpX,
-        ZpY,
-        Rel,
-        Abs,
-        AbsX,
-        AbsY,
-        Ind,
-        IzX,
-        IzY,
-        Izp,         // special addressing mode used by the 65C02
-        IaX,         // special addressing mode used by the 65C02
     }
 
     class StatusRegister(
@@ -88,8 +72,6 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
         }
     }
 
-    protected class Instruction(val mnemonic: String, val mode: AddrMode, val cycles: Int)
-
     class BreakpointResult(val newPC: Address?, val newOpcode: Int?)
 
     class State (
@@ -101,6 +83,27 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
         val PC: Address,
         val cycles: Long
     )
+
+    protected enum class AddrMode {
+        Imp,
+        Acc,
+        Imm,
+        Zp,
+        Zpr,        // special addressing mode used by the 65C02
+        ZpX,
+        ZpY,
+        Rel,
+        Abs,
+        AbsX,
+        AbsY,
+        Ind,
+        IzX,
+        IzY,
+        Izp,         // special addressing mode used by the 65C02
+        IaX,         // special addressing mode used by the 65C02
+    }
+
+    protected class Instruction(val mnemonic: String, val mode: AddrMode, val cycles: Int)
 
     var regA: Int = 0
     var regX: Int = 0
@@ -117,6 +120,9 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
     val currentMnemonic: String
         get() = currentInstruction.mnemonic
 
+    val averageSpeedKhzSinceReset: Double
+        get() = totalCycles.toDouble() / (System.nanoTime() - resetTime) * 1_000_000
+
     @Synchronized fun snapshot(): State {
         val status = StatusRegister().also { it.fromInt(regP.asInt()) }
         return State(regA.toShort(),
@@ -127,6 +133,14 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
             regPC,
             totalCycles)
     }
+
+    fun startSpeedMeasureInterval() {
+        speedMeasureCycles = totalCycles
+        speedMeasureStart = System.nanoTime()
+    }
+
+    fun measureAvgIntervalSpeedKhz() =
+        (totalCycles-speedMeasureCycles).toDouble() / (System.nanoTime() - speedMeasureStart) * 1_000_000
 
     // has an interrupt been requested?
     protected enum class Interrupt {
@@ -285,21 +299,23 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
      * Reset the cpu
      */
     override fun reset() {
+        regP.I = true
+        regP.C = false
+        regP.Z = false
+        regP.D = false
+        regP.B = false
+        regP.V = false
+        regP.N = false
         regSP = 0xfd
         regPC = readWord(RESET_vector)
         regA = 0
         regX = 0
         regY = 0
-        regP.C = false
-        regP.Z = false
-        regP.I = true
-        regP.D = false
-        regP.B = false
-        regP.V = false
-        regP.N = false
         instrCycles = resetCycles       // a reset takes time as well
         currentOpcode = 0
         currentInstruction = instructions[0]
+        totalCycles = 0
+        resetTime = System.nanoTime()
     }
 
     /**

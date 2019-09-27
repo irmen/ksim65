@@ -1,12 +1,10 @@
 package razorvine.examplemachines
 
-import kotlin.concurrent.scheduleAtFixedRate
 import razorvine.ksim65.Bus
 import razorvine.ksim65.Cpu6502
 import razorvine.ksim65.IVirtualMachine
 import razorvine.ksim65.Version
 import razorvine.ksim65.components.*
-import razorvine.ksim65.components.Timer
 import java.io.File
 import javax.swing.ImageIcon
 
@@ -22,9 +20,11 @@ class VirtualMachine(title: String) : IVirtualMachine {
 
     private val debugWindow = DebugWindow(this)
     private val hostDisplay = MainWindow(title)
-    private val display = Display(0xd000, 0xd00a, hostDisplay,
+    private val display = Display(
+        0xd000, 0xd00a, hostDisplay,
         ScreenDefs.SCREEN_WIDTH_CHARS, ScreenDefs.SCREEN_HEIGHT_CHARS,
-        ScreenDefs.SCREEN_WIDTH, ScreenDefs.SCREEN_HEIGHT)
+        ScreenDefs.SCREEN_WIDTH, ScreenDefs.SCREEN_HEIGHT
+    )
     private val mouse = Mouse(0xd300, 0xd305, hostDisplay)
     private val keyboard = Keyboard(0xd400, 0xd400, hostDisplay)
     private var paused = false
@@ -32,7 +32,7 @@ class VirtualMachine(title: String) : IVirtualMachine {
     init {
         hostDisplay.iconImage = ImageIcon(javaClass.getResource("/icon.png")).image
         debugWindow.iconImage = hostDisplay.iconImage
-        debugWindow.setLocation(hostDisplay.location.x+hostDisplay.width, hostDisplay.location.y)
+        debugWindow.setLocation(hostDisplay.location.x + hostDisplay.width, hostDisplay.location.y)
 
         ram[Cpu6502.RESET_vector] = 0x00
         ram[Cpu6502.RESET_vector + 1] = 0x10
@@ -55,7 +55,7 @@ class VirtualMachine(title: String) : IVirtualMachine {
     override fun getZeroAndStackPages(): Array<UByte> = ram.getPages(0, 2)
 
     override fun loadFileInRam(file: File, loadAddress: Address?) {
-        if(file.extension=="prg" && loadAddress==null)
+        if (file.extension == "prg" && loadAddress == null)
             ram.loadPrg(file.inputStream())
         else
             ram.load(file.readBytes(), loadAddress!!)
@@ -76,11 +76,22 @@ class VirtualMachine(title: String) : IVirtualMachine {
         javax.swing.Timer(10) {
             debugWindow.updateCpu(cpu, bus)
         }.start()
-        java.util.Timer("cpu-clock", true).scheduleAtFixedRate(1, 1) {
-            if(!paused) {
-                repeat(50) {
-                    step()
-                }
+
+        // busy waiting loop, averaging cpu speed to ~1 Mhz:
+        var numInstructionsteps = 600
+        val targetSpeedKhz = 1000
+        while (true) {
+            if (paused) {
+                Thread.sleep(100)
+            } else {
+                cpu.startSpeedMeasureInterval()
+                Thread.sleep(0, 1000)
+                repeat(numInstructionsteps) { step() }
+                val speed = cpu.measureAvgIntervalSpeedKhz()
+                if (speed < targetSpeedKhz - 50)
+                    numInstructionsteps++
+                else if (speed > targetSpeedKhz + 50)
+                    numInstructionsteps--
             }
         }
     }

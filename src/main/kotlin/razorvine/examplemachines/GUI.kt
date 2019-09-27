@@ -172,7 +172,6 @@ class DebugWindow(private val vm: IVirtualMachine) : JFrame("debugger"), ActionL
         it.disabledTextColor = Color.DARK_GRAY
         it.font = Font(Font.MONOSPACED, Font.PLAIN, 12)
     }
-    private val startTime = System.currentTimeMillis()
 
     init {
         contentPane.layout = GridBagLayout()
@@ -300,17 +299,17 @@ class DebugWindow(private val vm: IVirtualMachine) : JFrame("debugger"), ActionL
         }
     }
 
-    fun updateCpu(cpu2: Cpu6502, bus: Bus) {
-        val state = cpu2.snapshot()
+    fun updateCpu(cpu: Cpu6502, bus: Bus) {
+        val state = cpu.snapshot()
         cyclesTf.text = state.cycles.toString()
-        regAtf.text = cpu2.hexB(state.A)
-        regXtf.text = cpu2.hexB(state.X)
-        regYtf.text = cpu2.hexB(state.Y)
+        regAtf.text = cpu.hexB(state.A)
+        regXtf.text = cpu.hexB(state.X)
+        regYtf.text = cpu.hexB(state.Y)
         regPtf.text = "NV-BDIZC\n" + state.P.asInt().toString(2).padStart(8, '0')
-        regPCtf.text = cpu2.hexW(state.PC)
-        regSPtf.text = cpu2.hexB(state.SP)
+        regPCtf.text = cpu.hexW(state.PC)
+        regSPtf.text = cpu.hexB(state.SP)
         val memory = bus.memoryComponentFor(state.PC)
-        disassemTf.text = cpu2.disassembleOneInstruction(memory.data, state.PC, memory.startAddress).first.substringAfter(' ').trim()
+        disassemTf.text = cpu.disassembleOneInstruction(memory.data, state.PC, memory.startAddress).first.substringAfter(' ').trim()
         val pages = vm.getZeroAndStackPages()
         if(pages.isNotEmpty()) {
             val zpLines = (0..0xff step 32).map { location ->
@@ -329,9 +328,7 @@ class DebugWindow(private val vm: IVirtualMachine) : JFrame("debugger"), ActionL
             stackpageTf.text = stackLines.joinToString ("\n")
         }
 
-        val spentTime = System.currentTimeMillis() - startTime
-        val speedKhz = state.cycles.toDouble() / spentTime
-        speedKhzTf.text = "%.1f".format(speedKhz)
+        speedKhzTf.text = "%.1f".format(cpu.averageSpeedKhzSinceReset)
     }
 }
 
