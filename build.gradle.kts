@@ -13,18 +13,21 @@ plugins {
     id("com.jfrog.bintray") version "1.7.3"
 }
 
-val versionProps = Properties().also {
-    it.load(File("$projectDir/src/main/resources/version.properties").inputStream())
-}
-version = versionProps["version"] as String
-group = "net.razorvine"
-base.archivesBaseName = "ksim65"
+allprojects {
+    val versionProps = Properties().also {
+        it.load(File("$projectDir/src/main/resources/version.properties").inputStream())
+    }
+    version = versionProps["version"] as String
+    group = "net.razorvine"
+    base.archivesBaseName = "ksim65"
 
-repositories {
-    // Use jcenter for resolving dependencies.
-    // You can declare any Maven/Ivy/file repository here.
-    jcenter()
-    maven("https://jitpack.io")
+    repositories {
+        // Use jcenter for resolving dependencies.
+        // You can declare any Maven/Ivy/file repository here.
+        mavenLocal()
+        jcenter()
+        maven("https://jitpack.io")
+    }
 }
 
 dependencies {
@@ -38,6 +41,10 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.1.0")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.1.0")
+
+    subprojects.forEach {
+        archives(it)
+    }
 }
 
 tasks {
@@ -86,5 +93,30 @@ application {
     applicationDistribution.into("bin") {
         from(c64emuScript, ehbasicScript)
         fileMode = 493
+    }
+}
+
+val sourcesJar by tasks.registering(Jar::class) {
+    dependsOn("classes")
+    archiveClassifier.set("sources")
+    from(sourceSets.main.get().allSource)
+}
+
+val dokkaDocs by tasks.registering(Jar::class) {
+    dependsOn("dokka")
+    archiveClassifier.set("kdoc")
+    from(fileTree(File(project.buildDir, "kdoc")))
+}
+
+publishing {
+    repositories {
+        mavenLocal()
+    }
+    publications {
+        register("mavenJava", MavenPublication::class) {
+            from(components["java"])
+            artifact(sourcesJar.get())
+            artifact(dokkaDocs.get())
+        }
     }
 }
