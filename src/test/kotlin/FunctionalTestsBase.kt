@@ -42,7 +42,7 @@ abstract class FunctionalTestsBase {
     }
 
     protected fun runTest(testprogram: String) {
-        ram.loadPrg("src/test/kotlin/6502testsuite/$testprogram")
+        ram.loadPrg("src/test/kotlin/6502testsuite/$testprogram", null)
         bus.reset()
         cpu.regSP = 0xfd
         cpu.regP.fromInt(0b00100100)
@@ -50,7 +50,7 @@ abstract class FunctionalTestsBase {
             while (cpu.totalCycles < 50000000L) {
                 bus.clock()
             }
-            fail("test hangs: " + cpu.logState())
+            fail("test hangs: " + cpu.snapshot())
         } catch (e: Cpu6502.InstructionError) {
             println(">>> INSTRUCTION ERROR: ${e.message}")
         } catch (le: KernalLoadNextPart) {

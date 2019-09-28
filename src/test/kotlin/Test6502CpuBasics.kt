@@ -2,6 +2,7 @@ import razorvine.ksim65.Bus
 import razorvine.ksim65.Cpu6502
 import razorvine.ksim65.Cpu65C02
 import razorvine.ksim65.components.Ram
+import razorvine.ksim65.hexB
 import kotlin.test.*
 import kotlin.system.measureNanoTime
 import kotlin.test.assertEquals
@@ -140,9 +141,9 @@ class Test6502CpuBasics {
             val actualA = ram[0x00fd]
             val predictedF = ram[0x00fe]
             val actualF = ram[0x00ff]
-            println("BCD TEST: FAIL!! code=${cpu.hexB(code)} value1=${cpu.hexB(v1)} value2=${cpu.hexB(v2)}")
-            println("  predictedA=${cpu.hexB(predictedA)}")
-            println("  actualA=${cpu.hexB(actualA)}")
+            println("BCD TEST: FAIL!! code=${hexB(code)} value1=${hexB(v1)} value2=${hexB(v2)}")
+            println("  predictedA=${hexB(predictedA)}")
+            println("  actualA=${hexB(actualA)}")
             println("  predictedF=${predictedF.toString(2).padStart(8,'0')}")
             println("  actualF=${actualF.toString(2).padStart(8,'0')}")
             fail("BCD test failed")

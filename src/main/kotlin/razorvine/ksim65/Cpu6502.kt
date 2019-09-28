@@ -5,6 +5,7 @@ import razorvine.ksim65.components.BusComponent
 import razorvine.ksim65.components.MemoryComponent
 import razorvine.ksim65.components.UByte
 
+
 /**
  * 6502 cpu simulation (the NMOS version) including the 'illegal' opcodes.
  * TODO: actually implement the illegal opcodes, see http://www.ffd2.com/fridge/docs/6502-NMOS.extra.opcodes
@@ -82,7 +83,22 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
         val P: StatusRegister,
         val PC: Address,
         val cycles: Long
-    )
+    ) {
+        override fun toString(): String {
+            return  "cycle:$cycles - pc=${hexW(PC)} " +
+                    "A=${hexB(A)} " +
+                    "X=${hexB(X)} " +
+                    "Y=${hexB(Y)} " +
+                    "SP=${hexB(SP)} " +
+                    " n=" + (if (P.N) "1" else "0") +
+                    " v=" + (if (P.V) "1" else "0") +
+                    " b=" + (if (P.B) "1" else "0") +
+                    " d=" + (if (P.D) "1" else "0") +
+                    " i=" + (if (P.I) "1" else "0") +
+                    " z=" + (if (P.Z) "1" else "0") +
+                    " c=" + (if (P.C) "1" else "0")
+        }
+    }
 
     protected enum class AddrMode {
         Imp,
@@ -162,24 +178,6 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
     }
 
     fun removeBreakpoint(address: Address) = breakpoints.remove(address)
-
-    fun hexW(number: Address, allowSingleByte: Boolean = false): String {
-        val msb = number ushr 8
-        val lsb = number and 0xff
-        return if (msb == 0 && allowSingleByte)
-            hexB(lsb)
-        else
-            hexB(msb) + hexB(lsb)
-    }
-
-    fun hexB(number: Short): String = hexB(number.toInt())
-
-    fun hexB(number: Int): String {
-        val hexdigits = "0123456789abcdef"
-        val loNibble = number and 15
-        val hiNibble = number ushr 4
-        return hexdigits[hiNibble].toString() + hexdigits[loNibble]
-    }
 
     fun disassemble(memory: MemoryComponent, from: Address, to: Address) =
         disassemble(memory.data, memory.startAddress, from, to)
@@ -333,7 +331,7 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
                 currentOpcode = read(regPC)
                 currentInstruction = instructions[currentOpcode]
 
-                tracing?.invoke(logState())
+                tracing?.invoke(snapshot().toString())
 
                 breakpoints[regPC]?.let { breakpoint ->
                     val oldPC = regPC
@@ -380,21 +378,6 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
         if (!regP.I)
             pendingInterrupt = Interrupt.IRQ
     }
-
-    fun logState(): String =
-                    "cycle:$totalCycles - pc=${hexW(regPC)} " +
-                    "A=${hexB(regA)} " +
-                    "X=${hexB(regX)} " +
-                    "Y=${hexB(regY)} " +
-                    "SP=${hexB(regSP)} " +
-                    " n=" + (if (regP.N) "1" else "0") +
-                    " v=" + (if (regP.V) "1" else "0") +
-                    " b=" + (if (regP.B) "1" else "0") +
-                    " d=" + (if (regP.D) "1" else "0") +
-                    " i=" + (if (regP.I) "1" else "0") +
-                    " z=" + (if (regP.Z) "1" else "0") +
-                    " c=" + (if (regP.C) "1" else "0") +
-                    "  icycles=$instrCycles  instr=${hexB(currentOpcode)}:${currentInstruction.mnemonic}"
 
     protected fun getFetched() =
         if (currentInstruction.mode == AddrMode.Imm ||

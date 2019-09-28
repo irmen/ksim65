@@ -1,6 +1,7 @@
 package razorvine.ksim65.components
 
 import java.io.File
+import java.io.IOException
 import java.io.InputStream
 
 /**
@@ -26,14 +27,17 @@ class Ram(startAddress: Address, endAddress: Address) : MemoryComponent(startAdd
     /**
      * Load a c64-style prg program. This file type has the load address as the first two bytes.
      */
-    fun loadPrg(filename: String) = loadPrg(File(filename).inputStream())
+    fun loadPrg(filename: String, overrideLoadAddress: Address?)
+            = loadPrg(File(filename).inputStream(), overrideLoadAddress)
 
     /**
      * Load a c64-style prg program. This file type has the load address as the first two bytes.
      */
-    fun loadPrg(stream: InputStream) {
+    fun loadPrg(stream: InputStream, overrideLoadAddress: Address?): Pair<Address, Int> {
         val bytes = stream.readBytes()
-        val loadAddress = (bytes[0].toInt() or (bytes[1].toInt() shl 8)) and 65535
+        if(bytes.size > 0xffff)
+            throw IOException("file too large")
+        val loadAddress = overrideLoadAddress ?: bytes[0] + 256* bytes[1]
         val baseAddress = loadAddress - startAddress
         bytes.drop(2).forEachIndexed { index, byte ->
             data[baseAddress + index] =
@@ -42,10 +46,11 @@ class Ram(startAddress: Address, endAddress: Address) : MemoryComponent(startAdd
                 else
                     (256 + byte).toShort()
         }
+        return Pair(baseAddress, bytes.size-2)
     }
 
     /**
-     * load a binary program at the given address
+     * load a binary data file at the given address
      */
     fun load(filename: String, address: Address) {
         val bytes = File(filename).readBytes()

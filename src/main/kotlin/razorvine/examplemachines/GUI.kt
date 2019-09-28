@@ -1,13 +1,10 @@
 package razorvine.examplemachines
 
-import razorvine.ksim65.Bus
-import razorvine.ksim65.Cpu6502
+import razorvine.ksim65.*
 import java.awt.*
 import java.awt.image.BufferedImage
 import javax.imageio.ImageIO
 import javax.swing.event.MouseInputListener
-import razorvine.ksim65.IHostInterface
-import razorvine.ksim65.IVirtualMachine
 import java.awt.event.*
 import java.io.File
 import java.lang.Integer.parseInt
@@ -302,12 +299,12 @@ class DebugWindow(private val vm: IVirtualMachine) : JFrame("debugger"), ActionL
     fun updateCpu(cpu: Cpu6502, bus: Bus) {
         val state = cpu.snapshot()
         cyclesTf.text = state.cycles.toString()
-        regAtf.text = cpu.hexB(state.A)
-        regXtf.text = cpu.hexB(state.X)
-        regYtf.text = cpu.hexB(state.Y)
+        regAtf.text = hexB(state.A)
+        regXtf.text = hexB(state.X)
+        regYtf.text = hexB(state.Y)
         regPtf.text = "NV-BDIZC\n" + state.P.asInt().toString(2).padStart(8, '0')
-        regPCtf.text = cpu.hexW(state.PC)
-        regSPtf.text = cpu.hexB(state.SP)
+        regPCtf.text = hexW(state.PC)
+        regSPtf.text = hexB(state.SP)
         val memory = bus.memoryComponentFor(state.PC)
         disassemTf.text = cpu.disassembleOneInstruction(memory.data, state.PC, memory.startAddress).first.substringAfter(' ').trim()
         val pages = vm.getZeroAndStackPages()

@@ -36,7 +36,7 @@ class VirtualMachine(title: String) : IVirtualMachine {
 
         ram[Cpu6502.RESET_vector] = 0x00
         ram[Cpu6502.RESET_vector + 1] = 0x10
-        ram.loadPrg(javaClass.getResourceAsStream("/vmdemo.prg"))
+        ram.loadPrg(javaClass.getResourceAsStream("/vmdemo.prg"), null)
 
         bus += rtc
         bus += timer
@@ -56,7 +56,7 @@ class VirtualMachine(title: String) : IVirtualMachine {
 
     override fun loadFileInRam(file: File, loadAddress: Address?) {
         if (file.extension == "prg" && loadAddress == null)
-            ram.loadPrg(file.inputStream())
+            ram.loadPrg(file.inputStream(), null)
         else
             ram.load(file.readBytes(), loadAddress!!)
     }

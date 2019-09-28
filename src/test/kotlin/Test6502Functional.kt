@@ -36,7 +36,7 @@ class Test6502Functional {
             return
         }
 
-        println(cpu.logState())
+        println(cpu.snapshot())
         val d = cpu.disassemble(ram, cpu.regPC-20, cpu.regPC+20)
         println(d.joinToString ("\n"))
         fail("test failed")
@@ -68,7 +68,7 @@ class Test6502Functional {
             return
         }
 
-        println(cpu.logState())
+        println(cpu.snapshot())
         val d = cpu.disassemble(ram, cpu.regPC-20, cpu.regPC+20)
         println(d.joinToString ("\n"))
         fail("test failed")
