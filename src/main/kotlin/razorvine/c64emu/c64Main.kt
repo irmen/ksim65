@@ -1,19 +1,28 @@
 package razorvine.c64emu
 
 import razorvine.examplemachines.DebugWindow
-import razorvine.ksim65.*
-import razorvine.ksim65.components.*
+import razorvine.ksim65.Bus
+import razorvine.ksim65.Cpu6502
+import razorvine.ksim65.IVirtualMachine
+import razorvine.ksim65.Version
+import razorvine.ksim65.components.Address
+import razorvine.ksim65.components.Ram
+import razorvine.ksim65.components.Rom
+import razorvine.ksim65.components.UByte
 import java.io.File
 import java.io.FileFilter
 import java.io.FileNotFoundException
 import java.io.IOException
-import java.io.Serializable
 import java.nio.file.Path
 import java.nio.file.Paths
 import javax.swing.ImageIcon
 
 /**
  * The virtual representation of the Commodore-64
+ *
+ * It simulates text-mode video.
+ * It hooks into the LOAD and SAVE kernal routines so you can actually
+ * load and save your basic programs to the host filesystem.
  */
 class C64Machine(title: String) : IVirtualMachine {
     private val romsPath = determineRomPath()
@@ -34,17 +43,38 @@ class C64Machine(title: String) : IVirtualMachine {
     private val hostDisplay = MainC64Window(title, chargenData, ram, cpu, cia1)
     private var paused = false
 
+    init {
+        cpu.addBreakpoint(0xffd5, ::breakpointKernelLoad)       // intercept LOAD subroutine in the kernal
+        cpu.addBreakpoint(0xffd8, ::breakpointKernelSave)       // intercept SAVE subroutine in the kernal
+
+        bus += basicRom
+        bus += kernalRom
+        bus += vic
+        bus += cia1
+        bus += cia2
+        bus += ram
+        bus += cpu
+        bus.reset()
+
+        hostDisplay.iconImage = ImageIcon(javaClass.getResource("/icon.png")).image
+        debugWindow.iconImage = hostDisplay.iconImage
+        debugWindow.setLocation(hostDisplay.location.x + hostDisplay.width, hostDisplay.location.y)
+        debugWindow.isVisible = true
+        hostDisplay.isVisible = true
+        hostDisplay.start()
+    }
+
     fun breakpointKernelLoad(cpu: Cpu6502, pc: Address): Cpu6502.BreakpointResult {
-        if(cpu.regA==0) {
+        if (cpu.regA == 0) {
             val fnlen = ram[0xb7]   // file name length
             val fa = ram[0xba]      // device number
             val sa = ram[0xb9]      // secondary address
-            val txttab = ram[0x2b] + 256*ram[0x2c]  // basic load address ($0801 usually)
-            val fnaddr = ram[0xbb] + 256*ram[0xbc]  // file name address
-            return if(fnlen>0) {
-                val filename = (0 until fnlen).map { ram[fnaddr+it].toChar() }.joinToString("")
+            val txttab = ram[0x2b] + 256 * ram[0x2c]  // basic load address ($0801 usually)
+            val fnaddr = ram[0xbb] + 256 * ram[0xbc]  // file name address
+            return if (fnlen > 0) {
+                val filename = (0 until fnlen).map { ram[fnaddr + it].toChar() }.joinToString("")
                 val loadEndAddress = searchAndLoadFile(filename, fa, sa, txttab)
-                if(loadEndAddress!=null) {
+                if (loadEndAddress != null) {
                     ram[0x90] = 0  // status OK
                     ram[0xae] = (loadEndAddress and 0xff).toShort()
                     ram[0xaf] = (loadEndAddress ushr 8).toShort()
@@ -54,13 +84,43 @@ class C64Machine(title: String) : IVirtualMachine {
         } else return Cpu6502.BreakpointResult(0xf707, null)   // 'device not present' (VERIFY command not supported)
     }
 
-    // TODO: breakpoint on kernel SAVE
+    fun breakpointKernelSave(cpu: Cpu6502, pc: Address): Cpu6502.BreakpointResult {
+        val fnlen = ram[0xb7]   // file name length
+//        val fa = ram[0xba]      // device number
+//        val sa = ram[0xb9]      // secondary address
+        val fnaddr = ram[0xbb] + 256 * ram[0xbc]  // file name address
+        return if (fnlen > 0) {
+            val fromAddr = ram[cpu.regA] + 256 * ram[cpu.regA + 1]
+            val endAddr = cpu.regX + 256 * cpu.regY
+            val data = (fromAddr..endAddr).map { ram[it].toByte() }.toByteArray()
+            var filename = (0 until fnlen).map { ram[fnaddr + it].toChar() }.joinToString("").toLowerCase()
+            if (!filename.endsWith(".prg"))
+                filename += ".prg"
+            File(filename).outputStream().use {
+                it.write(fromAddr and 0xff)
+                it.write(fromAddr ushr 8)
+                it.write(data)
+            }
+            ram[0x90] = 0  // status OK
+            Cpu6502.BreakpointResult(0xf5a9, 0)  // success!
+        } else Cpu6502.BreakpointResult(0xf710, null)  // 'missing file name'
+    }
 
-    private fun searchAndLoadFile(filename: String, device: UByte, secondary: UByte, basicLoadAddress: Address): Address? {
+    private fun searchAndLoadFile(
+        filename: String,
+        device: UByte,
+        secondary: UByte,
+        basicLoadAddress: Address
+    ): Address? {
         when (filename) {
-            "*" ->  {
+            "*" -> {
                 // load the first file in the directory
-                return searchAndLoadFile(File(".").listFiles()?.firstOrNull()?.name ?: "", device, secondary, basicLoadAddress)
+                return searchAndLoadFile(
+                    File(".").listFiles()?.firstOrNull()?.name ?: "",
+                    device,
+                    secondary,
+                    basicLoadAddress
+                )
             }
             "$" -> {
                 // load the directory
@@ -70,7 +130,7 @@ class C64Machine(title: String) : IVirtualMachine {
                         val name = it.nameWithoutExtension.toUpperCase()
                         val ext = it.extension.toUpperCase()
                         val fileAndSize = Pair(it, it.length())
-                        if(name.isEmpty())
+                        if (name.isEmpty())
                             Pair("." + ext, "") to fileAndSize
                         else
                             Pair(name, ext) to fileAndSize
@@ -83,10 +143,11 @@ class C64Machine(title: String) : IVirtualMachine {
             else -> {
                 fun findHostFile(filename: String): String? {
                     val file = File(".").listFiles(FileFilter { it.isFile })?.firstOrNull {
-                        it.name.toUpperCase()==filename
+                        it.name.toUpperCase() == filename
                     }
                     return file?.name
                 }
+
                 val hostFileName = findHostFile(filename) ?: findHostFile("$filename.PRG") ?: return null
                 return try {
                     return if (secondary == 1.toShort()) {
@@ -117,7 +178,7 @@ class C64Machine(title: String) : IVirtualMachine {
             listing.add((address ushr 8).toShort())
             listing.add((lineNumber and 0xff).toShort())
             listing.add((lineNumber ushr 8).toShort())
-            listing.addAll(line.map{ it.toShort() })
+            listing.addAll(line.map { it.toShort() })
             listing.add(0)
         }
         addLine(0, "\u0012\"${dirname.take(16).padEnd(16)}\" 00 2A")
@@ -128,39 +189,19 @@ class C64Machine(title: String) : IVirtualMachine {
             val filename = it.key.first.take(16)
             val padding1 = "   ".substring(blocksize.toString().length)
             val padding2 = "               ".substring(filename.length)
-            addLine(blocksize, "$padding1 \"$filename\" $padding2 ${it.key.second.take(3).padEnd(3)}" )
+            addLine(blocksize, "$padding1 \"$filename\" $padding2 ${it.key.second.take(3).padEnd(3)}")
         }
-        addLine(kotlin.math.max(0, 664-totalBlocks), "BLOCKS FREE.")
+        addLine(kotlin.math.max(0, 664 - totalBlocks), "BLOCKS FREE.")
         listing.add(0)
         listing.add(0)
         return listing.toTypedArray()
-    }
-
-    init {
-        hostDisplay.iconImage = ImageIcon(javaClass.getResource("/icon.png")).image
-        debugWindow.iconImage = hostDisplay.iconImage
-        debugWindow.setLocation(hostDisplay.location.x+hostDisplay.width, hostDisplay.location.y)
-        cpu.addBreakpoint(0xffd5, ::breakpointKernelLoad)
-
-        bus += basicRom
-        bus += kernalRom
-        bus += vic
-        bus += cia1
-        bus += cia2
-        bus += ram
-        bus += cpu
-        bus.reset()
-
-        debugWindow.isVisible = true
-        hostDisplay.isVisible = true
-        hostDisplay.start()
     }
 
     private fun determineRomPath(): Path {
         val candidates = listOf("./roms", "~/roms/c64", "~/roms", "~/.vice/C64")
         candidates.forEach {
             val path = Paths.get(expandUser(it))
-            if(path.toFile().isDirectory)
+            if (path.toFile().isDirectory)
                 return path
         }
         throw FileNotFoundException("no roms directory found, tried: $candidates")
@@ -176,7 +217,7 @@ class C64Machine(title: String) : IVirtualMachine {
     }
 
     override fun loadFileInRam(file: File, loadAddress: Address?) {
-        if(file.extension=="prg" && (loadAddress==null || loadAddress==0x0801))
+        if (file.extension == "prg" && (loadAddress == null || loadAddress == 0x0801))
             ram.loadPrg(file.inputStream(), null)
         else
             ram.load(file.readBytes(), loadAddress!!)
@@ -211,7 +252,7 @@ class C64Machine(title: String) : IVirtualMachine {
                 Thread.sleep(0, 1000)
                 repeat(numInstructionsteps) {
                     step()
-                    if(vic.currentRasterLine == 255) {
+                    if (vic.currentRasterLine == 255) {
                         // we force an irq here ourselves rather than fully emulating the VIC-II's raster IRQ
                         // or the CIA timer IRQ/NMI.
                         cpu.irq()

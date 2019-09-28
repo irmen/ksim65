@@ -146,7 +146,7 @@ private class BitmapScreenPanel : JPanel() {
     }
 }
 
-class DebugWindow(private val vm: IVirtualMachine) : JFrame("debugger"), ActionListener {
+class DebugWindow(private val vm: IVirtualMachine) : JFrame("Debugger - ksim65 v${Version.version}"), ActionListener {
     private val cyclesTf = JTextField("00000000000000")
     private val speedKhzTf = JTextField("0000000")
     private val regAtf = JTextField("000")
