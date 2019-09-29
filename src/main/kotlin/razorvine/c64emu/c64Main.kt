@@ -1,10 +1,7 @@
 package razorvine.c64emu
 
 import razorvine.examplemachines.DebugWindow
-import razorvine.ksim65.Bus
-import razorvine.ksim65.Cpu6502
-import razorvine.ksim65.IVirtualMachine
-import razorvine.ksim65.Version
+import razorvine.ksim65.*
 import razorvine.ksim65.components.Address
 import razorvine.ksim65.components.Ram
 import razorvine.ksim65.components.Rom
@@ -31,7 +28,7 @@ class C64Machine(title: String) : IVirtualMachine {
     private val kernalData = romsPath.resolve("kernal").toFile().readBytes()
 
     override val bus = Bus()
-    override val cpu = Cpu6502(false)
+    override val cpu = Cpu6502()
     val ram = Ram(0x0000, 0xffff)
     val vic = VicII(0xd000, 0xd3ff)
     val cia1 = Cia(1, 0xdc00, 0xdcff)
@@ -46,6 +43,7 @@ class C64Machine(title: String) : IVirtualMachine {
     init {
         cpu.addBreakpoint(0xffd5, ::breakpointKernelLoad)       // intercept LOAD subroutine in the kernal
         cpu.addBreakpoint(0xffd8, ::breakpointKernelSave)       // intercept SAVE subroutine in the kernal
+        cpu.breakpointForBRK = ::breakpointBRK
 
         bus += basicRom
         bus += kernalRom
@@ -64,7 +62,7 @@ class C64Machine(title: String) : IVirtualMachine {
         hostDisplay.start()
     }
 
-    fun breakpointKernelLoad(cpu: Cpu6502, pc: Address): Cpu6502.BreakpointResult {
+    fun breakpointKernelLoad(cpu: Cpu6502, pc: Address): Cpu6502.BreakpointResultAction {
         if (cpu.regA == 0) {
             val fnlen = ram[0xb7]   // file name length
             val fa = ram[0xba]      // device number
@@ -78,13 +76,13 @@ class C64Machine(title: String) : IVirtualMachine {
                     ram[0x90] = 0  // status OK
                     ram[0xae] = (loadEndAddress and 0xff).toShort()
                     ram[0xaf] = (loadEndAddress ushr 8).toShort()
-                    Cpu6502.BreakpointResult(0xf5a9, 0)  // success!
-                } else Cpu6502.BreakpointResult(0xf704, null)   // 'file not found'
-            } else Cpu6502.BreakpointResult(0xf710, null)  // 'missing file name'
-        } else return Cpu6502.BreakpointResult(0xf707, null)   // 'device not present' (VERIFY command not supported)
+                    Cpu6502.BreakpointResultAction(changePC = 0xf5a9)  // success!
+                } else Cpu6502.BreakpointResultAction(changePC = 0xf704)   // 'file not found'
+            } else Cpu6502.BreakpointResultAction(changePC = 0xf710)  // 'missing file name'
+        } else return Cpu6502.BreakpointResultAction(changePC = 0xf707)   // 'device not present' (VERIFY command not supported)
     }
 
-    fun breakpointKernelSave(cpu: Cpu6502, pc: Address): Cpu6502.BreakpointResult {
+    fun breakpointKernelSave(cpu: Cpu6502, pc: Address): Cpu6502.BreakpointResultAction {
         val fnlen = ram[0xb7]   // file name length
 //        val fa = ram[0xba]      // device number
 //        val sa = ram[0xb9]      // secondary address
@@ -102,8 +100,12 @@ class C64Machine(title: String) : IVirtualMachine {
                 it.write(data)
             }
             ram[0x90] = 0  // status OK
-            Cpu6502.BreakpointResult(0xf5a9, 0)  // success!
-        } else Cpu6502.BreakpointResult(0xf710, null)  // 'missing file name'
+            Cpu6502.BreakpointResultAction(changePC = 0xf5a9)  // success!
+        } else Cpu6502.BreakpointResultAction(changePC = 0xf710)  // 'missing file name'
+    }
+
+    fun breakpointBRK(cpu: Cpu6502, pc: Address): Cpu6502.BreakpointResultAction {
+        throw Cpu6502.InstructionError("BRK instruction hit at ${hexW(pc)}")
     }
 
     private fun searchAndLoadFile(

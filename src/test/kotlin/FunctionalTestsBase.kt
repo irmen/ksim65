@@ -6,7 +6,7 @@ import kotlin.test.*
 
 abstract class FunctionalTestsBase {
 
-    val cpu: Cpu6502 = Cpu6502(stopOnBrk = false)
+    val cpu: Cpu6502 = Cpu6502()
     val ram = Ram(0, 0xffff)
     val bus = Bus()
     val kernalStubs = C64KernalStubs(ram)

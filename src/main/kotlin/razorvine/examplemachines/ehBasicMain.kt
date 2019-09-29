@@ -15,7 +15,7 @@ import javax.swing.ImageIcon
  */
 class EhBasicMachine(title: String) {
     val bus = Bus()
-    val cpu = Cpu6502(false)
+    val cpu = Cpu6502()
     val ram = Ram(0x0000, 0xbfff)
     val rom = Rom(0xc000, 0xffff).also { it.load(javaClass.getResourceAsStream("/ehbasic_C000.bin").readBytes()) }
 

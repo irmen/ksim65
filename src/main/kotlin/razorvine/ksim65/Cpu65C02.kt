@@ -6,7 +6,7 @@ import razorvine.ksim65.components.Address
  * 65C02 cpu simulation (the CMOS version of the 6502).
  * TODO: add the optional additional cycles to certain instructions and addressing modes
  */
-class Cpu65C02(stopOnBrk: Boolean = false) : Cpu6502(stopOnBrk) {
+class Cpu65C02 : Cpu6502() {
     override val name = "65C02"
 
     enum class Wait {

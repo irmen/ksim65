@@ -11,7 +11,7 @@ import razorvine.ksim65.components.UByte
  * TODO: actually implement the illegal opcodes, see http://www.ffd2.com/fridge/docs/6502-NMOS.extra.opcodes
  * TODO: add the optional additional cycles to certain instructions and addressing modes
  */
-open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
+open class Cpu6502 : BusComponent() {
     open val name = "6502"
     var tracing: ((state:String) -> Unit)? = null
     var totalCycles = 0L
@@ -19,6 +19,8 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
     private var speedMeasureCycles = 0L
     private var speedMeasureStart = System.nanoTime()
     private var resetTime = System.nanoTime()
+
+    var breakpointForBRK: BreakpointHandler? = null
 
     class InstructionError(msg: String) : RuntimeException(msg)
 
@@ -73,7 +75,21 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
         }
     }
 
-    class BreakpointResult(val newPC: Address?, val newOpcode: Int?)
+    /**
+     * Breakpoint handlers have to return this to specify to the CPU simulator
+     * what should happen after the breakpoint code has executed.
+     *
+     * Setting changePC will continue execution from a different memory location.
+     * Setting changeOpcode will execute a different opcode in place of the one
+     *    that's actually on the location of the breakpoint.
+     *    (it's a bit limited; you can only use one-byte instructions for this)
+     * Setting causeBRK will simulate a software interrupt via BRK,
+     *    without having to actually have a BRK in the breakpoint's memory location
+     *    (this is the same as changeOpcode=0x00)
+     */
+    class BreakpointResultAction(val changePC: Address? = null,
+                                 val changeOpcode: Int? = null,
+                                 val causeBRK: Boolean = false)
 
     class State (
         val A: UByte,
@@ -171,10 +187,10 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
     // all other addressing modes yield a fetched memory address
     protected var fetchedAddress: Address = 0
 
-    private val breakpoints = mutableMapOf<Address, (cpu: Cpu6502, pc: Address) -> BreakpointResult>()
+    private val breakpoints = mutableMapOf<Address, BreakpointHandler>()
 
-    fun addBreakpoint(address: Address, action: (cpu: Cpu6502, pc: Address) -> BreakpointResult) {
-        breakpoints[address] = action
+    fun addBreakpoint(address: Address, handler: BreakpointHandler) {
+        breakpoints[address] = handler
     }
 
     fun removeBreakpoint(address: Address) = breakpoints.remove(address)
@@ -331,24 +347,18 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
                 currentOpcode = read(regPC)
                 currentInstruction = instructions[currentOpcode]
 
+                // tracing and breakpoint handling
                 tracing?.invoke(snapshot().toString())
+                breakpoints[regPC]?.let {
+                    if(breakpoint(it))
+                        return
+                }
 
-                breakpoints[regPC]?.let { breakpoint ->
-                    val oldPC = regPC
-                    val result = breakpoint(this, regPC)
-                    if(result.newPC!=null)
-                        regPC = result.newPC
-                    if (regPC != oldPC)
-                        return clock()
-                    else if(result.newOpcode!=null) {
-                        currentOpcode = result.newOpcode
-                        currentInstruction = instructions[currentOpcode]
+                if(currentOpcode==0x00)
+                    breakpointForBRK?.let {
+                        if(breakpoint(it))
+                            return
                     }
-                }
-
-                if (stopOnBrk && currentOpcode == 0) {
-                    throw InstructionError("stopped on BRK instruction at ${hexW(regPC)}")
-                }
             }
 
             regPC++
@@ -359,6 +369,29 @@ open class Cpu6502(private val stopOnBrk: Boolean = false) : BusComponent() {
 
         instrCycles--
         totalCycles++
+    }
+
+    private fun breakpoint(handler: BreakpointHandler): Boolean {
+        val oldPC = regPC
+        val result = handler(this, regPC)
+
+        when {
+            result.changePC != null -> regPC = result.changePC
+            result.changeOpcode != null -> {
+                currentOpcode = result.changeOpcode
+                currentInstruction = instructions[currentOpcode]
+            }
+            result.causeBRK -> {
+                currentOpcode = 0x00
+                currentInstruction = instructions[0x00]
+            }
+        }
+
+        return if (regPC != oldPC) {
+            clock()
+            true
+        } else
+            false
     }
 
     /**

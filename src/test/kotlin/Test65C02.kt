@@ -40,7 +40,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 @TestInstance(TestInstance.Lifecycle.PER_METHOD)
 class Test65C02 : TestCommon6502() {
     //  CMOS 65C02 Tests
-    override fun createCpu() = Cpu65C02(false)
+    override fun createCpu() = Cpu65C02()
 
     // Reset
 

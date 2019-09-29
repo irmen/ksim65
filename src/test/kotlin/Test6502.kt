@@ -42,7 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 class Test6502 : TestCommon6502() {
     // NMOS 6502 tests
 
-    override fun createCpu() = Cpu6502(false)
+    override fun createCpu() = Cpu6502()
 
     // ADC Indirect, Indexed (X)
 

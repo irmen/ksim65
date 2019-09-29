@@ -12,7 +12,7 @@ class Test6502CpuBasics {
 
     @Test
     fun testCpuFlagsAfterReset6502() {
-        val cpu = Cpu6502(true)
+        val cpu = Cpu6502()
         val bus = Bus()
         bus.add(cpu)
         cpu.reset()
@@ -30,7 +30,7 @@ class Test6502CpuBasics {
 
     @Test
     fun testCpuFlagsAfterReset65c02() {
-        val cpu = Cpu65C02(true)
+        val cpu = Cpu65C02()
         val bus = Bus()
         bus.add(cpu)
         cpu.reset()
@@ -48,7 +48,7 @@ class Test6502CpuBasics {
 
     @Test
     fun testCpuPerformance6502() {
-        val cpu = Cpu6502(true)
+        val cpu = Cpu6502()
         val ram = Ram(0x1000, 0x1fff)
         // load a simple program that loops a few instructions
         for(b in listOf(0xa9, 0x63, 0xaa, 0x86, 0x22, 0x8e, 0x22, 0x22, 0x91, 0x22, 0x6d, 0x33, 0x33, 0xcd, 0x55, 0x55, 0xd0, 0xee, 0xf0, 0xec).withIndex()) {
@@ -79,7 +79,7 @@ class Test6502CpuBasics {
 
     @Test
     fun testCpuPerformance65C02() {
-        val cpu = Cpu65C02(true)
+        val cpu = Cpu65C02()
         val ram = Ram(0x0000, 0x1fff)
         // load a simple program that loops a few instructions
         for(b in listOf(0xa9, 0x63, 0xaa, 0x86, 0x22, 0x8e, 0x22, 0x22, 0x91, 0x22, 0x6d, 0x33, 0x33, 0xcd, 0x55, 0x55,
@@ -111,7 +111,7 @@ class Test6502CpuBasics {
 
     @Test
     fun testBCD6502() {
-        val cpu = Cpu6502(true)
+        val cpu = Cpu6502()
         val bus = Bus()
         bus.add(cpu)
         val ram = Ram(0, 0xffff)
@@ -148,6 +148,33 @@ class Test6502CpuBasics {
             println("  actualF=${actualF.toString(2).padStart(8,'0')}")
             fail("BCD test failed")
         }
+    }
+
+    @Test
+    fun testBRKbreakpoint() {
+        val cpu = Cpu6502()
+        val bus = Bus()
+        val ram = Ram(0, 0x0ffff)
+        ram[0xfffe] = 0x00
+        ram[0xffff] = 0xc0
+        ram[0x3333] = 0xea
+        ram[0x3334] = 0xea
+        ram[0x200] = 0x00
+        bus.add(cpu)
+        bus.add(ram)
+        bus.reset()
+        cpu.regPC = 0x200
+        cpu.breakpointForBRK = null
+        cpu.step()
+        assertEquals(0xc000, cpu.regPC)
+        cpu.regPC = 0x200
+        cpu.breakpointForBRK = { theCpu, _ ->
+            theCpu.regA = 123
+            Cpu6502.BreakpointResultAction(changePC = 0x3333)
+        }
+        cpu.step()
+        assertEquals(123, cpu.regA)
+        assertEquals(0x3334, cpu.regPC)
     }
 
 }

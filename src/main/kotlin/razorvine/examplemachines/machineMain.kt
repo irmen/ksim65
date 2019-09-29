@@ -13,7 +13,7 @@ import javax.swing.ImageIcon
  */
 class VirtualMachine(title: String) : IVirtualMachine {
     override val bus = Bus()
-    override val cpu = Cpu6502(false)
+    override val cpu = Cpu6502()
     val ram = Ram(0x0000, 0xffff)
     private val rtc = RealTimeClock(0xd100, 0xd108)
     private val timer = Timer(0xd200, 0xd203, cpu)

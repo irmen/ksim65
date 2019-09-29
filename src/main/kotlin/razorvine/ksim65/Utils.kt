@@ -19,3 +19,5 @@ fun hexB(number: Int): String {
     val hiNibble = number ushr 4
     return hexdigits[hiNibble].toString() + hexdigits[loNibble]
 }
+
+typealias BreakpointHandler = (cpu: Cpu6502, pc: Address) -> Cpu6502.BreakpointResultAction
