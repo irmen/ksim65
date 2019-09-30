@@ -22,7 +22,9 @@ object ScreenDefs {
     const val SCREEN_HEIGHT_CHARS = 30
     const val SCREEN_WIDTH = SCREEN_WIDTH_CHARS * 8
     const val SCREEN_HEIGHT = SCREEN_HEIGHT_CHARS * 16
-    const val DISPLAY_PIXEL_SCALING: Double = 1.25
+    const val DISPLAY_PIXEL_SCALING: Double = 1.5
+    const val BORDER_SIZE = 32
+
     val BG_COLOR = Color(0, 10, 20)
     val FG_COLOR = Color(200, 255, 230)
     val BORDER_COLOR = Color(20, 30, 40)
@@ -78,9 +80,9 @@ private class BitmapScreenPanel : JPanel() {
         requestFocusInWindow()
     }
 
-    override fun paint(graphics: Graphics?) {
-        val g2d = graphics as Graphics2D?
-        g2d!!.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF)
+    override fun paint(graphics: Graphics) {
+        val g2d = graphics as Graphics2D
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF)
         g2d.setRenderingHint(RenderingHints.KEY_DITHERING, RenderingHints.VALUE_DITHER_DISABLE)
         g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC)
         g2d.drawImage(
@@ -339,57 +341,17 @@ class MainWindow(title: String) : JFrame(title), KeyListener, MouseInputListener
     private var middleButton = false
 
     init {
-        val borderWidth = 16
-        layout = GridBagLayout()
+        contentPane.layout = GridBagLayout()
         defaultCloseOperation = EXIT_ON_CLOSE
         isResizable = false
         isFocusable = true
-
-        // the borders (top, left, right, bottom)
-        val borderTop = JPanel().apply {
-            preferredSize = Dimension(
-                (ScreenDefs.DISPLAY_PIXEL_SCALING * (ScreenDefs.SCREEN_WIDTH + 2 * borderWidth)).toInt(),
-                (ScreenDefs.DISPLAY_PIXEL_SCALING * borderWidth).toInt()
-            )
-            background = ScreenDefs.BORDER_COLOR
-        }
-        val borderBottom = JPanel().apply {
-            preferredSize = Dimension(
-                (ScreenDefs.DISPLAY_PIXEL_SCALING * (ScreenDefs.SCREEN_WIDTH + 2 * borderWidth)).toInt(),
-                (ScreenDefs.DISPLAY_PIXEL_SCALING * borderWidth).toInt()
-            )
-            background = ScreenDefs.BORDER_COLOR
-        }
-        val borderLeft = JPanel().apply {
-            preferredSize = Dimension(
-                (ScreenDefs.DISPLAY_PIXEL_SCALING * borderWidth).toInt(),
-                (ScreenDefs.DISPLAY_PIXEL_SCALING * ScreenDefs.SCREEN_HEIGHT).toInt()
-            )
-            background = ScreenDefs.BORDER_COLOR
-        }
-        val borderRight = JPanel().apply {
-            preferredSize = Dimension(
-                (ScreenDefs.DISPLAY_PIXEL_SCALING * borderWidth).toInt(),
-                (ScreenDefs.DISPLAY_PIXEL_SCALING * ScreenDefs.SCREEN_HEIGHT).toInt()
-            )
-            background = ScreenDefs.BORDER_COLOR
-        }
-        var c = GridBagConstraints()
-        c.gridx = 0; c.gridy = 1; c.gridwidth = 3
-        add(borderTop, c)
-        c = GridBagConstraints()
-        c.gridx = 0; c.gridy = 2
-        add(borderLeft, c)
-        c = GridBagConstraints()
-        c.gridx = 2; c.gridy = 2
-        add(borderRight, c)
-        c = GridBagConstraints()
-        c.gridx = 0; c.gridy = 3; c.gridwidth = 3
-        add(borderBottom, c)
-        // the screen canvas(bitmap)
-        c = GridBagConstraints()
-        c.gridx = 1; c.gridy = 2
-        add(canvas, c)
+        contentPane.background = ScreenDefs.BORDER_COLOR
+        val gc = GridBagConstraints()
+        gc.fill = GridBagConstraints.BOTH
+        gc.gridx=1
+        gc.gridy=1
+        gc.insets = Insets(ScreenDefs.BORDER_SIZE, ScreenDefs.BORDER_SIZE, ScreenDefs.BORDER_SIZE, ScreenDefs.BORDER_SIZE)
+        contentPane.add(canvas, gc)
         addKeyListener(this)
         addMouseMotionListener(this)
         addMouseListener(this)
