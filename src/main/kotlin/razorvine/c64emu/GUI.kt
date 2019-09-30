@@ -19,6 +19,7 @@ object ScreenDefs {
     const val SCREEN_WIDTH = SCREEN_WIDTH_CHARS * 8
     const val SCREEN_HEIGHT = SCREEN_HEIGHT_CHARS * 8
     const val DISPLAY_PIXEL_SCALING: Double = 3.0
+    const val BORDER_SIZE = 24
 
     val colorPalette = listOf(         // this is Pepto's Commodore-64 palette  http://www.pepto.de/projects/colorvic/
         Color(0x000000),  // 0 = black
@@ -42,15 +43,16 @@ object ScreenDefs {
 
 private class BitmapScreenPanel(val chargenData: ByteArray, val ram: MemoryComponent) : JPanel() {
 
-    private val image = BufferedImage(ScreenDefs.SCREEN_WIDTH, ScreenDefs.SCREEN_HEIGHT, BufferedImage.TYPE_INT_ARGB)
-    private val g2d = image.graphics as Graphics2D
+    private val fullscreenImage = BufferedImage(ScreenDefs.SCREEN_WIDTH + 2*ScreenDefs.BORDER_SIZE,
+        ScreenDefs.SCREEN_HEIGHT + 2*ScreenDefs.BORDER_SIZE, BufferedImage.TYPE_INT_ARGB)
+    private val fullscreenG2d = fullscreenImage.graphics as Graphics2D
     private val normalCharacters = loadCharacters(false)
     private val shiftedCharacters = loadCharacters(true)
 
     init {
         val size = Dimension(
-            (image.width * ScreenDefs.DISPLAY_PIXEL_SCALING).toInt(),
-            (image.height * ScreenDefs.DISPLAY_PIXEL_SCALING).toInt()
+            fullscreenImage.width * ScreenDefs.DISPLAY_PIXEL_SCALING.toInt(),
+            fullscreenImage.height*ScreenDefs.DISPLAY_PIXEL_SCALING.toInt()
         )
         minimumSize = size
         maximumSize = size
@@ -78,20 +80,21 @@ private class BitmapScreenPanel(val chargenData: ByteArray, val ram: MemoryCompo
     override fun paint(graphics: Graphics?) {
         redrawCharacters()
         val g2d = graphics as Graphics2D
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF)
-        g2d.setRenderingHint(RenderingHints.KEY_DITHERING, RenderingHints.VALUE_DITHER_DISABLE)
-        g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC)
+        g2d.background = ScreenDefs.colorPalette[ram[0xd020].toInt() and 15]
+        g2d.clearRect(0, 0, width, height)
+        g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR)
         g2d.drawImage(
-            image, 0, 0, (image.width * ScreenDefs.DISPLAY_PIXEL_SCALING).toInt(),
-            (image.height * ScreenDefs.DISPLAY_PIXEL_SCALING).toInt(), null
+            fullscreenImage, 0, 0, (fullscreenImage.width * ScreenDefs.DISPLAY_PIXEL_SCALING).toInt(),
+            (fullscreenImage.height * ScreenDefs.DISPLAY_PIXEL_SCALING).toInt(), null
         )
 
         // simulate a slight scan line effect
-        g2d.color = Color(0, 0, 0, 25)
-        for (y in ScreenDefs.DISPLAY_PIXEL_SCALING.toInt() - 1
-                until (ScreenDefs.SCREEN_HEIGHT * ScreenDefs.DISPLAY_PIXEL_SCALING).toInt()
-                step ScreenDefs.DISPLAY_PIXEL_SCALING.toInt()) {
-            g2d.drawLine(0, y, ScreenDefs.SCREEN_WIDTH * ScreenDefs.DISPLAY_PIXEL_SCALING.toInt(), y)
+        g2d.color = Color(0, 0, 0, 40)
+        g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR)
+        val width = fullscreenImage.width * ScreenDefs.DISPLAY_PIXEL_SCALING.toInt()
+        val height = fullscreenImage.height * ScreenDefs.DISPLAY_PIXEL_SCALING.toInt()
+        for (y in 0 until height step ScreenDefs.DISPLAY_PIXEL_SCALING.toInt()) {
+            g2d.drawLine(0, y, width, y)
         }
     }
 
@@ -99,8 +102,8 @@ private class BitmapScreenPanel(val chargenData: ByteArray, val ram: MemoryCompo
         val screen = 0x0400
         val colors = 0xd800
         val shifted = (ram[0xd018].toInt() and 0b00000010) != 0
-        g2d.background = ScreenDefs.colorPalette[ram[0xd021].toInt() and 15]
-        g2d.clearRect(0, 0, ScreenDefs.SCREEN_WIDTH, ScreenDefs.SCREEN_HEIGHT)
+        fullscreenG2d.background = ScreenDefs.colorPalette[ram[0xd021].toInt() and 15]
+        fullscreenG2d.clearRect(ScreenDefs.BORDER_SIZE, ScreenDefs.BORDER_SIZE, ScreenDefs.SCREEN_WIDTH, ScreenDefs.SCREEN_HEIGHT)
         for (y in 0 until ScreenDefs.SCREEN_HEIGHT_CHARS) {
             for (x in 0 until ScreenDefs.SCREEN_WIDTH_CHARS) {
                 val char = ram[screen + x + y * ScreenDefs.SCREEN_WIDTH_CHARS].toInt()
@@ -116,7 +119,7 @@ private class BitmapScreenPanel(val chargenData: ByteArray, val ram: MemoryCompo
         var cached = coloredCharacters[Triple(char, color, shifted)]
         if (cached == null) {
             cached = if (shifted) shiftedCharacters[char] else normalCharacters[char]
-            val colored = g2d.deviceConfiguration.createCompatibleImage(8, 8, BufferedImage.BITMASK)
+            val colored = fullscreenG2d.deviceConfiguration.createCompatibleImage(8, 8, BufferedImage.BITMASK)
             val sourceRaster = cached.raster
             val coloredRaster = colored.raster
             val pixelArray = IntArray(4)
@@ -133,7 +136,7 @@ private class BitmapScreenPanel(val chargenData: ByteArray, val ram: MemoryCompo
             coloredCharacters[Triple(char, color, shifted)] = colored
             cached = colored
         }
-        g2d.drawImage(cached, x * 8, y * 8, null)
+        fullscreenG2d.drawImage(cached, x * 8 + ScreenDefs.BORDER_SIZE, y * 8 + ScreenDefs.BORDER_SIZE, null)
     }
 }
 
@@ -145,63 +148,13 @@ class MainC64Window(
     val keypressCia: Cia
 ) : JFrame(title), KeyListener {
     private val canvas = BitmapScreenPanel(chargenData, ram)
-    private var borderTop: JPanel
-    private var borderBottom: JPanel
-    private var borderLeft: JPanel
-    private var borderRight: JPanel
 
     init {
-        val borderWidth = 24
-        layout = GridBagLayout()
         defaultCloseOperation = EXIT_ON_CLOSE
         isResizable = false
         isFocusable = true
 
-        // the borders (top, left, right, bottom)
-        borderTop = JPanel().apply {
-            preferredSize = Dimension(
-                (ScreenDefs.DISPLAY_PIXEL_SCALING * (ScreenDefs.SCREEN_WIDTH + 2 * borderWidth)).toInt(),
-                (ScreenDefs.DISPLAY_PIXEL_SCALING * borderWidth).toInt()
-            )
-            background = ScreenDefs.colorPalette[14]
-        }
-        borderBottom = JPanel().apply {
-            preferredSize = Dimension(
-                (ScreenDefs.DISPLAY_PIXEL_SCALING * (ScreenDefs.SCREEN_WIDTH + 2 * borderWidth)).toInt(),
-                (ScreenDefs.DISPLAY_PIXEL_SCALING * borderWidth).toInt()
-            )
-            background = ScreenDefs.colorPalette[14]
-        }
-        borderLeft = JPanel().apply {
-            preferredSize = Dimension(
-                (ScreenDefs.DISPLAY_PIXEL_SCALING * borderWidth).toInt(),
-                (ScreenDefs.DISPLAY_PIXEL_SCALING * ScreenDefs.SCREEN_HEIGHT).toInt()
-            )
-            background = ScreenDefs.colorPalette[14]
-        }
-        borderRight = JPanel().apply {
-            preferredSize = Dimension(
-                (ScreenDefs.DISPLAY_PIXEL_SCALING * borderWidth).toInt(),
-                (ScreenDefs.DISPLAY_PIXEL_SCALING * ScreenDefs.SCREEN_HEIGHT).toInt()
-            )
-            background = ScreenDefs.colorPalette[14]
-        }
-        var c = GridBagConstraints()
-        c.gridx = 0; c.gridy = 1; c.gridwidth = 3
-        add(borderTop, c)
-        c = GridBagConstraints()
-        c.gridx = 0; c.gridy = 2
-        add(borderLeft, c)
-        c = GridBagConstraints()
-        c.gridx = 2; c.gridy = 2
-        add(borderRight, c)
-        c = GridBagConstraints()
-        c.gridx = 0; c.gridy = 3; c.gridwidth = 3
-        add(borderBottom, c)
-        // the screen canvas(bitmap)
-        c = GridBagConstraints()
-        c.gridx = 1; c.gridy = 2
-        add(canvas, c)
+        add(canvas)
         addKeyListener(this)
         pack()
         setLocationRelativeTo(null)
@@ -215,10 +168,6 @@ class MainC64Window(
         // repaint the screen's back buffer ~60 times per second
         val repaintTimer = Timer(1000 / 60) {
             repaint()
-            borderTop.background = ScreenDefs.colorPalette[ram[0xd020].toInt() and 15]
-            borderBottom.background = ScreenDefs.colorPalette[ram[0xd020].toInt() and 15]
-            borderLeft.background = ScreenDefs.colorPalette[ram[0xd020].toInt() and 15]
-            borderRight.background = ScreenDefs.colorPalette[ram[0xd020].toInt() and 15]
         }
         repaintTimer.initialDelay = 0
         repaintTimer.start()
