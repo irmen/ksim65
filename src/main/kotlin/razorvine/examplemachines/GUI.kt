@@ -61,13 +61,18 @@ object ScreenDefs {
 
 private class BitmapScreenPanel : JPanel() {
 
-    private val image = BufferedImage(ScreenDefs.SCREEN_WIDTH, ScreenDefs.SCREEN_HEIGHT, BufferedImage.TYPE_INT_ARGB)
-    private val g2d = image.graphics as Graphics2D
+    private val image: BufferedImage
+    private val g2d: Graphics2D
     private var cursorX: Int = 0
     private var cursorY: Int = 0
     private var cursorState: Boolean = false
 
     init {
+        val ge = GraphicsEnvironment.getLocalGraphicsEnvironment()
+        val gd = ge.defaultScreenDevice.defaultConfiguration
+        image = gd.createCompatibleImage(ScreenDefs.SCREEN_WIDTH, ScreenDefs.SCREEN_HEIGHT, Transparency.OPAQUE)
+        g2d = image.graphics as Graphics2D
+
         val size = Dimension(
             (image.width * ScreenDefs.DISPLAY_PIXEL_SCALING).toInt(),
             (image.height * ScreenDefs.DISPLAY_PIXEL_SCALING).toInt()
@@ -75,9 +80,10 @@ private class BitmapScreenPanel : JPanel() {
         minimumSize = size
         maximumSize = size
         preferredSize = size
-        clearScreen()
         isFocusable = true
+        isDoubleBuffered = false
         requestFocusInWindow()
+        clearScreen()
     }
 
     override fun paint(graphics: Graphics) {

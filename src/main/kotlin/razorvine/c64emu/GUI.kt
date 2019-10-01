@@ -4,6 +4,7 @@ import razorvine.ksim65.Cpu6502
 import razorvine.ksim65.components.MemoryComponent
 import java.awt.*
 import java.awt.image.BufferedImage
+import java.awt.image.VolatileImage
 import java.awt.event.*
 import javax.swing.*
 import javax.swing.Timer
@@ -43,13 +44,19 @@ object ScreenDefs {
 
 private class BitmapScreenPanel(val chargenData: ByteArray, val ram: MemoryComponent) : JPanel() {
 
-    private val fullscreenImage = BufferedImage(ScreenDefs.SCREEN_WIDTH + 2*ScreenDefs.BORDER_SIZE,
-        ScreenDefs.SCREEN_HEIGHT + 2*ScreenDefs.BORDER_SIZE, BufferedImage.TYPE_INT_ARGB)
-    private val fullscreenG2d = fullscreenImage.graphics as Graphics2D
+
+    private val fullscreenImage: VolatileImage
+    private val fullscreenG2d: Graphics2D
     private val normalCharacters = loadCharacters(false)
     private val shiftedCharacters = loadCharacters(true)
 
     init {
+        val ge = GraphicsEnvironment.getLocalGraphicsEnvironment()
+        val gd = ge.defaultScreenDevice.defaultConfiguration
+        fullscreenImage = gd.createCompatibleVolatileImage(ScreenDefs.SCREEN_WIDTH + 2*ScreenDefs.BORDER_SIZE,
+            ScreenDefs.SCREEN_HEIGHT + 2*ScreenDefs.BORDER_SIZE, Transparency.OPAQUE)
+        fullscreenG2d = fullscreenImage.graphics as Graphics2D
+
         val size = Dimension(
             fullscreenImage.width * ScreenDefs.DISPLAY_PIXEL_SCALING.toInt(),
             fullscreenImage.height*ScreenDefs.DISPLAY_PIXEL_SCALING.toInt()
@@ -58,6 +65,7 @@ private class BitmapScreenPanel(val chargenData: ByteArray, val ram: MemoryCompo
         maximumSize = size
         preferredSize = size
         isFocusable = true
+        isDoubleBuffered = false
         requestFocusInWindow()
     }
 
@@ -77,11 +85,25 @@ private class BitmapScreenPanel(val chargenData: ByteArray, val ram: MemoryCompo
         return chars
     }
 
-    override fun paint(graphics: Graphics?) {
+    override fun paint(graphics: Graphics) {
+        fullscreenG2d.color=Color.RED
+        fullscreenG2d.drawLine(0,0,ScreenDefs.SCREEN_WIDTH+ScreenDefs.BORDER_SIZE*2, ScreenDefs.SCREEN_HEIGHT+ScreenDefs.BORDER_SIZE*2)
+        // draw the background color
+        fullscreenG2d.background = ScreenDefs.colorPalette[ram[0xd021].toInt() and 15]
+        fullscreenG2d.clearRect(ScreenDefs.BORDER_SIZE, ScreenDefs.BORDER_SIZE, ScreenDefs.SCREEN_WIDTH, ScreenDefs.SCREEN_HEIGHT)
+
+        // draw the characters
         redrawCharacters()
+
+        // draw the screen border
+        fullscreenG2d.background = ScreenDefs.colorPalette[ram[0xd020].toInt() and 15]
+        fullscreenG2d.clearRect(0, 0, ScreenDefs.SCREEN_WIDTH + 2*ScreenDefs.BORDER_SIZE, ScreenDefs.BORDER_SIZE)
+        fullscreenG2d.clearRect(0, ScreenDefs.SCREEN_HEIGHT+ScreenDefs.BORDER_SIZE, ScreenDefs.SCREEN_WIDTH + 2*ScreenDefs.BORDER_SIZE, ScreenDefs.BORDER_SIZE)
+        fullscreenG2d.clearRect(0, ScreenDefs.BORDER_SIZE, ScreenDefs.BORDER_SIZE, ScreenDefs.SCREEN_HEIGHT)
+        fullscreenG2d.clearRect(ScreenDefs.SCREEN_WIDTH+ScreenDefs.BORDER_SIZE, ScreenDefs.BORDER_SIZE, ScreenDefs.BORDER_SIZE, ScreenDefs.SCREEN_HEIGHT)
+
+        // scale and draw the image to the window
         val g2d = graphics as Graphics2D
-        g2d.background = ScreenDefs.colorPalette[ram[0xd020].toInt() and 15]
-        g2d.clearRect(0, 0, width, height)
         g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR)
         g2d.drawImage(
             fullscreenImage, 0, 0, (fullscreenImage.width * ScreenDefs.DISPLAY_PIXEL_SCALING).toInt(),
@@ -102,8 +124,6 @@ private class BitmapScreenPanel(val chargenData: ByteArray, val ram: MemoryCompo
         val screen = 0x0400
         val colors = 0xd800
         val shifted = (ram[0xd018].toInt() and 0b00000010) != 0
-        fullscreenG2d.background = ScreenDefs.colorPalette[ram[0xd021].toInt() and 15]
-        fullscreenG2d.clearRect(ScreenDefs.BORDER_SIZE, ScreenDefs.BORDER_SIZE, ScreenDefs.SCREEN_WIDTH, ScreenDefs.SCREEN_HEIGHT)
         for (y in 0 until ScreenDefs.SCREEN_HEIGHT_CHARS) {
             for (x in 0 until ScreenDefs.SCREEN_WIDTH_CHARS) {
                 val char = ram[screen + x + y * ScreenDefs.SCREEN_WIDTH_CHARS].toInt()
