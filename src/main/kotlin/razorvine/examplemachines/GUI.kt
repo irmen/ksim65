@@ -10,7 +10,6 @@ import java.io.File
 import java.lang.Integer.parseInt
 import java.util.*
 import javax.swing.*
-import javax.swing.Timer
 
 
 /**
@@ -386,7 +385,7 @@ class MainWindow(title: String) : JFrame(title), KeyListener, MouseInputListener
     fun start() {
         // repaint the screen's back buffer ~60 times per second
         var cursorBlink = 0L
-        val repaintTimer = Timer(1000 / 60) {
+        val repaintTimer = javax.swing.Timer(1000 / 60) {
             repaint()
             if(it.`when` - cursorBlink > 200L) {
                 cursorBlink = it.`when`

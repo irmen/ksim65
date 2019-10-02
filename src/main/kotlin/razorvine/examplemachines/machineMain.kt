@@ -73,7 +73,7 @@ class VirtualMachine(title: String) : IVirtualMachine {
     }
 
     fun start() {
-        javax.swing.Timer(10) {
+        javax.swing.Timer(50) {
             debugWindow.updateCpu(cpu, bus)
         }.start()
 

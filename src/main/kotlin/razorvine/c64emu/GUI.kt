@@ -7,7 +7,6 @@ import java.awt.image.BufferedImage
 import java.awt.image.VolatileImage
 import java.awt.event.*
 import javax.swing.*
-import javax.swing.Timer
 
 
 /**
