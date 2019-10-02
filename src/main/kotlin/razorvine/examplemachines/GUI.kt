@@ -154,6 +154,15 @@ private class BitmapScreenPanel : JPanel() {
     }
 }
 
+private class UnaliasedTextBox(rows: Int, columns: Int): JTextArea(rows, columns) {
+    override fun paintComponent(g: Graphics) {
+        g as Graphics2D
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF)
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF)
+        super.paintComponent(g)
+    }
+}
+
 class DebugWindow(private val vm: IVirtualMachine) : JFrame("Debugger - ksim65 v${Version.version}"), ActionListener {
     private val cyclesTf = JTextField("00000000000000")
     private val speedKhzTf = JTextField("0000000")
@@ -165,13 +174,13 @@ class DebugWindow(private val vm: IVirtualMachine) : JFrame("Debugger - ksim65 v
     private val regPtf = JTextArea("NV-BDIZC\n000000000")
     private val disassemTf = JTextField("00 00 00   lda   (fffff),x")
     private val pauseBt = JButton("Pause").also { it.actionCommand = "pause" }
-    private val zeropageTf = JTextArea(8, 102).also {
+    private val zeropageTf = UnaliasedTextBox(8, 102).also {
         it.border = BorderFactory.createEtchedBorder()
         it.isEnabled = false
         it.disabledTextColor = Color.DARK_GRAY
         it.font = Font(Font.MONOSPACED, Font.PLAIN, 12)
     }
-    private val stackpageTf = JTextArea(8, 102).also {
+    private val stackpageTf = UnaliasedTextBox(8, 102).also {
         it.border = BorderFactory.createEtchedBorder()
         it.isEnabled=false
         it.disabledTextColor = Color.DARK_GRAY
@@ -235,6 +244,13 @@ class DebugWindow(private val vm: IVirtualMachine) : JFrame("Debugger - ksim65 v
         val zeropagePanel = JPanel()
         zeropagePanel.layout = BoxLayout(zeropagePanel, BoxLayout.Y_AXIS)
         zeropagePanel.border = BorderFactory.createTitledBorder("Zeropage and Stack")
+        val showZp = JCheckBox("show Zero page and Stack dumps", true)
+        showZp.addActionListener {
+            val visible = (it.source as JCheckBox).isSelected
+            zeropageTf.isVisible = visible
+            stackpageTf.isVisible = visible
+        }
+        zeropagePanel.add(showZp)
         zeropagePanel.add(zeropageTf)
         zeropagePanel.add(stackpageTf)
 
@@ -246,7 +262,6 @@ class DebugWindow(private val vm: IVirtualMachine) : JFrame("Debugger - ksim65 v
         contentPane.add(zeropagePanel, gc)
         gc.gridy++
         contentPane.add(buttonPanel, gc)
-
         pack()
     }
 
