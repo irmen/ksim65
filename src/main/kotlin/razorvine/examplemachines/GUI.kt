@@ -382,10 +382,10 @@ class MainWindow(title: String) : JFrame(title), KeyListener, MouseInputListener
         requestFocusInWindow()
     }
 
-    fun start() {
-        // repaint the screen's back buffer ~60 times per second
+    fun start(updateRate: Int) {
+        // repaint the screen's back buffer
         var cursorBlink = 0L
-        val repaintTimer = javax.swing.Timer(1000 / 60) {
+        val repaintTimer = javax.swing.Timer(1000 / updateRate) {
             repaint()
             if(it.`when` - cursorBlink > 200L) {
                 cursorBlink = it.`when`

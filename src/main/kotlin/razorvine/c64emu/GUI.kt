@@ -43,7 +43,6 @@ object ScreenDefs {
 
 private class BitmapScreenPanel(val chargenData: ByteArray, val ram: MemoryComponent) : JPanel() {
 
-
     private val fullscreenImage: VolatileImage
     private val fullscreenG2d: Graphics2D
     private val normalCharacters = loadCharacters(false)
@@ -183,9 +182,9 @@ class MainC64Window(
         requestFocusInWindow()
     }
 
-    fun start() {
-        // repaint the screen's back buffer ~60 times per second
-        val repaintTimer = Timer(1000 / 60) {
+    fun start(updateRate: Int) {
+        // repaint the screen's back buffer
+        val repaintTimer = Timer(1000 / updateRate) {
             repaint()
         }
         repaintTimer.initialDelay = 0

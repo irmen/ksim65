@@ -26,6 +26,7 @@ class Cpu65C02 : Cpu6502() {
 
     /**
      * Process once clock cycle in the cpu
+     * Use this if goal is cycle-perfect emulation.
      */
     override fun clock() {
         when (waiting) {
@@ -47,18 +48,16 @@ class Cpu65C02 : Cpu6502() {
     }
 
     /**
-     * Execute one single complete instruction
+     * Execute one single complete instruction.
+     * Use this when the goal is emulation performance and not a cycle perfect system.
      */
     override fun step() {
+        totalCycles += instrCycles
+        instrCycles = 0
         if (waiting == Wait.Normal) {
-            while (instrCycles > 0) clock()
             clock()
-            if (waiting == Wait.Normal)
-                while (instrCycles > 0) clock()
-            else {
-                totalCycles += instrCycles
-                instrCycles = 0
-            }
+            totalCycles += instrCycles
+            instrCycles = 0
         }
     }
 

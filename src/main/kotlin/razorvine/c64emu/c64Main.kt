@@ -59,7 +59,7 @@ class C64Machine(title: String) : IVirtualMachine {
         debugWindow.setLocation(hostDisplay.location.x + hostDisplay.width, hostDisplay.location.y)
         debugWindow.isVisible = true
         hostDisplay.isVisible = true
-        hostDisplay.start()
+        hostDisplay.start(30)
     }
 
     fun breakpointKernelLoad(cpu: Cpu6502, pc: Address): Cpu6502.BreakpointResultAction {

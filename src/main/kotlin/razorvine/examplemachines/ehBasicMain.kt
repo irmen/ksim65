@@ -37,7 +37,7 @@ class EhBasicMachine(title: String) {
         bus.reset()
 
         hostDisplay.isVisible = true
-        hostDisplay.start()
+        hostDisplay.start(30)
     }
 
     private fun step() {

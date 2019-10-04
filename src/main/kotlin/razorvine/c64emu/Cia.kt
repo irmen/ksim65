@@ -54,6 +54,7 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address) : MemMapp
         }
     }
 
+    private var totalCycles = 0
     private var tod = TimeOfDay()
     private var timerAset = 0
     private var timerBset = 0
@@ -69,7 +70,13 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address) : MemMapp
     }
 
     override fun clock() {
-        tod.update()
+        totalCycles++
+
+        if(totalCycles % 20000 == 0) {
+            // TOD resolution is 0.1 second, no need to update it in every cycle
+            tod.update()
+        }
+
         if(ramBuffer[0x0e].toInt() and 1 != 0) {
             timerAactual--
             if(timerAactual<0)
@@ -232,19 +239,9 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address) : MemMapp
                 tod.start()
                 (tod.tenths and 0x0f).toShort()
             }
-            0x09 -> {
-                toBCD(tod.seconds)
-            }
-            0x0a -> {
-                toBCD(tod.minutes)
-            }
-            0x0b -> {
-                val hours = toBCD(tod.hours)
-                if (tod.hours >= 12)
-                    (hours.toInt() or 0x10000000).toShort()
-                else
-                    hours
-            }
+            0x09 -> toBCD(tod.seconds)
+            0x0a -> toBCD(tod.minutes)
+            0x0b -> toBCD(tod.hours)
             else -> ramBuffer[register]
         }
     }
@@ -301,8 +298,6 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address) : MemMapp
             0x0b -> {
                 tod.stop()
                 tod.hours = fromBCD(data)
-                if (data >= 12)
-                    tod.hours = tod.hours or 0b10000000
             }
             // the timer A and B control registers are simply provided by the rambuffer for now.
         }
@@ -323,7 +318,7 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address) : MemMapp
         }
 
         // to avoid some 'stuck' keys, if we receive a shift/control/alt RELEASE, we wipe the keyboard buffer
-        // (this can happen becase we're changing the keycode for some pressed keys below,
+        // (this can happen because we're changing the keycode for some pressed keys below,
         // and a released key doesn't always match the pressed keycode anymore then)
         if (event.id == KeyEvent.KEY_RELEASED && event.keyCode in listOf(
                 KeyEvent.VK_SHIFT,

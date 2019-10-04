@@ -333,7 +333,8 @@ open class Cpu6502 : BusComponent() {
     }
 
     /**
-     * Process once clock cycle in the cpu
+     * Process once clock cycle in the cpu.
+     * Use this if goal is cycle-perfect emulation.
      */
     override fun clock() {
         if (instrCycles == 0) {
@@ -395,12 +396,15 @@ open class Cpu6502 : BusComponent() {
     }
 
     /**
-     * Execute one single complete instruction
+     * Execute one single complete instruction.
+     * Use this when the goal is emulation performance and not a cycle perfect system.
      */
     open fun step() {
-        while (instrCycles > 0) clock()
+        totalCycles += instrCycles
+        instrCycles = 0
         clock()
-        while (instrCycles > 0) clock()
+        totalCycles += instrCycles
+        instrCycles = 0
     }
 
     fun nmi() {

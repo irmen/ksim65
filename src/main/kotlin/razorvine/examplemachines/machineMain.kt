@@ -49,7 +49,7 @@ class VirtualMachine(title: String) : IVirtualMachine {
 
         debugWindow.isVisible = true
         hostDisplay.isVisible = true
-        hostDisplay.start()
+        hostDisplay.start(30)
     }
 
     override fun getZeroAndStackPages(): Array<UByte> = ram.getPages(0, 2)
