@@ -84,8 +84,6 @@ private class BitmapScreenPanel(val chargenData: ByteArray, val ram: MemoryCompo
     }
 
     override fun paint(graphics: Graphics) {
-        fullscreenG2d.color=Color.RED
-        fullscreenG2d.drawLine(0,0,ScreenDefs.SCREEN_WIDTH+ScreenDefs.BORDER_SIZE*2, ScreenDefs.SCREEN_HEIGHT+ScreenDefs.BORDER_SIZE*2)
         // draw the background color
         fullscreenG2d.background = ScreenDefs.colorPalette[ram[0xd021].toInt() and 15]
         fullscreenG2d.clearRect(ScreenDefs.BORDER_SIZE, ScreenDefs.BORDER_SIZE, ScreenDefs.SCREEN_WIDTH, ScreenDefs.SCREEN_HEIGHT)
@@ -116,6 +114,7 @@ private class BitmapScreenPanel(val chargenData: ByteArray, val ram: MemoryCompo
         for (y in 0 until height step ScreenDefs.DISPLAY_PIXEL_SCALING.toInt()) {
             g2d.drawLine(0, y, width, y)
         }
+        Toolkit.getDefaultToolkit().sync()
     }
 
     private fun redrawCharacters() {

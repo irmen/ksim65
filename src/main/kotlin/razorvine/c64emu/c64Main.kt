@@ -133,7 +133,7 @@ class C64Machine(title: String) : IVirtualMachine {
                         val ext = it.extension.toUpperCase()
                         val fileAndSize = Pair(it, it.length())
                         if (name.isEmpty())
-                            Pair("." + ext, "") to fileAndSize
+                            Pair(".$ext", "") to fileAndSize
                         else
                             Pair(name, ext) to fileAndSize
                     }

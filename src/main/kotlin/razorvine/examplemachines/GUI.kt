@@ -2,14 +2,14 @@ package razorvine.examplemachines
 
 import razorvine.ksim65.*
 import java.awt.*
-import java.awt.image.BufferedImage
-import javax.imageio.ImageIO
-import javax.swing.event.MouseInputListener
 import java.awt.event.*
+import java.awt.image.BufferedImage
 import java.io.File
 import java.lang.Integer.parseInt
 import java.util.*
+import javax.imageio.ImageIO
 import javax.swing.*
+import javax.swing.event.MouseInputListener
 
 
 /**
@@ -87,9 +87,7 @@ private class BitmapScreenPanel : JPanel() {
 
     override fun paint(graphics: Graphics) {
         val g2d = graphics as Graphics2D
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF)
-        g2d.setRenderingHint(RenderingHints.KEY_DITHERING, RenderingHints.VALUE_DITHER_DISABLE)
-        g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC)
+        g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR)
         g2d.drawImage(
             image, 0, 0, (image.width * ScreenDefs.DISPLAY_PIXEL_SCALING).toInt(),
             (image.height * ScreenDefs.DISPLAY_PIXEL_SCALING).toInt(), null
@@ -103,7 +101,7 @@ private class BitmapScreenPanel : JPanel() {
             g2d.fillRect(scx, scy, scw, sch)
             g2d.setPaintMode()
         }
-
+        Toolkit.getDefaultToolkit().sync()
     }
 
     fun clearScreen() {

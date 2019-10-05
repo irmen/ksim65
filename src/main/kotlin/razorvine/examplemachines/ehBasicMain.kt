@@ -27,8 +27,6 @@ class EhBasicMachine(title: String) {
     private var paused = false
 
     init {
-        hostDisplay.iconImage = ImageIcon(javaClass.getResource("/icon.png")).image
-
         bus += display
         bus += keyboard
         bus += rom
@@ -36,6 +34,7 @@ class EhBasicMachine(title: String) {
         bus += cpu
         bus.reset()
 
+        hostDisplay.iconImage = ImageIcon(javaClass.getResource("/icon.png")).image
         hostDisplay.isVisible = true
         hostDisplay.start(30)
     }

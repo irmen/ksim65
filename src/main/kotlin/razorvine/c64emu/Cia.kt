@@ -9,7 +9,7 @@ import java.awt.event.KeyEvent
  * Minimal simulation of the MOS 6526 CIA chip.
  * Depending on what CIA it is (1 or 2), some registers do different things on the C64.
  * This implementation provides a working keyboard matrix, TOD clock, and the essentials of the timer A and B.
- * TODO: timer IRQ triggering, more timer control bits.
+ * TODO: timer IRQ triggering, more timer control bits. Validate that the timerA/B timing is cycle correct.
  */
 class Cia(val number: Int, startAddress: Address, endAddress: Address) : MemMappedComponent(startAddress, endAddress) {
     private var ramBuffer = Array<UByte>(endAddress - startAddress + 1) { 0 }

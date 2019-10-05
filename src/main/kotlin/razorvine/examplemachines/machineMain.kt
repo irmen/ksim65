@@ -30,10 +30,6 @@ class VirtualMachine(title: String) : IVirtualMachine {
     private var paused = false
 
     init {
-        hostDisplay.iconImage = ImageIcon(javaClass.getResource("/icon.png")).image
-        debugWindow.iconImage = hostDisplay.iconImage
-        debugWindow.setLocation(hostDisplay.location.x + hostDisplay.width, hostDisplay.location.y)
-
         ram[Cpu6502.RESET_vector] = 0x00
         ram[Cpu6502.RESET_vector + 1] = 0x10
         ram.loadPrg(javaClass.getResourceAsStream("/vmdemo.prg"), null)
@@ -47,6 +43,9 @@ class VirtualMachine(title: String) : IVirtualMachine {
         bus += cpu
         bus.reset()
 
+        hostDisplay.iconImage = ImageIcon(javaClass.getResource("/icon.png")).image
+        debugWindow.iconImage = hostDisplay.iconImage
+        debugWindow.setLocation(hostDisplay.location.x + hostDisplay.width, hostDisplay.location.y)
         debugWindow.isVisible = true
         hostDisplay.isVisible = true
         hostDisplay.start(30)
