@@ -24,6 +24,8 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address) : MemMapp
         var minutes = 0
         var seconds = 0
         var tenths = 0
+        private var latchedTime = 0L
+        private var latched = false
 
         fun start() {
             if (!running) {
@@ -32,17 +34,25 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address) : MemMapp
                 userStartTime = hours * 3600 + minutes * 60 + seconds + tenths / 10.0
                 running = true
             }
+            latch(false)
         }
 
         fun stop() {
             running = false
         }
 
+        fun latch(latched: Boolean) {
+            this.latched = latched
+            update()
+        }
+
         fun update() {
-            val currentTime = System.currentTimeMillis()
-            if (running && updatedAt != currentTime) {
-                updatedAt = currentTime
-                var elapsedSeconds = (currentTime.toDouble() - startedAt) / 1000.0 + userStartTime
+            if(!running || latched)
+                return
+            latchedTime = System.currentTimeMillis()
+            if (updatedAt != latchedTime) {
+                updatedAt = latchedTime
+                var elapsedSeconds = (latchedTime.toDouble() - startedAt) / 1000.0 + userStartTime
                 hours = (elapsedSeconds / 3600).toInt()
                 elapsedSeconds -= hours * 3600
                 minutes = (elapsedSeconds / 60).toInt()
@@ -241,7 +251,10 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address) : MemMapp
             }
             0x09 -> toBCD(tod.seconds)
             0x0a -> toBCD(tod.minutes)
-            0x0b -> toBCD(tod.hours)
+            0x0b -> {
+                tod.latch(true)
+                toBCD(tod.hours)
+            }
             else -> ramBuffer[register]
         }
     }
