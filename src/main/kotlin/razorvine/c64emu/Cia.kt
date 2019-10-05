@@ -9,7 +9,7 @@ import java.awt.event.KeyEvent
  * Minimal simulation of the MOS 6526 CIA chip.
  * Depending on what CIA it is (1 or 2), some registers do different things on the C64.
  * This implementation provides a working keyboard matrix, TOD clock, and the essentials of the timer A and B.
- * TODO: timer IRQ triggering, more timer control bits. Validate that the timerA/B timing is cycle correct.
+ * TODO: timerA IRQ, timerB NMI triggering
  */
 class Cia(val number: Int, startAddress: Address, endAddress: Address) : MemMappedComponent(startAddress, endAddress) {
     private var ramBuffer = Array<UByte>(endAddress - startAddress + 1) { 0 }
@@ -88,14 +88,24 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address) : MemMapp
         }
 
         if(ramBuffer[0x0e].toInt() and 1 != 0) {
+            // timer A is enabled, assume system cycles counting for now
             timerAactual--
             if(timerAactual<0)
-                timerAactual = if(ramBuffer[0x0e].toInt() and 0b1000 != 0) 0 else timerAset
+                timerAactual = if(ramBuffer[0x0e].toInt() and 0b00001000 != 0) 0 else timerAset
         }
         if(ramBuffer[0x0f].toInt() and 1 != 0) {
-            timerBactual--
+            // timer B is enabled
+            val crb = ramBuffer[0x0f].toInt()
+            if(crb and 0b01000000 != 0) {
+                // timer B counts timer A underruns
+                if(timerAactual==0)
+                    timerBactual--
+            } else {
+                // timer B counts just the system cycles
+                timerBactual--
+            }
             if(timerBactual<0)
-                timerBactual = if(ramBuffer[0x0f].toInt() and 0b1000 != 0) 0 else timerBset
+                timerBactual = if(crb and 0b00001000 != 0) 0 else timerBset
         }
     }
 

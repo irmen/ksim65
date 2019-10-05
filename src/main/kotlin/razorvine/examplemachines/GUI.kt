@@ -227,7 +227,7 @@ class DebugWindow(private val vm: IVirtualMachine) : JFrame("Debugger - ksim65 v
         val buttonPanel = JPanel(FlowLayout())
         buttonPanel.border = BorderFactory.createTitledBorder("Control")
 
-        val loadBt = JButton("Load program").also { it.actionCommand = "load" }
+        val loadBt = JButton("Inject program").also { it.actionCommand = "inject" }
         val resetBt = JButton("Reset").also { it.actionCommand = "reset" }
         val stepBt = JButton("Step").also { it.actionCommand = "step" }
         val irqBt = JButton("IRQ").also { it.actionCommand = "irq" }
@@ -264,7 +264,7 @@ class DebugWindow(private val vm: IVirtualMachine) : JFrame("Debugger - ksim65 v
 
     override fun actionPerformed(e: ActionEvent) {
         when(e.actionCommand) {
-            "load" -> {
+            "inject" -> {
                 val chooser = JFileChooser()
                 chooser.dialogTitle = "Choose binary program or .prg to load"
                 chooser.currentDirectory = File(".")
