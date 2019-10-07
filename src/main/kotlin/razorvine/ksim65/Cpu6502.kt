@@ -761,12 +761,12 @@ open class Cpu6502 : BusComponent() {
                 fetchedAddress = regY + (lo or (hi shl 8)) and 0xffff
             }
             AddrMode.Ind -> {
-                // not able to fetch an address which crosses the page boundary (6502, fixed in 65C02)
                 var lo = readPc()
                 var hi = readPc()
                 fetchedAddress = lo or (hi shl 8)
                 if (lo == 0xff) {
-                    // emulate bug
+                    // emulate 6502 bug (fixed in 65C02):
+                    // not able to fetch an address which crosses the page boundary.
                     lo = read(fetchedAddress)
                     hi = read(fetchedAddress and 0xff00)
                 } else {
@@ -777,14 +777,14 @@ open class Cpu6502 : BusComponent() {
                 fetchedAddress = lo or (hi shl 8)
             }
             AddrMode.IzX -> {
-                // note: not able to fetch an adress which crosses the page boundary
+                // note: not able to fetch an address which crosses the page boundary
                 fetchedAddress = readPc()
                 val lo = read((fetchedAddress + regX) and 0xff)
                 val hi = read((fetchedAddress + regX + 1) and 0xff)
                 fetchedAddress = lo or (hi shl 8)
             }
             AddrMode.IzY -> {
-                // note: not able to fetch an adress which crosses the page boundary
+                // note: not able to fetch an address which crosses the page boundary
                 fetchedAddress = readPc()
                 val lo = read(fetchedAddress)
                 val hi = read((fetchedAddress + 1) and 0xff)
