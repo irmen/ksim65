@@ -13,6 +13,7 @@ import java.io.IOException
 import java.nio.file.Path
 import java.nio.file.Paths
 import javax.swing.ImageIcon
+import kotlin.concurrent.scheduleAtFixedRate
 
 /**
  * The virtual representation of the Commodore-64
@@ -243,28 +244,16 @@ class C64Machine(title: String) : IVirtualMachine {
             debugWindow.updateCpu(cpu, bus)
         }.start()
 
-        // busy waiting loop, averaging cpu speed to ~1 Mhz:
-        var numInstructionsteps = 600
-        val targetSpeedKhz = 1000
-        while (true) {
-            if (paused) {
-                Thread.sleep(100)
-            } else {
-                cpu.startSpeedMeasureInterval()
-                Thread.sleep(0, 1000)
-                repeat(numInstructionsteps) {
-                    step()
-                    if (vic.currentRasterLine == 255) {
-                        // we force an irq here ourselves rather than fully emulating the VIC-II's raster IRQ
-                        // or the CIA timer IRQ/NMI.
-                        cpu.irq()
-                    }
-                }
-                val speed = cpu.measureAvgIntervalSpeedKhz()
-                if (speed < targetSpeedKhz - 50)
-                    numInstructionsteps++
-                else if (speed > targetSpeedKhz + 50)
-                    numInstructionsteps--
+        val timer = java.util.Timer("cpu-cycle", true)
+        timer.scheduleAtFixedRate(0, 1000L/vic.framerate) {
+            if(!paused) {
+                // we synchronise cpu cycles to the vertical blank of the Vic chip
+                // this should result in ~1 Mhz cpu speed
+                while(vic.vsync) step()
+                while(!vic.vsync) step()
+                // we force an irq here ourselves rather than fully emulating the VIC-II's raster IRQ
+                // or the CIA timer IRQ/NMI.
+                cpu.irq()
             }
         }
     }

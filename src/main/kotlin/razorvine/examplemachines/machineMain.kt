@@ -1,12 +1,14 @@
 package razorvine.examplemachines
 
+import java.io.File
+import javax.swing.ImageIcon
+import kotlin.concurrent.scheduleAtFixedRate
 import razorvine.ksim65.Bus
 import razorvine.ksim65.Cpu6502
 import razorvine.ksim65.IVirtualMachine
 import razorvine.ksim65.Version
 import razorvine.ksim65.components.*
-import java.io.File
-import javax.swing.ImageIcon
+
 
 /**
  * A virtual computer constructed from the various virtual components
@@ -76,21 +78,15 @@ class VirtualMachine(title: String) : IVirtualMachine {
             debugWindow.updateCpu(cpu, bus)
         }.start()
 
-        // busy waiting loop, averaging cpu speed to ~1 Mhz:
-        var numInstructionsteps = 600
-        val targetSpeedKhz = 1000
-        while (true) {
-            if (paused) {
-                Thread.sleep(100)
-            } else {
-                cpu.startSpeedMeasureInterval()
-                Thread.sleep(0, 1000)
-                repeat(numInstructionsteps) { step() }
-                val speed = cpu.measureAvgIntervalSpeedKhz()
-                if (speed < targetSpeedKhz - 50)
-                    numInstructionsteps++
-                else if (speed > targetSpeedKhz + 50)
-                    numInstructionsteps--
+        val frameRate = 60L
+        val desiredCyclesPerFrame = 500_000L/frameRate      // 500 khz
+        val timer = java.util.Timer("cpu-cycle", true)
+        timer.scheduleAtFixedRate(500, 1000/frameRate) {
+            if(!paused) {
+                val prevCycles = cpu.totalCycles
+                while(cpu.totalCycles - prevCycles < desiredCyclesPerFrame) {
+                    step()
+                }
             }
         }
     }

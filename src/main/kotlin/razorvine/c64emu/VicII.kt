@@ -7,13 +7,18 @@ import razorvine.ksim65.components.UByte
 /**
  * Minimal simulation of the VIC-II graphics chip
  * It only has some logic to keep track of the raster line
+ * This chip is the PAL version (50 Hz screen refresh, 312 vertical raster lines)
  */
 class VicII(startAddress: Address, endAddress: Address): MemMappedComponent(startAddress, endAddress) {
     private var ramBuffer = Array<UByte>(endAddress - startAddress + 1) { 0xff }
     private var rasterIrqLine = 0
-    var currentRasterLine = 1
     private var scanlineClocks = 0
     private var interruptStatusRegisterD019 = 0
+    var currentRasterLine = 1
+    val vsync: Boolean
+        get() = currentRasterLine==0
+    val framerate = 50
+    val numRasterLines = 312
 
     init {
         require(endAddress - startAddress + 1 == 0x400) { "vic-II requires exactly 1024 memory bytes (64*16 mirrored)" }
@@ -24,7 +29,7 @@ class VicII(startAddress: Address, endAddress: Address): MemMappedComponent(star
         if(scanlineClocks == 63) {
             scanlineClocks = 0
             currentRasterLine++
-            if(currentRasterLine >= 312)
+            if(currentRasterLine >= numRasterLines)
                 currentRasterLine = 0
             interruptStatusRegisterD019 = if(currentRasterLine == rasterIrqLine) {
                 // signal that current raster line is equal to the desired IRQ raster line
