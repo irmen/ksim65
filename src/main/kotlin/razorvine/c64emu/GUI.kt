@@ -3,10 +3,13 @@ package razorvine.c64emu
 import razorvine.ksim65.Cpu6502
 import razorvine.ksim65.components.MemoryComponent
 import java.awt.*
+import java.awt.event.KeyEvent
+import java.awt.event.KeyListener
 import java.awt.image.BufferedImage
 import java.awt.image.VolatileImage
-import java.awt.event.*
-import javax.swing.*
+import javax.swing.JFrame
+import javax.swing.JPanel
+import javax.swing.Timer
 
 
 /**

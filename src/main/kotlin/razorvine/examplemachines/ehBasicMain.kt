@@ -8,6 +8,7 @@ import razorvine.ksim65.components.Keyboard
 import razorvine.ksim65.components.Ram
 import razorvine.ksim65.components.Rom
 import javax.swing.ImageIcon
+import javax.swing.JOptionPane
 import kotlin.concurrent.scheduleAtFixedRate
 
 /**
@@ -53,9 +54,17 @@ class EhBasicMachine(title: String) {
         val timer = java.util.Timer("cpu-cycle", true)
         timer.scheduleAtFixedRate(500, 1000/frameRate) {
             if(!paused) {
-                val prevCycles = cpu.totalCycles
-                while(cpu.totalCycles - prevCycles < desiredCyclesPerFrame) {
-                    step()
+                try {
+                    val prevCycles = cpu.totalCycles
+                    while (cpu.totalCycles - prevCycles < desiredCyclesPerFrame) {
+                        step()
+                    }
+                } catch(rx: RuntimeException) {
+                    JOptionPane.showMessageDialog(hostDisplay, "Run time error: $rx", "Error during execution", JOptionPane.ERROR_MESSAGE)
+                    this.cancel()
+                } catch(ex: Error) {
+                    JOptionPane.showMessageDialog(hostDisplay, "Run time error: $ex", "Error during execution", JOptionPane.ERROR_MESSAGE)
+                    this.cancel()
                 }
             }
         }

@@ -1,5 +1,6 @@
 package razorvine.c64emu
 
+import razorvine.ksim65.Cpu6502
 import razorvine.ksim65.components.Address
 import razorvine.ksim65.components.MemMappedComponent
 import razorvine.ksim65.components.UByte
@@ -9,11 +10,13 @@ import java.awt.event.KeyEvent
  * Minimal simulation of the MOS 6526 CIA chip.
  * Depending on what CIA it is (1 or 2), some registers do different things on the C64.
  * This implementation provides a working keyboard matrix, TOD clock, and the essentials of the timer A and B.
- * TODO: timerA IRQ, timerB NMI triggering
  */
-class Cia(val number: Int, startAddress: Address, endAddress: Address) : MemMappedComponent(startAddress, endAddress) {
+class Cia(val number: Int,
+          startAddress: Address, endAddress: Address,
+          val cpu: Cpu6502) : MemMappedComponent(startAddress, endAddress)
+{
     private var ramBuffer = Array<UByte>(endAddress - startAddress + 1) { 0 }
-    private var pra = 0xff
+    private var regPRA = 0xff
 
     class TimeOfDay {
         private var updatedAt = 0L
@@ -70,6 +73,8 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address) : MemMapp
     private var timerBset = 0
     private var timerAactual = 0
     private var timerBactual = 0
+    private var timerAinterruptEnabled = false
+    private var timerBinterruptEnabled = false
 
     private data class HostKeyPress(val code: Int, val rightSide: Boolean=false, val numpad: Boolean=false)
 
@@ -90,13 +95,19 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address) : MemMapp
         if(ramBuffer[0x0e].toInt() and 1 != 0) {
             // timer A is enabled, assume system cycles counting for now
             timerAactual--
+            if(timerAactual==0 && timerAinterruptEnabled) {
+                if(number==1)
+                    cpu.irq()
+                else if(number==2)
+                    cpu.nmi()
+            }
             if(timerAactual<0)
                 timerAactual = if(ramBuffer[0x0e].toInt() and 0b00001000 != 0) 0 else timerAset
         }
         if(ramBuffer[0x0f].toInt() and 1 != 0) {
             // timer B is enabled
-            val crb = ramBuffer[0x0f].toInt()
-            if(crb and 0b01000000 != 0) {
+            val regCRB = ramBuffer[0x0f].toInt()
+            if(regCRB and 0b01000000 != 0) {
                 // timer B counts timer A underruns
                 if(timerAactual==0)
                     timerBactual--
@@ -104,8 +115,14 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address) : MemMapp
                 // timer B counts just the system cycles
                 timerBactual--
             }
+            if(timerBactual==0 && timerBinterruptEnabled) {
+                if(number==1)
+                    cpu.irq()
+                else if(number==2)
+                    cpu.nmi()
+            }
             if(timerBactual<0)
-                timerBactual = if(crb and 0b00001000 != 0) 0 else timerBset
+                timerBactual = if(regCRB and 0b00001000 != 0) 0 else timerBset
         }
     }
 
@@ -134,7 +151,7 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address) : MemMapp
         if (number == 1 && register == 0x01) {
             // register 1 on CIA#1 is the keyboard data port
             // if bit is cleared in PRA, contains keys pressed in that column of the matrix
-            return when (pra) {
+            return when (regPRA) {
                 0b00000000 -> {
                     // check if any keys are pressed at all (by checking all columns at once)
                     if (hostKeyPresses.isEmpty()) 0xff.toShort() else 0x00.toShort()
@@ -284,11 +301,13 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address) : MemMapp
 
     override fun set(address: Address, data: UByte) {
         val register = (address - startAddress) and 15
-        ramBuffer[register] = data
         if (number == 1 && register == 0x00) {
             // PRA data port A (select keyboard matrix column)
-            pra = data.toInt()
+            regPRA = data.toInt()
         }
+
+        if(register!=0x0d)
+            ramBuffer[register] = data
 
         when (register) {
             0x04 -> {
@@ -322,7 +341,21 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address) : MemMapp
                 tod.stop()
                 tod.hours = fromBCD(data)
             }
-            // the timer A and B control registers are simply provided by the rambuffer for now.
+            0x0d -> {
+                if(data.toInt() and 0b10000000 != 0) {
+                    // set ICR bits
+                    val newICR = ramBuffer[0x0d].toInt() or (data.toInt() and 0b01111111)
+                    timerAinterruptEnabled = newICR and 1 != 0
+                    timerBinterruptEnabled = newICR and 2 != 0
+                    ramBuffer[0x0d] = newICR.toShort()
+                } else {
+                    // clear ICR bits
+                    val newICR = ramBuffer[0x0d].toInt() and (data.toInt() and 0b01111111).inv()
+                    timerAinterruptEnabled = newICR and 1 != 0
+                    timerBinterruptEnabled = newICR and 2 != 0
+                    ramBuffer[0x0d] = newICR.toShort()
+                }
+            }
         }
     }
 
@@ -341,8 +374,8 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address) : MemMapp
         }
 
         // to avoid some 'stuck' keys, if we receive a shift/control/alt RELEASE, we wipe the keyboard buffer
-        // (this can happen because we're changing the keycode for some pressed keys below,
-        // and a released key doesn't always match the pressed keycode anymore then)
+        // (this can happen because we're changing the key code for some pressed keys below,
+        // and a released key doesn't always match the pressed key code anymore then)
         if (event.id == KeyEvent.KEY_RELEASED && event.keyCode in listOf(
                 KeyEvent.VK_SHIFT,
                 KeyEvent.VK_CONTROL,

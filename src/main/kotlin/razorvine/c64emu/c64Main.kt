@@ -13,6 +13,7 @@ import java.io.IOException
 import java.nio.file.Path
 import java.nio.file.Paths
 import javax.swing.ImageIcon
+import javax.swing.JOptionPane
 import kotlin.concurrent.scheduleAtFixedRate
 
 /**
@@ -31,9 +32,9 @@ class C64Machine(title: String) : IVirtualMachine {
     override val bus = Bus()
     override val cpu = Cpu6502()
     val ram = Ram(0x0000, 0xffff)
-    val vic = VicII(0xd000, 0xd3ff)
-    val cia1 = Cia(1, 0xdc00, 0xdcff)
-    val cia2 = Cia(2, 0xdd00, 0xddff)
+    val vic = VicII(0xd000, 0xd3ff, cpu)
+    val cia1 = Cia(1, 0xdc00, 0xdcff, cpu)
+    val cia2 = Cia(2, 0xdd00, 0xddff, cpu)
     val basicRom = Rom(0xa000, 0xbfff).also { it.load(basicData) }
     val kernalRom = Rom(0xe000, 0xffff).also { it.load(kernalData) }
 
@@ -106,7 +107,7 @@ class C64Machine(title: String) : IVirtualMachine {
     }
 
     fun breakpointBRK(cpu: Cpu6502, pc: Address): Cpu6502.BreakpointResultAction {
-        throw Cpu6502.InstructionError("BRK instruction hit at ${hexW(pc)}")
+        throw Cpu6502.InstructionError("BRK instruction hit at $${hexW(pc)}")
     }
 
     private fun searchAndLoadFile(
@@ -245,15 +246,20 @@ class C64Machine(title: String) : IVirtualMachine {
         }.start()
 
         val timer = java.util.Timer("cpu-cycle", true)
-        timer.scheduleAtFixedRate(0, 1000L/vic.framerate) {
+        timer.scheduleAtFixedRate(0, 1000L/VicII.framerate) {
             if(!paused) {
                 // we synchronise cpu cycles to the vertical blank of the Vic chip
                 // this should result in ~1 Mhz cpu speed
-                while(vic.vsync) step()
-                while(!vic.vsync) step()
-                // we force an irq here ourselves rather than fully emulating the VIC-II's raster IRQ
-                // or the CIA timer IRQ/NMI.
-                cpu.irq()
+                try {
+                    while (vic.vsync) step()
+                    while (!vic.vsync) step()
+                } catch(rx: RuntimeException) {
+                    JOptionPane.showMessageDialog(hostDisplay, "Run time error: $rx", "Error during execution", JOptionPane.ERROR_MESSAGE)
+                    this.cancel()
+                } catch(ex: Error) {
+                    JOptionPane.showMessageDialog(hostDisplay, "Run time error: $ex", "Error during execution", JOptionPane.ERROR_MESSAGE)
+                    this.cancel()
+                }
             }
         }
     }

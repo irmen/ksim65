@@ -1,13 +1,14 @@
 package razorvine.examplemachines
 
-import java.io.File
-import javax.swing.ImageIcon
-import kotlin.concurrent.scheduleAtFixedRate
 import razorvine.ksim65.Bus
 import razorvine.ksim65.Cpu6502
 import razorvine.ksim65.IVirtualMachine
 import razorvine.ksim65.Version
 import razorvine.ksim65.components.*
+import java.io.File
+import javax.swing.ImageIcon
+import javax.swing.JOptionPane
+import kotlin.concurrent.scheduleAtFixedRate
 
 
 /**
@@ -83,9 +84,17 @@ class VirtualMachine(title: String) : IVirtualMachine {
         val timer = java.util.Timer("cpu-cycle", true)
         timer.scheduleAtFixedRate(500, 1000/frameRate) {
             if(!paused) {
-                val prevCycles = cpu.totalCycles
-                while(cpu.totalCycles - prevCycles < desiredCyclesPerFrame) {
-                    step()
+                try {
+                    val prevCycles = cpu.totalCycles
+                    while (cpu.totalCycles - prevCycles < desiredCyclesPerFrame) {
+                        step()
+                    }
+                } catch(rx: RuntimeException) {
+                    JOptionPane.showMessageDialog(hostDisplay, "Run time error: $rx", "Error during execution", JOptionPane.ERROR_MESSAGE)
+                    this.cancel()
+                } catch(ex: Error) {
+                    JOptionPane.showMessageDialog(hostDisplay, "Run time error: $ex", "Error during execution", JOptionPane.ERROR_MESSAGE)
+                    this.cancel()
                 }
             }
         }
