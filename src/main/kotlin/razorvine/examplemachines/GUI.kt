@@ -254,11 +254,12 @@ class DebugWindow(private val vm: IVirtualMachine) : JFrame("Debugger - ksim65 v
         val monitorPanel = JPanel()
         monitorPanel.layout = BoxLayout(monitorPanel, BoxLayout.Y_AXIS)
         monitorPanel.border = BorderFactory.createTitledBorder("Built-in Monitor")
-        val output = JTextArea(5, 50)
+        val output = JTextArea(6, 80)
         output.font = Font(Font.MONOSPACED, Font.PLAIN, 14)
         output.isEditable = false
         val outputScroll = JScrollPane(output)
         monitorPanel.add(outputScroll)
+        outputScroll.verticalScrollBarPolicy = JScrollPane.VERTICAL_SCROLLBAR_ALWAYS
         val input = JTextField(50)
         input.border = BorderFactory.createLineBorder(Color.LIGHT_GRAY)
         input.font = Font(Font.MONOSPACED, Font.PLAIN, 14)

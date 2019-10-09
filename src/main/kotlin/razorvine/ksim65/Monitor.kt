@@ -15,6 +15,10 @@ class Monitor(val bus: Bus, val cpu: Cpu6502) {
             return IVirtualMachine.MonitorCmdResult("", "", false)
 
         return when(command[0]) {
+            'h', '?' -> {
+                val text="h)elp  m)emory  i)nspect  f)ill  p)oke  g)o  a)ssemble  d)isassemble\n$ # % for hex, dec, bin number"
+                IVirtualMachine.MonitorCmdResult(text, "", false)
+            }
             'f' -> {
                 val parts = command.substring(1).trim().split(' ')
                 if(parts.size!=3)
@@ -30,7 +34,6 @@ class Monitor(val bus: Bus, val cpu: Cpu6502) {
                 }
             }
             'm' -> {
-                // TODO add possibility to change bytes
                 val addresses = command.substring(1).trim().split(' ')
                 val start = parseNumber(addresses[0])
                 val end = if(addresses.size>1) parseNumber(addresses[1]) else start+1
@@ -49,6 +52,13 @@ class Monitor(val bus: Bus, val cpu: Cpu6502) {
                     )
                 }
                 IVirtualMachine.MonitorCmdResult(result.joinToString("\n"), "", true)
+            }
+            'p' -> {
+                val numbers = command.substring(1).trim().split(' ')
+                val address = parseNumber(numbers[0])
+                val values = numbers.drop(1).map { parseNumber(it) }
+                values.forEachIndexed { index, i -> bus.write(address+index, i.toShort()) }
+                IVirtualMachine.MonitorCmdResult("ok", "", true)
             }
             'i' -> {
                 val addresses = command.substring(1).trim().split(' ')
@@ -121,8 +131,6 @@ class Monitor(val bus: Bus, val cpu: Cpu6502) {
                 if(instruction==null)
                     return IVirtualMachine.MonitorCmdResult("?invalid instruction", command, false)
                 bus.write(address, instruction.toShort())
-                val disassem = cpu.disassemble(bus.memoryComponentFor(address), address, address)
-                return IVirtualMachine.MonitorCmdResult(disassem.first.single(), "a$${hexW(disassem.second)} ", false)
             }
             parts.size==3 -> {
                 val arg = parts[2]
@@ -133,25 +141,102 @@ class Monitor(val bus: Bus, val cpu: Cpu6502) {
                             ?: return IVirtualMachine.MonitorCmdResult("?invalid instruction", command, false)
                         bus.write(address, instruction.toShort())
                         bus.write(address+1, parseNumber(arg.substring(1), true).toShort())
-                        val disassem = cpu.disassemble(bus.memoryComponentFor(address), address, address)
-                        return IVirtualMachine.MonitorCmdResult(disassem.first.single(), "a$${hexW(disassem.second)} ", false)
                     }
-                    arg.startsWith('(') -> // indirect or indirect+indexed
-                        TODO("assemble indirect addrmode $arg")
-                    arg.contains(",x") -> // indexed x
-                        TODO("assemble indexed X addrmode $arg")
-                    arg.contains(",y") -> // indexed y
-                        TODO("assemble indexed X addrmode $arg")
+                    arg.startsWith("(") && arg.endsWith(",x)") -> {
+                        // indirect X
+                        val indAddress = try {
+                            parseNumber(arg.substring(1, arg.length-3))
+                        } catch(x: NumberFormatException) {
+                            return IVirtualMachine.MonitorCmdResult("?invalid instruction", command, false)
+                        }
+                        val instruction = instructions[Pair(mnemonic, Cpu6502.AddrMode.IzX)]
+                            ?: return IVirtualMachine.MonitorCmdResult("?invalid instruction", command, false)
+                        bus.write(address, instruction.toShort())
+                        bus.write(address+1, indAddress.toShort())
+                    }
+                    arg.startsWith("(") && arg.endsWith("),y") -> {
+                        // indirect Y
+                        val indAddress = try {
+                            parseNumber(arg.substring(1, arg.length-3))
+                        } catch(x: NumberFormatException) {
+                            return IVirtualMachine.MonitorCmdResult("?invalid instruction", command, false)
+                        }
+                        val instruction = instructions[Pair(mnemonic, Cpu6502.AddrMode.IzY)]
+                            ?: return IVirtualMachine.MonitorCmdResult("?invalid instruction", command, false)
+                        bus.write(address, instruction.toShort())
+                        bus.write(address+1, indAddress.toShort())
+                    }
+                    arg.endsWith(",x") -> {
+                        // indexed X or zpIndexed X
+                        val indAddress = try {
+                            parseNumber(arg.substring(1, arg.length-2))
+                        } catch(x: NumberFormatException) {
+                            return IVirtualMachine.MonitorCmdResult("?invalid instruction", command, false)
+                        }
+                        if(indAddress<=255) {
+                            val instruction = instructions[Pair(mnemonic, Cpu6502.AddrMode.ZpX)]
+                                ?: return IVirtualMachine.MonitorCmdResult("?invalid instruction", command, false)
+                            bus.write(address, instruction.toShort())
+                            bus.write(address+1, indAddress.toShort())
+                        } else {
+                            val instruction = instructions[Pair(mnemonic, Cpu6502.AddrMode.AbsX)]
+                                ?: return IVirtualMachine.MonitorCmdResult("?invalid instruction", command, false)
+                            bus.write(address, instruction.toShort())
+                            bus.write(address + 1, (indAddress and 255).toShort())
+                            bus.write(address + 2, (indAddress ushr 8).toShort())
+                        }
+                    }
+                    arg.endsWith(",y") -> {
+                        // indexed Y or zpIndexed Y
+                        val indAddress = try {
+                            parseNumber(arg.substring(1, arg.length - 2))
+                        } catch(x: NumberFormatException) {
+                            return IVirtualMachine.MonitorCmdResult("?invalid instruction", command, false)
+                        }
+                        if(indAddress<=255) {
+                            val instruction = instructions[Pair(mnemonic, Cpu6502.AddrMode.ZpY)]
+                                ?: return IVirtualMachine.MonitorCmdResult("?invalid instruction", command, false)
+                            bus.write(address, instruction.toShort())
+                            bus.write(address+1, indAddress.toShort())
+                        } else {
+                            val instruction = instructions[Pair(mnemonic, Cpu6502.AddrMode.AbsY)]
+                                ?: return IVirtualMachine.MonitorCmdResult("?invalid instruction", command, false)
+                            bus.write(address, instruction.toShort())
+                            bus.write(address + 1, (indAddress and 255).toShort())
+                            bus.write(address + 2, (indAddress ushr 8).toShort())
+                        }
+                    }
+                    arg.endsWith(")") -> {
+                        // indirect (jmp)
+                        val indAddress = try {
+                            parseNumber(arg.substring(1, arg.length - 1))
+                        } catch(x: NumberFormatException) {
+                            return IVirtualMachine.MonitorCmdResult("?invalid instruction", command, false)
+                        }
+                        val instruction = instructions[Pair(mnemonic, Cpu6502.AddrMode.Ind)]
+                            ?: return IVirtualMachine.MonitorCmdResult("?invalid instruction", command, false)
+                        bus.write(address, instruction.toShort())
+                        bus.write(address + 1, (indAddress and 255).toShort())
+                        bus.write(address + 2, (indAddress ushr 8).toShort())
+                    }
                     else -> {
                         val instr = instructions[Pair(mnemonic, Cpu6502.AddrMode.Rel)]
                         if(instr!=null) {
                             // relative address
-                            val rel = parseNumber(arg)
+                            val rel = try {
+                                parseNumber(arg)
+                            } catch(x: NumberFormatException) {
+                                return IVirtualMachine.MonitorCmdResult("?invalid instruction", command, false)
+                            }
                             bus.write(address, instr.toShort())
                             bus.write(address+1, (rel-address-2 and 255).toShort())
                         } else {
                             // absolute or absZp
-                            val absAddress = parseNumber(arg)
+                            val absAddress = try {
+                                parseNumber(arg)
+                            } catch(x: NumberFormatException) {
+                                return IVirtualMachine.MonitorCmdResult("?invalid instruction", command, false)
+                            }
                             if (absAddress <= 255) {
                                 val absInstr = instructions[Pair(mnemonic, Cpu6502.AddrMode.Zp)]
                                     ?: return IVirtualMachine.MonitorCmdResult("?invalid instruction", command, false)
@@ -165,13 +250,14 @@ class Monitor(val bus: Bus, val cpu: Cpu6502) {
                                 bus.write(address + 2, (absAddress ushr 8).toShort())
                             }
                         }
-                        val disassem = cpu.disassemble(bus.memoryComponentFor(address), address, address)
-                        return IVirtualMachine.MonitorCmdResult(disassem.first.single(), "a$${hexW(disassem.second)} ", false)
                     }
                 }
             }
             else -> return IVirtualMachine.MonitorCmdResult("?syntax error", command, false)
         }
+
+        val disassem = cpu.disassemble(bus.memoryComponentFor(address), address, address)
+        return IVirtualMachine.MonitorCmdResult(disassem.first.single(), "a$${hexW(disassem.second)} ", false)
     }
 
     private fun parseNumber(number: String, decimalFirst: Boolean = false): Int {
