@@ -116,7 +116,7 @@ open class Cpu6502 : BusComponent() {
         }
     }
 
-    protected enum class AddrMode {
+    enum class AddrMode {
         Imp,
         Acc,
         Imm,
@@ -135,7 +135,7 @@ open class Cpu6502 : BusComponent() {
         IaX,         // special addressing mode used by the 65C02
     }
 
-    protected class Instruction(val mnemonic: String, val mode: AddrMode, val cycles: Int)
+    class Instruction(val mnemonic: String, val mode: AddrMode, val cycles: Int)
 
     var regA: Int = 0
     var regX: Int = 0
@@ -198,7 +198,7 @@ open class Cpu6502 : BusComponent() {
     fun disassemble(memory: MemoryComponent, from: Address, to: Address) =
         disassemble(memory.data, memory.startAddress, from, to)
 
-    fun disassemble(memory: Array<UByte>, baseAddress: Address, from: Address, to: Address): List<String> {
+    fun disassemble(memory: Array<UByte>, baseAddress: Address, from: Address, to: Address): Pair<List<String>, Address> {
         var location = from
         val result = mutableListOf<String>()
 
@@ -208,7 +208,7 @@ open class Cpu6502 : BusComponent() {
             location += dis.second
         }
 
-        return result
+        return Pair(result, location)
     }
 
     fun disassembleOneInstruction(memory: Array<UByte>, address: Address, baseAddress: Address): Pair<String, Int> {
@@ -459,7 +459,7 @@ open class Cpu6502 : BusComponent() {
     protected fun write(address: Address, data: Int) = bus.write(address, data.toShort())
 
     // opcodes table from  http://www.oxyron.de/html/opcodes02.html
-    protected open val instructions: Array<Instruction> =
+    open val instructions: Array<Instruction> =
         listOf(
             /* 00 */  Instruction("brk", AddrMode.Imp, 7),
             /* 01 */  Instruction("ora", AddrMode.IzX, 6),
@@ -777,14 +777,14 @@ open class Cpu6502 : BusComponent() {
                 fetchedAddress = lo or (hi shl 8)
             }
             AddrMode.IzX -> {
-                // note: not able to fetch an address which crosses the page boundary
+                // note: not able to fetch an address which crosses the (zero)page boundary
                 fetchedAddress = readPc()
                 val lo = read((fetchedAddress + regX) and 0xff)
                 val hi = read((fetchedAddress + regX + 1) and 0xff)
                 fetchedAddress = lo or (hi shl 8)
             }
             AddrMode.IzY -> {
-                // note: not able to fetch an address which crosses the page boundary
+                // note: not able to fetch an address which crosses the (zero)page boundary
                 fetchedAddress = readPc()
                 val lo = read(fetchedAddress)
                 val hi = read((fetchedAddress + 1) and 0xff)

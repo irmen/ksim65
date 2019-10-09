@@ -10,6 +10,9 @@ interface IVirtualMachine {
     fun getZeroAndStackPages(): Array<UByte>
     fun loadFileInRam(file: File, loadAddress: Address?)
 
+    class MonitorCmdResult(val output: String, val prompt: String, val echo: Boolean)
+    fun executeMonitorCommand(command: String): MonitorCmdResult
+
     val cpu: Cpu6502
     val bus: Bus
 }

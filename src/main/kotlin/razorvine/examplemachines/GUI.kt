@@ -251,12 +251,36 @@ class DebugWindow(private val vm: IVirtualMachine) : JFrame("Debugger - ksim65 v
         zeropagePanel.add(zeropageTf)
         zeropagePanel.add(stackpageTf)
 
+        val monitorPanel = JPanel()
+        monitorPanel.layout = BoxLayout(monitorPanel, BoxLayout.Y_AXIS)
+        monitorPanel.border = BorderFactory.createTitledBorder("Built-in Monitor")
+        val output = JTextArea(5, 50)
+        output.font = Font(Font.MONOSPACED, Font.PLAIN, 14)
+        output.isEditable = false
+        val outputScroll = JScrollPane(output)
+        monitorPanel.add(outputScroll)
+        val input = JTextField(50)
+        input.border = BorderFactory.createLineBorder(Color.LIGHT_GRAY)
+        input.font = Font(Font.MONOSPACED, Font.PLAIN, 14)
+        input.addActionListener {
+            output.append("\n")
+            val command = input.text.trim()
+            val result = vm.executeMonitorCommand(command)
+            if(result.echo)
+                output.append("> $command\n")
+            output.append(result.output)
+            input.text = result.prompt
+        }
+        monitorPanel.add(input)
+
         gc.gridx=0
         gc.gridy=0
         gc.fill=GridBagConstraints.BOTH
         contentPane.add(cpuPanel, gc)
         gc.gridy++
         contentPane.add(zeropagePanel, gc)
+        gc.gridy++
+        contentPane.add(monitorPanel, gc)
         gc.gridy++
         contentPane.add(buttonPanel, gc)
         pack()

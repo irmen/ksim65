@@ -40,6 +40,7 @@ class C64Machine(title: String) : IVirtualMachine {
 
     private val debugWindow = DebugWindow(this)
     private val hostDisplay = MainC64Window(title, chargenData, ram, cpu, cia1)
+    private val monitor = Monitor(bus, cpu)
     private var paused = false
 
     init {
@@ -239,6 +240,8 @@ class C64Machine(title: String) : IVirtualMachine {
         bus.clock()
         while (cpu.instrCycles > 0) bus.clock()
     }
+
+    override fun executeMonitorCommand(command: String) = monitor.command(command)
 
     fun start() {
         javax.swing.Timer(50) {

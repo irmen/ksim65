@@ -1,9 +1,6 @@
 package razorvine.examplemachines
 
-import razorvine.ksim65.Bus
-import razorvine.ksim65.Cpu6502
-import razorvine.ksim65.IVirtualMachine
-import razorvine.ksim65.Version
+import razorvine.ksim65.*
 import razorvine.ksim65.components.*
 import java.io.File
 import javax.swing.ImageIcon
@@ -21,6 +18,7 @@ class VirtualMachine(title: String) : IVirtualMachine {
     private val rtc = RealTimeClock(0xd100, 0xd108)
     private val timer = Timer(0xd200, 0xd203, cpu)
 
+    private val monitor = Monitor(bus, cpu)
     private val debugWindow = DebugWindow(this)
     private val hostDisplay = MainWindow(title)
     private val display = Display(
@@ -73,6 +71,8 @@ class VirtualMachine(title: String) : IVirtualMachine {
         bus.clock()
         while (cpu.instrCycles > 0) bus.clock()
     }
+
+    override fun executeMonitorCommand(command: String) = monitor.command(command)
 
     fun start() {
         javax.swing.Timer(50) {
