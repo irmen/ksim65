@@ -31,7 +31,7 @@ object ScreenDefs {
 
     private fun loadCharacters(): Array<BufferedImage> {
         val img = ImageIO.read(javaClass.getResourceAsStream("/charset/unscii8x16.png"))
-        val charactersImage = BufferedImage(img.width, img.height, BufferedImage.TYPE_INT_ARGB)
+        val charactersImage = BufferedImage(img.width, img.height, BufferedImage.TYPE_INT_ARGB).also {it.accelerationPriority=1.0f}
         charactersImage.createGraphics().drawImage(img, 0, 0, null)
 
         val black = Color(0, 0, 0).rgb

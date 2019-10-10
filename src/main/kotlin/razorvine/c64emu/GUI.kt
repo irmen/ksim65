@@ -2,11 +2,12 @@ package razorvine.c64emu
 
 import razorvine.ksim65.Cpu6502
 import razorvine.ksim65.components.MemoryComponent
+import razorvine.ksim65.components.UByte
 import java.awt.*
 import java.awt.event.KeyEvent
 import java.awt.event.KeyListener
 import java.awt.image.BufferedImage
-import java.awt.image.VolatileImage
+import java.awt.image.DataBufferInt
 import javax.swing.JFrame
 import javax.swing.JPanel
 import javax.swing.Timer
@@ -24,29 +25,36 @@ object ScreenDefs {
     const val DISPLAY_PIXEL_SCALING: Double = 3.0
     const val BORDER_SIZE = 24
 
-    val colorPalette = listOf(         // this is Pepto's Commodore-64 palette  http://www.pepto.de/projects/colorvic/
-        Color(0x000000),  // 0 = black
-        Color(0xFFFFFF),  // 1 = white
-        Color(0x813338),  // 2 = red
-        Color(0x75cec8),  // 3 = cyan
-        Color(0x8e3c97),  // 4 = purple
-        Color(0x56ac4d),  // 5 = green
-        Color(0x2e2c9b),  // 6 = blue
-        Color(0xedf171),  // 7 = yellow
-        Color(0x8e5029),  // 8 = orange
-        Color(0x553800),  // 9 = brown
-        Color(0xc46c71),  // 10 = light red
-        Color(0x4a4a4a),  // 11 = dark grey
-        Color(0x7b7b7b),  // 12 = medium grey
-        Color(0xa9ff9f),  // 13 = light green
-        Color(0x706deb),  // 14 = light blue
-        Color(0xb2b2b2)   // 15 = light grey
-    )
+    class Palette {
+        // this is Pepto's Commodore-64 palette  http://www.pepto.de/projects/colorvic/
+        private val sixteenColors = listOf(
+            Color(0x000000),  // 0 = black
+            Color(0xFFFFFF),  // 1 = white
+            Color(0x813338),  // 2 = red
+            Color(0x75cec8),  // 3 = cyan
+            Color(0x8e3c97),  // 4 = purple
+            Color(0x56ac4d),  // 5 = green
+            Color(0x2e2c9b),  // 6 = blue
+            Color(0xedf171),  // 7 = yellow
+            Color(0x8e5029),  // 8 = orange
+            Color(0x553800),  // 9 = brown
+            Color(0xc46c71),  // 10 = light red
+            Color(0x4a4a4a),  // 11 = dark grey
+            Color(0x7b7b7b),  // 12 = medium grey
+            Color(0xa9ff9f),  // 13 = light green
+            Color(0x706deb),  // 14 = light blue
+            Color(0xb2b2b2)   // 15 = light grey
+        )
+        operator fun get(i: Int): Color = sixteenColors[i and 15]
+        operator fun get(i: UByte): Color = sixteenColors[i.toInt() and 15]
+    }
+
+    val colorPalette = Palette()
 }
 
 private class BitmapScreenPanel(val chargenData: ByteArray, val ram: MemoryComponent) : JPanel() {
 
-    private val fullscreenImage: VolatileImage
+    private val fullscreenImage: BufferedImage
     private val fullscreenG2d: Graphics2D
     private val normalCharacters = loadCharacters(false)
     private val shiftedCharacters = loadCharacters(true)
@@ -54,8 +62,9 @@ private class BitmapScreenPanel(val chargenData: ByteArray, val ram: MemoryCompo
     init {
         val ge = GraphicsEnvironment.getLocalGraphicsEnvironment()
         val gd = ge.defaultScreenDevice.defaultConfiguration
-        fullscreenImage = gd.createCompatibleVolatileImage(ScreenDefs.SCREEN_WIDTH + 2*ScreenDefs.BORDER_SIZE,
+        fullscreenImage = gd.createCompatibleImage(ScreenDefs.SCREEN_WIDTH + 2*ScreenDefs.BORDER_SIZE,
             ScreenDefs.SCREEN_HEIGHT + 2*ScreenDefs.BORDER_SIZE, Transparency.OPAQUE)
+        fullscreenImage.accelerationPriority = 1.0f
         fullscreenG2d = fullscreenImage.graphics as Graphics2D
 
         val size = Dimension(
@@ -71,9 +80,8 @@ private class BitmapScreenPanel(val chargenData: ByteArray, val ram: MemoryCompo
     }
 
     private fun loadCharacters(shifted: Boolean): Array<BufferedImage> {
-        val chars = Array(256) { BufferedImage(8, 8, BufferedImage.TYPE_BYTE_BINARY) }
+        val chars = Array(256) { BufferedImage(8, 8, BufferedImage.TYPE_BYTE_BINARY).also { it.accelerationPriority=1.0f } }
         val offset = if (shifted) 256 * 8 else 0
-        // val color = ScreenDefs.colorPalette[14].rgb
         for (char in 0..255) {
             for (line in 0..7) {
                 val charbyte = chargenData[offset + char * 8 + line].toInt()
@@ -87,37 +95,82 @@ private class BitmapScreenPanel(val chargenData: ByteArray, val ram: MemoryCompo
     }
 
     override fun paint(graphics: Graphics) {
-        // draw the background color
-        fullscreenG2d.background = ScreenDefs.colorPalette[ram[0xd021].toInt() and 15]
-        fullscreenG2d.clearRect(ScreenDefs.BORDER_SIZE, ScreenDefs.BORDER_SIZE, ScreenDefs.SCREEN_WIDTH, ScreenDefs.SCREEN_HEIGHT)
+        val windowG2d = graphics as Graphics2D
+        val vicSCROLY = ram[0xd011].toInt()
+        val vicVMCSB = ram[0xd018].toInt()
+        if(vicSCROLY and 0b10000 == 0) {
+            // screen blanked, only display border
+            fullscreenG2d.background = ScreenDefs.colorPalette[ram[0xd020]]
+            fullscreenG2d.clearRect(
+                0, 0,
+                ScreenDefs.SCREEN_WIDTH + 2 * ScreenDefs.BORDER_SIZE, ScreenDefs.SCREEN_HEIGHT+ 2*ScreenDefs.BORDER_SIZE)
+        } else {
+            // draw the screen border
+            fullscreenG2d.background = ScreenDefs.colorPalette[ram[0xd020]]
+            fullscreenG2d.clearRect(0, 0, ScreenDefs.SCREEN_WIDTH + 2 * ScreenDefs.BORDER_SIZE, ScreenDefs.BORDER_SIZE)
+            fullscreenG2d.clearRect(
+                0, ScreenDefs.SCREEN_HEIGHT + ScreenDefs.BORDER_SIZE,
+                ScreenDefs.SCREEN_WIDTH + 2 * ScreenDefs.BORDER_SIZE, ScreenDefs.BORDER_SIZE
+            )
+            fullscreenG2d.clearRect(0, ScreenDefs.BORDER_SIZE, ScreenDefs.BORDER_SIZE, ScreenDefs.SCREEN_HEIGHT)
+            fullscreenG2d.clearRect(
+                ScreenDefs.SCREEN_WIDTH + ScreenDefs.BORDER_SIZE, ScreenDefs.BORDER_SIZE,
+                ScreenDefs.BORDER_SIZE, ScreenDefs.SCREEN_HEIGHT
+            )
 
-        // draw the characters
-        redrawCharacters()
+            if(vicSCROLY and 0b100000 != 0) {
+                // bitmap mode 320x200
+                fullscreenG2d.background = ScreenDefs.colorPalette[ram[0xd021]]
+                fullscreenG2d.clearRect(ScreenDefs.BORDER_SIZE, ScreenDefs.BORDER_SIZE, ScreenDefs.SCREEN_WIDTH, ScreenDefs.SCREEN_HEIGHT)
+                // TODO vic address offset in memory, so that medusa.prg will work
+                val bitmap = ram.getPages(if(vicVMCSB and 0b00001000 != 0) 32 else 0, 32)
+                val colorBytes = ram.getPages((vicVMCSB ushr 4) shl 2, 4)
+                val pixels: IntArray = (fullscreenImage.raster.dataBuffer as DataBufferInt).data
+                for(y in 0 until ScreenDefs.SCREEN_HEIGHT) {
+                    for(x in 0 until ScreenDefs.SCREEN_WIDTH step 8) {
+                        val colorbyte = ScreenDefs.SCREEN_WIDTH_CHARS*(y ushr 3) + (x ushr 3)
+                        val bgColor = ScreenDefs.colorPalette[colorBytes[colorbyte].toInt() and 15].rgb
+                        val fgColor = ScreenDefs.colorPalette[colorBytes[colorbyte].toInt() ushr 4].rgb
+                        draw8Pixels(pixels, x, y, bitmap, fgColor, bgColor)
+                    }
+                }
+            } else {
+                // normal character mode
+                fullscreenG2d.background = ScreenDefs.colorPalette[ram[0xd021]]
+                fullscreenG2d.clearRect(ScreenDefs.BORDER_SIZE, ScreenDefs.BORDER_SIZE, ScreenDefs.SCREEN_WIDTH, ScreenDefs.SCREEN_HEIGHT)
+                redrawCharacters()
+            }
+        }
 
-        // draw the screen border
-        fullscreenG2d.background = ScreenDefs.colorPalette[ram[0xd020].toInt() and 15]
-        fullscreenG2d.clearRect(0, 0, ScreenDefs.SCREEN_WIDTH + 2*ScreenDefs.BORDER_SIZE, ScreenDefs.BORDER_SIZE)
-        fullscreenG2d.clearRect(0, ScreenDefs.SCREEN_HEIGHT+ScreenDefs.BORDER_SIZE, ScreenDefs.SCREEN_WIDTH + 2*ScreenDefs.BORDER_SIZE, ScreenDefs.BORDER_SIZE)
-        fullscreenG2d.clearRect(0, ScreenDefs.BORDER_SIZE, ScreenDefs.BORDER_SIZE, ScreenDefs.SCREEN_HEIGHT)
-        fullscreenG2d.clearRect(ScreenDefs.SCREEN_WIDTH+ScreenDefs.BORDER_SIZE, ScreenDefs.BORDER_SIZE, ScreenDefs.BORDER_SIZE, ScreenDefs.SCREEN_HEIGHT)
-
-        // scale and draw the image to the window
-        val g2d = graphics as Graphics2D
-        g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR)
-        g2d.drawImage(
+        // scale and draw the image to the window, and simulate a slight scanline effect
+        windowG2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR)
+        windowG2d.drawImage(
             fullscreenImage, 0, 0, (fullscreenImage.width * ScreenDefs.DISPLAY_PIXEL_SCALING).toInt(),
             (fullscreenImage.height * ScreenDefs.DISPLAY_PIXEL_SCALING).toInt(), null
         )
-
-        // simulate a slight scan line effect
-        g2d.color = Color(0, 0, 0, 40)
-        g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR)
+        windowG2d.color = Color(0, 0, 0, 40)
+        windowG2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR)
         val width = fullscreenImage.width * ScreenDefs.DISPLAY_PIXEL_SCALING.toInt()
         val height = fullscreenImage.height * ScreenDefs.DISPLAY_PIXEL_SCALING.toInt()
         for (y in 0 until height step ScreenDefs.DISPLAY_PIXEL_SCALING.toInt()) {
-            g2d.drawLine(0, y, width, y)
+            windowG2d.drawLine(0, y, width, y)
         }
         Toolkit.getDefaultToolkit().sync()
+    }
+
+    private fun draw8Pixels(pixels: IntArray, xstart: Int, y: Int,
+                            bitmap: Array<UByte>, fgColorRgb: Int, bgColorRgb: Int) {
+        val offset = ScreenDefs.BORDER_SIZE + ScreenDefs.BORDER_SIZE*fullscreenImage.width +
+                xstart + y * fullscreenImage.width
+        val byte = bitmap[ScreenDefs.SCREEN_WIDTH_CHARS*(y and 248) + (y and 7) + (xstart and 504)].toInt()
+        pixels[offset + 0] = if(byte and 0b10000000 != 0) fgColorRgb else bgColorRgb
+        pixels[offset + 1] = if(byte and 0b01000000 != 0) fgColorRgb else bgColorRgb
+        pixels[offset + 2] = if(byte and 0b00100000 != 0) fgColorRgb else bgColorRgb
+        pixels[offset + 3] = if(byte and 0b00010000 != 0) fgColorRgb else bgColorRgb
+        pixels[offset + 4] = if(byte and 0b00001000 != 0) fgColorRgb else bgColorRgb
+        pixels[offset + 5] = if(byte and 0b00000100 != 0) fgColorRgb else bgColorRgb
+        pixels[offset + 6] = if(byte and 0b00000010 != 0) fgColorRgb else bgColorRgb
+        pixels[offset + 7] = if(byte and 0b00000001 != 0) fgColorRgb else bgColorRgb
     }
 
     private fun redrawCharacters() {
