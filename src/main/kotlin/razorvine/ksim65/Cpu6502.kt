@@ -16,8 +16,6 @@ open class Cpu6502 : BusComponent() {
     var tracing: ((state:String) -> Unit)? = null
     var totalCycles = 0L
         protected set
-    private var speedMeasureCycles = 0L
-    private var speedMeasureStart = System.nanoTime()
     private var resetTime = System.nanoTime()
 
     var breakpointForBRK: BreakpointHandler? = null
@@ -165,14 +163,6 @@ open class Cpu6502 : BusComponent() {
             regPC,
             totalCycles)
     }
-
-    fun startSpeedMeasureInterval() {
-        speedMeasureCycles = totalCycles
-        speedMeasureStart = System.nanoTime()
-    }
-
-    fun measureAvgIntervalSpeedKhz() =
-        (totalCycles-speedMeasureCycles).toDouble() / (System.nanoTime() - speedMeasureStart) * 1_000_000
 
     // has an interrupt been requested?
     protected enum class Interrupt {

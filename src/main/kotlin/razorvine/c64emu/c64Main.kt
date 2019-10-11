@@ -65,7 +65,7 @@ class C64Machine(title: String) : IVirtualMachine {
         hostDisplay.start(30)
     }
 
-    fun breakpointKernelLoad(cpu: Cpu6502, pc: Address): Cpu6502.BreakpointResultAction {
+    private fun breakpointKernelLoad(cpu: Cpu6502, pc: Address): Cpu6502.BreakpointResultAction {
         if (cpu.regA == 0) {
             val fnlen = ram[0xb7]   // file name length
             val fa = ram[0xba]      // device number
@@ -85,7 +85,7 @@ class C64Machine(title: String) : IVirtualMachine {
         } else return Cpu6502.BreakpointResultAction(changePC = 0xf707)   // 'device not present' (VERIFY command not supported)
     }
 
-    fun breakpointKernelSave(cpu: Cpu6502, pc: Address): Cpu6502.BreakpointResultAction {
+    private fun breakpointKernelSave(cpu: Cpu6502, pc: Address): Cpu6502.BreakpointResultAction {
         val fnlen = ram[0xb7]   // file name length
 //        val fa = ram[0xba]      // device number
 //        val sa = ram[0xb9]      // secondary address
@@ -107,16 +107,12 @@ class C64Machine(title: String) : IVirtualMachine {
         } else Cpu6502.BreakpointResultAction(changePC = 0xf710)  // 'missing file name'
     }
 
-    fun breakpointBRK(cpu: Cpu6502, pc: Address): Cpu6502.BreakpointResultAction {
+    private fun breakpointBRK(cpu: Cpu6502, pc: Address): Cpu6502.BreakpointResultAction {
         throw Cpu6502.InstructionError("BRK instruction hit at $${hexW(pc)}")
     }
 
-    private fun searchAndLoadFile(
-        filename: String,
-        device: UByte,
-        secondary: UByte,
-        basicLoadAddress: Address
-    ): Address? {
+    private fun searchAndLoadFile(filename: String,
+                                  device: UByte, secondary: UByte, basicLoadAddress: Address): Address? {
         when (filename) {
             "*" -> {
                 // load the first file in the directory
@@ -170,11 +166,9 @@ class C64Machine(title: String) : IVirtualMachine {
         }
     }
 
-    private fun makeDirListing(
-        dirname: String,
-        files: Map<Pair<String, String>, Pair<File, Long>>,
-        basicLoadAddress: Address
-    ): Array<UByte> {
+    private fun makeDirListing(dirname: String,
+        files: Map<Pair<String, String>, Pair<File, Long>>, basicLoadAddress: Address): Array<UByte>
+    {
         var address = basicLoadAddress
         val listing = mutableListOf<UByte>()
         fun addLine(lineNumber: Int, line: String) {
@@ -193,8 +187,8 @@ class C64Machine(title: String) : IVirtualMachine {
             totalBlocks += blocksize
             val filename = it.key.first.take(16)
             val padding1 = "   ".substring(blocksize.toString().length)
-            val padding2 = "               ".substring(filename.length)
-            addLine(blocksize, "$padding1 \"$filename\" $padding2 ${it.key.second.take(3).padEnd(3)}")
+            val padding2 = "                ".substring(filename.length)
+            addLine(blocksize, "$padding1 \"$filename\" $padding2${it.key.second.take(3).padEnd(3)}")
         }
         addLine(kotlin.math.max(0, 664 - totalBlocks), "BLOCKS FREE.")
         listing.add(0)
@@ -249,19 +243,31 @@ class C64Machine(title: String) : IVirtualMachine {
         }.start()
 
         val timer = java.util.Timer("cpu-cycle", true)
-        timer.scheduleAtFixedRate(0, 1000L/VicII.framerate) {
-            if(!paused) {
+        timer.scheduleAtFixedRate(0, 1000L / VicII.framerate) {
+            if (!paused) {
                 // we synchronise cpu cycles to the vertical blank of the Vic chip
                 // this should result in ~1 Mhz cpu speed
                 try {
                     while (vic.vsync) step()
                     while (!vic.vsync) step()
-                } catch(rx: RuntimeException) {
-                    JOptionPane.showMessageDialog(hostDisplay, "Run time error: $rx", "Error during execution", JOptionPane.ERROR_MESSAGE)
+                } catch (rx: RuntimeException) {
+                    JOptionPane.showMessageDialog(
+                        hostDisplay,
+                        "Run time error: $rx",
+                        "Error during execution",
+                        JOptionPane.ERROR_MESSAGE
+                    )
                     this.cancel()
-                } catch(ex: Error) {
-                    JOptionPane.showMessageDialog(hostDisplay, "Run time error: $ex", "Error during execution", JOptionPane.ERROR_MESSAGE)
+                    throw rx
+                } catch (ex: Error) {
+                    JOptionPane.showMessageDialog(
+                        hostDisplay,
+                        "Run time error: $ex",
+                        "Error during execution",
+                        JOptionPane.ERROR_MESSAGE
+                    )
                     this.cancel()
+                    throw ex
                 }
             }
         }
