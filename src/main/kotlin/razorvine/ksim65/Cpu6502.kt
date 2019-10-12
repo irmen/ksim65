@@ -13,7 +13,7 @@ import razorvine.ksim65.components.UByte
  */
 open class Cpu6502 : BusComponent() {
     open val name = "6502"
-    var tracing: ((state:String) -> Unit)? = null
+    var tracing: ((state: String) -> Unit)? = null
     var totalCycles = 0L
         protected set
     private var resetTime = System.nanoTime()
@@ -29,25 +29,10 @@ open class Cpu6502 : BusComponent() {
         const val resetCycles = 8
     }
 
-    class StatusRegister(
-        var C: Boolean = false,
-        var Z: Boolean = false,
-        var I: Boolean = false,
-        var D: Boolean = false,
-        var B: Boolean = false,
-        var V: Boolean = false,
-        var N: Boolean = false
-    ) {
+    class StatusRegister(var C: Boolean = false, var Z: Boolean = false, var I: Boolean = false, var D: Boolean = false,
+                         var B: Boolean = false, var V: Boolean = false, var N: Boolean = false) {
         fun asInt(): Int {
-            return (0b00100000 or
-                    (if (N) 0b10000000 else 0) or
-                    (if (V) 0b01000000 else 0) or
-                    (if (B) 0b00010000 else 0) or
-                    (if (D) 0b00001000 else 0) or
-                    (if (I) 0b00000100 else 0) or
-                    (if (Z) 0b00000010 else 0) or
-                    (if (C) 0b00000001 else 0)
-                    )
+            return (0b00100000 or (if (N) 0b10000000 else 0) or (if (V) 0b01000000 else 0) or (if (B) 0b00010000 else 0) or (if (D) 0b00001000 else 0) or (if (I) 0b00000100 else 0) or (if (Z) 0b00000010 else 0) or (if (C) 0b00000001 else 0))
         }
 
         fun fromInt(byte: Int) {
@@ -67,8 +52,7 @@ open class Cpu6502 : BusComponent() {
         override fun hashCode(): Int = asInt()
 
         override fun equals(other: Any?): Boolean {
-            if (other !is StatusRegister)
-                return false
+            if (other !is StatusRegister) return false
             return asInt() == other.asInt()
         }
     }
@@ -85,51 +69,18 @@ open class Cpu6502 : BusComponent() {
      *    without having to actually have a BRK in the breakpoint's memory location
      *    (this is the same as changeOpcode=0x00)
      */
-    class BreakpointResultAction(val changePC: Address? = null,
-                                 val changeOpcode: Int? = null,
-                                 val causeBRK: Boolean = false)
+    class BreakpointResultAction(val changePC: Address? = null, val changeOpcode: Int? = null, val causeBRK: Boolean = false)
 
-    class State (
-        val A: UByte,
-        val X: UByte,
-        val Y: UByte,
-        val SP: Address,
-        val P: StatusRegister,
-        val PC: Address,
-        val cycles: Long
-    ) {
+    class State(val A: UByte, val X: UByte, val Y: UByte, val SP: Address, val P: StatusRegister, val PC: Address, val cycles: Long) {
         override fun toString(): String {
-            return  "cycle:$cycles - pc=${hexW(PC)} " +
-                    "A=${hexB(A)} " +
-                    "X=${hexB(X)} " +
-                    "Y=${hexB(Y)} " +
-                    "SP=${hexB(SP)} " +
-                    " n=" + (if (P.N) "1" else "0") +
-                    " v=" + (if (P.V) "1" else "0") +
-                    " b=" + (if (P.B) "1" else "0") +
-                    " d=" + (if (P.D) "1" else "0") +
-                    " i=" + (if (P.I) "1" else "0") +
-                    " z=" + (if (P.Z) "1" else "0") +
-                    " c=" + (if (P.C) "1" else "0")
+            return "cycle:$cycles - pc=${hexW(PC)} "+"A=${hexB(A)} "+"X=${hexB(X)} "+"Y=${hexB(Y)} "+"SP=${hexB(
+                    SP)} "+" n="+(if (P.N) "1" else "0")+" v="+(if (P.V) "1" else "0")+" b="+(if (P.B) "1" else "0")+" d="+(if (P.D) "1" else "0")+" i="+(if (P.I) "1" else "0")+" z="+(if (P.Z) "1" else "0")+" c="+(if (P.C) "1" else "0")
         }
     }
 
     enum class AddrMode {
-        Imp,
-        Acc,
-        Imm,
-        Zp,
-        Zpr,        // special addressing mode used by the 65C02
-        ZpX,
-        ZpY,
-        Rel,
-        Abs,
-        AbsX,
-        AbsY,
-        Ind,
-        IzX,
-        IzY,
-        Izp,         // special addressing mode used by the 65C02
+        Imp, Acc, Imm, Zp, Zpr,        // special addressing mode used by the 65C02
+        ZpX, ZpY, Rel, Abs, AbsX, AbsY, Ind, IzX, IzY, Izp,         // special addressing mode used by the 65C02
         IaX,         // special addressing mode used by the 65C02
     }
 
@@ -151,24 +102,19 @@ open class Cpu6502 : BusComponent() {
         get() = currentInstruction.mnemonic
 
     val averageSpeedKhzSinceReset: Double
-        get() = totalCycles.toDouble() / (System.nanoTime() - resetTime) * 1_000_000
+        get() = totalCycles.toDouble()/(System.nanoTime()-resetTime)*1_000_000
 
-    @Synchronized fun snapshot(): State {
+    @Synchronized
+    fun snapshot(): State {
         val status = StatusRegister().also { it.fromInt(regP.asInt()) }
-        return State(regA.toShort(),
-            regX.toShort(),
-            regY.toShort(),
-            regSP,
-            status,
-            regPC,
-            totalCycles)
+        return State(regA.toShort(), regX.toShort(), regY.toShort(), regSP, status, regPC, totalCycles)
     }
 
     // has an interrupt been requested?
     protected enum class Interrupt {
-        IRQ,
-        NMI
+        IRQ, NMI
     }
+
     protected var pendingInterrupt: Interrupt? = null
 
     // data byte from the instruction (only set when addr.mode is Accumulator, Immediate or Implied)
@@ -185,8 +131,7 @@ open class Cpu6502 : BusComponent() {
 
     fun removeBreakpoint(address: Address) = breakpoints.remove(address)
 
-    fun disassemble(memory: MemoryComponent, from: Address, to: Address) =
-        disassemble(memory.data, memory.startAddress, from, to)
+    fun disassemble(memory: MemoryComponent, from: Address, to: Address) = disassemble(memory.data, memory.startAddress, from, to)
 
     fun disassemble(memory: Array<UByte>, baseAddress: Address, from: Address, to: Address): Pair<List<String>, Address> {
         var location = from
@@ -211,90 +156,84 @@ open class Cpu6502 : BusComponent() {
         val opcode = instructions[byte.toInt()]
         return when (opcode.mode) {
             AddrMode.Acc -> {
-                Pair(line + "$spacing1 ${opcode.mnemonic}  a", 1)
+                Pair(line+"$spacing1 ${opcode.mnemonic}  a", 1)
             }
             AddrMode.Imp -> {
-                Pair(line + "$spacing1 ${opcode.mnemonic}", 1)
+                Pair(line+"$spacing1 ${opcode.mnemonic}", 1)
             }
             AddrMode.Imm -> {
                 val value = memory[location+1]
-                Pair(line + "${hexB(value)} $spacing2 ${opcode.mnemonic}  #\$${hexB(value)}", 2)
+                Pair(line+"${hexB(value)} $spacing2 ${opcode.mnemonic}  #\$${hexB(value)}", 2)
             }
             AddrMode.Zp -> {
                 val zpAddr = memory[location+1]
-                Pair(line + "${hexB(zpAddr)} $spacing2 ${opcode.mnemonic}  \$${hexB(zpAddr)}", 2)
+                Pair(line+"${hexB(zpAddr)} $spacing2 ${opcode.mnemonic}  \$${hexB(zpAddr)}", 2)
             }
             AddrMode.Zpr -> {
                 // addressing mode used by the 65C02, put here for convenience
                 val zpAddr = memory[location+1]
                 val rel = memory[location+2]
-                val target =
-                    if (rel <= 0x7f)
-                        location + 3 + rel + baseAddress
-                    else
-                        location + 3 - (256 - rel) + baseAddress
-                Pair(line + "${hexB(zpAddr)} ${hexB(rel)} $spacing3 ${opcode.mnemonic}  \$${hexB(zpAddr)}, \$${hexW(target, true)}", 3)
+                val target = if (rel <= 0x7f) location+3+rel+baseAddress
+                else location+3-(256-rel)+baseAddress
+                Pair(line+"${hexB(zpAddr)} ${hexB(rel)} $spacing3 ${opcode.mnemonic}  \$${hexB(zpAddr)}, \$${hexW(target, true)}", 3)
             }
             AddrMode.Izp -> {
                 // addressing mode used by the 65C02, put here for convenience
                 val zpAddr = memory[location+1]
-                Pair(line + "${hexB(zpAddr)} $spacing2 ${opcode.mnemonic}  \$(${hexB(zpAddr)})", 2)
+                Pair(line+"${hexB(zpAddr)} $spacing2 ${opcode.mnemonic}  \$(${hexB(zpAddr)})", 2)
             }
             AddrMode.IaX -> {
                 // addressing mode used by the 65C02, put here for convenience
                 val lo = memory[location+1]
                 val hi = memory[location+2]
                 val absAddr = lo.toInt() or (hi.toInt() shl 8)
-                Pair(line + "${hexB(lo)} ${hexB(hi)} $spacing3 ${opcode.mnemonic}  \$(${hexW(absAddr)},x)", 3)
+                Pair(line+"${hexB(lo)} ${hexB(hi)} $spacing3 ${opcode.mnemonic}  \$(${hexW(absAddr)},x)", 3)
             }
             AddrMode.ZpX -> {
                 val zpAddr = memory[location+1]
-                Pair(line + "${hexB(zpAddr)} $spacing2 ${opcode.mnemonic}  \$${hexB(zpAddr)},x", 2)
+                Pair(line+"${hexB(zpAddr)} $spacing2 ${opcode.mnemonic}  \$${hexB(zpAddr)},x", 2)
             }
             AddrMode.ZpY -> {
                 val zpAddr = memory[location+1]
-                Pair(line + "${hexB(zpAddr)} $spacing2 ${opcode.mnemonic}  \$${hexB(zpAddr)},y", 2)
+                Pair(line+"${hexB(zpAddr)} $spacing2 ${opcode.mnemonic}  \$${hexB(zpAddr)},y", 2)
             }
             AddrMode.Rel -> {
                 val rel = memory[location+1]
-                val target =
-                    if (rel <= 0x7f)
-                        location + 2 + rel + baseAddress
-                    else
-                        location + 2 - (256 - rel) + baseAddress
-                Pair(line + "${hexB(rel)} $spacing2 ${opcode.mnemonic}  \$${hexW(target, true)}", 2)
+                val target = if (rel <= 0x7f) location+2+rel+baseAddress
+                else location+2-(256-rel)+baseAddress
+                Pair(line+"${hexB(rel)} $spacing2 ${opcode.mnemonic}  \$${hexW(target, true)}", 2)
             }
             AddrMode.Abs -> {
                 val lo = memory[location+1]
                 val hi = memory[location+2]
                 val absAddr = lo.toInt() or (hi.toInt() shl 8)
-                Pair(line + "${hexB(lo)} ${hexB(hi)} $spacing3 ${opcode.mnemonic}  \$${hexW(absAddr)}", 3)
+                Pair(line+"${hexB(lo)} ${hexB(hi)} $spacing3 ${opcode.mnemonic}  \$${hexW(absAddr)}", 3)
             }
             AddrMode.AbsX -> {
                 val lo = memory[location+1]
                 val hi = memory[location+2]
                 val absAddr = lo.toInt() or (hi.toInt() shl 8)
-                Pair(line + "${hexB(lo)} ${hexB(hi)} $spacing3 ${opcode.mnemonic}  \$${hexW(absAddr)},x", 3)
+                Pair(line+"${hexB(lo)} ${hexB(hi)} $spacing3 ${opcode.mnemonic}  \$${hexW(absAddr)},x", 3)
             }
             AddrMode.AbsY -> {
                 val lo = memory[location+1]
                 val hi = memory[location+2]
                 val absAddr = lo.toInt() or (hi.toInt() shl 8)
-                Pair(line + "${hexB(lo)} ${hexB(hi)} $spacing3 ${opcode.mnemonic}  \$${hexW(absAddr)},y", 3)
+                Pair(line+"${hexB(lo)} ${hexB(hi)} $spacing3 ${opcode.mnemonic}  \$${hexW(absAddr)},y", 3)
             }
             AddrMode.Ind -> {
                 val lo = memory[location+1]
                 val hi = memory[location+2]
                 val indirectAddr = lo.toInt() or (hi.toInt() shl 8)
-                Pair(line + "${hexB(lo)} ${hexB(hi)} $spacing3 ${opcode.mnemonic}  (\$${hexW(indirectAddr)})", 3)
+                Pair(line+"${hexB(lo)} ${hexB(hi)} $spacing3 ${opcode.mnemonic}  (\$${hexW(indirectAddr)})", 3)
             }
             AddrMode.IzX -> {
                 val zpAddr = memory[location+1]
-                Pair(line + "${hexB(zpAddr)} $spacing2 ${opcode.mnemonic}  (\$${hexB(zpAddr)},x)", 2)
+                Pair(line+"${hexB(zpAddr)} $spacing2 ${opcode.mnemonic}  (\$${hexB(zpAddr)},x)", 2)
             }
             AddrMode.IzY -> {
                 val zpAddr = memory[location+1]
-                Pair(line + "${hexB(zpAddr)} $spacing2 ${opcode.mnemonic}  (\$${hexB(zpAddr)}),y", 2)
+                Pair(line+"${hexB(zpAddr)} $spacing2 ${opcode.mnemonic}  (\$${hexB(zpAddr)}),y", 2)
             }
         }
     }
@@ -341,15 +280,12 @@ open class Cpu6502 : BusComponent() {
                 // tracing and breakpoint handling
                 tracing?.invoke(snapshot().toString())
                 breakpoints[regPC]?.let {
-                    if(breakpoint(it))
-                        return
+                    if (breakpoint(it)) return
                 }
 
-                if(currentOpcode==0x00)
-                    breakpointForBRK?.let {
-                        if(breakpoint(it))
-                            return
-                    }
+                if (currentOpcode == 0x00) breakpointForBRK?.let {
+                    if (breakpoint(it)) return
+                }
             }
 
             regPC++
@@ -381,8 +317,7 @@ open class Cpu6502 : BusComponent() {
         return if (regPC != oldPC) {
             clock()
             true
-        } else
-            false
+        } else false
     }
 
     /**
@@ -402,18 +337,12 @@ open class Cpu6502 : BusComponent() {
     }
 
     fun irq() {
-        if (!regP.I)
-            pendingInterrupt = Interrupt.IRQ
+        if (!regP.I) pendingInterrupt = Interrupt.IRQ
     }
 
     protected fun getFetched() =
-        if (currentInstruction.mode == AddrMode.Imm ||
-            currentInstruction.mode == AddrMode.Acc ||
-            currentInstruction.mode == AddrMode.Imp
-        )
-            fetchedData
-        else
-            read(fetchedAddress)
+            if (currentInstruction.mode == AddrMode.Imm || currentInstruction.mode == AddrMode.Acc || currentInstruction.mode == AddrMode.Imp) fetchedData
+            else read(fetchedAddress)
 
     protected fun readPc(): Int = bus.read(regPC++).toInt()
 
@@ -430,11 +359,11 @@ open class Cpu6502 : BusComponent() {
 
     protected fun pushStack(data: Int) {
         write(regSP or 0x0100, data)
-        regSP = (regSP - 1) and 0xff
+        regSP = (regSP-1) and 0xff
     }
 
     protected fun popStack(): Int {
-        regSP = (regSP + 1) and 0xff
+        regSP = (regSP+1) and 0xff
         return read(regSP or 0x0100)
     }
 
@@ -445,12 +374,11 @@ open class Cpu6502 : BusComponent() {
     }
 
     protected fun read(address: Address): Int = bus.read(address).toInt()
-    protected fun readWord(address: Address): Int = bus.read(address).toInt() or (bus.read(address + 1).toInt() shl 8)
+    protected fun readWord(address: Address): Int = bus.read(address).toInt() or (bus.read(address+1).toInt() shl 8)
     protected fun write(address: Address, data: Int) = bus.write(address, data.toShort())
 
     // opcodes table from  http://www.oxyron.de/html/opcodes02.html
-    open val instructions: Array<Instruction> =
-        listOf(
+    open val instructions: Array<Instruction> = listOf(
             /* 00 */  Instruction("brk", AddrMode.Imp, 7),
             /* 01 */  Instruction("ora", AddrMode.IzX, 6),
             /* 02 */  Instruction("???", AddrMode.Imp, 2),
@@ -706,8 +634,7 @@ open class Cpu6502 : BusComponent() {
             /* fc */  Instruction("nop", AddrMode.AbsX, 4),
             /* fd */  Instruction("sbc", AddrMode.AbsX, 4),
             /* fe */  Instruction("inc", AddrMode.AbsX, 7),
-            /* ff */  Instruction("isc", AddrMode.AbsX, 7)
-        ).toTypedArray()
+            /* ff */  Instruction("isc", AddrMode.AbsX, 7)).toTypedArray()
 
     protected open fun applyAddressingMode(addrMode: AddrMode) {
         when (addrMode) {
@@ -722,18 +649,17 @@ open class Cpu6502 : BusComponent() {
             }
             AddrMode.ZpX -> {
                 // note: zeropage index will not leave Zp when page boundary is crossed
-                fetchedAddress = (readPc() + regX) and 0xff
+                fetchedAddress = (readPc()+regX) and 0xff
             }
             AddrMode.ZpY -> {
                 // note: zeropage index will not leave Zp when page boundary is crossed
-                fetchedAddress = (readPc() + regY) and 0xff
+                fetchedAddress = (readPc()+regY) and 0xff
             }
             AddrMode.Rel -> {
                 val relative = readPc()
                 fetchedAddress = if (relative >= 0x80) {
-                    regPC - (256 - relative) and 0xffff
-                } else
-                    regPC + relative and 0xffff
+                    regPC-(256-relative) and 0xffff
+                } else regPC+relative and 0xffff
             }
             AddrMode.Abs -> {
                 val lo = readPc()
@@ -743,12 +669,12 @@ open class Cpu6502 : BusComponent() {
             AddrMode.AbsX -> {
                 val lo = readPc()
                 val hi = readPc()
-                fetchedAddress = regX + (lo or (hi shl 8)) and 0xffff
+                fetchedAddress = regX+(lo or (hi shl 8)) and 0xffff
             }
             AddrMode.AbsY -> {
                 val lo = readPc()
                 val hi = readPc()
-                fetchedAddress = regY + (lo or (hi shl 8)) and 0xffff
+                fetchedAddress = regY+(lo or (hi shl 8)) and 0xffff
             }
             AddrMode.Ind -> {
                 var lo = readPc()
@@ -762,23 +688,23 @@ open class Cpu6502 : BusComponent() {
                 } else {
                     // normal behavior
                     lo = read(fetchedAddress)
-                    hi = read(fetchedAddress + 1)
+                    hi = read(fetchedAddress+1)
                 }
                 fetchedAddress = lo or (hi shl 8)
             }
             AddrMode.IzX -> {
                 // note: not able to fetch an address which crosses the (zero)page boundary
                 fetchedAddress = readPc()
-                val lo = read((fetchedAddress + regX) and 0xff)
-                val hi = read((fetchedAddress + regX + 1) and 0xff)
+                val lo = read((fetchedAddress+regX) and 0xff)
+                val hi = read((fetchedAddress+regX+1) and 0xff)
                 fetchedAddress = lo or (hi shl 8)
             }
             AddrMode.IzY -> {
                 // note: not able to fetch an address which crosses the (zero)page boundary
                 fetchedAddress = readPc()
                 val lo = read(fetchedAddress)
-                val hi = read((fetchedAddress + 1) and 0xff)
-                fetchedAddress = regY + (lo or (hi shl 8)) and 0xffff
+                val hi = read((fetchedAddress+1) and 0xff)
+                fetchedAddress = regY+(lo or (hi shl 8)) and 0xffff
             }
             AddrMode.Zpr, AddrMode.Izp, AddrMode.IaX -> {
                 // addressing mode used by the 65C02 only
@@ -1061,14 +987,14 @@ open class Cpu6502 : BusComponent() {
             // and http://nesdev.com/6502.txt
             // and https://sourceforge.net/p/vice-emu/code/HEAD/tree/trunk/vice/src/6510core.c#l598
             // (the implementation below is based on the code used by Vice)
-            var tmp = (regA and 0xf) + (operand and 0xf) + (if (regP.C) 1 else 0)
+            var tmp = (regA and 0xf)+(operand and 0xf)+(if (regP.C) 1 else 0)
             if (tmp > 9) tmp += 6
             tmp = if (tmp <= 0x0f) {
-                (tmp and 0xf) + (regA and 0xf0) + (operand and 0xf0)
+                (tmp and 0xf)+(regA and 0xf0)+(operand and 0xf0)
             } else {
-                (tmp and 0xf) + (regA and 0xf0) + (operand and 0xf0) + 0x10
+                (tmp and 0xf)+(regA and 0xf0)+(operand and 0xf0)+0x10
             }
-            regP.Z = regA + operand + (if (regP.C) 1 else 0) and 0xff == 0
+            regP.Z = regA+operand+(if (regP.C) 1 else 0) and 0xff == 0
             regP.N = tmp and 0b10000000 != 0
             regP.V = (regA xor tmp) and 0x80 != 0 && (regA xor operand) and 0b10000000 == 0
             if (tmp and 0x1f0 > 0x90) tmp += 0x60
@@ -1076,7 +1002,7 @@ open class Cpu6502 : BusComponent() {
             regA = tmp and 0xff
         } else {
             // normal add
-            val tmp = operand + regA + if (regP.C) 1 else 0
+            val tmp = operand+regA+if (regP.C) 1 else 0
             regP.N = (tmp and 0b10000000) != 0
             regP.Z = (tmp and 0xff) == 0
             regP.V = (regA xor operand).inv() and (regA xor tmp) and 0b10000000 != 0
@@ -1141,7 +1067,7 @@ open class Cpu6502 : BusComponent() {
     protected open fun iBrk() {
         // handle BRK ('software interrupt') or a real hardware IRQ
         if (pendingInterrupt != null) {
-            pushStackAddr(regPC - 1)
+            pushStackAddr(regPC-1)
         } else {
             regPC++
             pushStackAddr(regPC)
@@ -1150,7 +1076,7 @@ open class Cpu6502 : BusComponent() {
         pushStack(regP)
         regP.I = true     // interrupts are now disabled
         // NMOS 6502 doesn't clear the D flag (CMOS 65C02 version does...)
-        regPC = readWord(if (pendingInterrupt==Interrupt.NMI) NMI_vector else IRQ_vector)
+        regPC = readWord(if (pendingInterrupt == Interrupt.NMI) NMI_vector else IRQ_vector)
         pendingInterrupt = null
     }
 
@@ -1182,38 +1108,38 @@ open class Cpu6502 : BusComponent() {
         val fetched = getFetched()
         regP.C = regA >= fetched
         regP.Z = regA == fetched
-        regP.N = ((regA - fetched) and 0b10000000) != 0
+        regP.N = ((regA-fetched) and 0b10000000) != 0
     }
 
     protected fun iCpx() {
         val fetched = getFetched()
         regP.C = regX >= fetched
         regP.Z = regX == fetched
-        regP.N = ((regX - fetched) and 0b10000000) != 0
+        regP.N = ((regX-fetched) and 0b10000000) != 0
     }
 
     protected fun iCpy() {
         val fetched = getFetched()
         regP.C = regY >= fetched
         regP.Z = regY == fetched
-        regP.N = ((regY - fetched) and 0b10000000) != 0
+        regP.N = ((regY-fetched) and 0b10000000) != 0
     }
 
     protected open fun iDec() {
-        val data = (read(fetchedAddress) - 1) and 0xff
+        val data = (read(fetchedAddress)-1) and 0xff
         write(fetchedAddress, data)
         regP.Z = data == 0
         regP.N = (data and 0b10000000) != 0
     }
 
     protected fun iDex() {
-        regX = (regX - 1) and 0xff
+        regX = (regX-1) and 0xff
         regP.Z = regX == 0
         regP.N = (regX and 0b10000000) != 0
     }
 
     protected fun iDey() {
-        regY = (regY - 1) and 0xff
+        regY = (regY-1) and 0xff
         regP.Z = regY == 0
         regP.N = (regY and 0b10000000) != 0
     }
@@ -1225,20 +1151,20 @@ open class Cpu6502 : BusComponent() {
     }
 
     protected open fun iInc() {
-        val data = (read(fetchedAddress) + 1) and 0xff
+        val data = (read(fetchedAddress)+1) and 0xff
         write(fetchedAddress, data)
         regP.Z = data == 0
         regP.N = (data and 0b10000000) != 0
     }
 
     protected fun iInx() {
-        regX = (regX + 1) and 0xff
+        regX = (regX+1) and 0xff
         regP.Z = regX == 0
         regP.N = (regX and 0b10000000) != 0
     }
 
     protected fun iIny() {
-        regY = (regY + 1) and 0xff
+        regY = (regY+1) and 0xff
         regP.Z = regY == 0
         regP.N = (regY and 0b10000000) != 0
     }
@@ -1248,7 +1174,7 @@ open class Cpu6502 : BusComponent() {
     }
 
     protected fun iJsr() {
-        pushStackAddr(regPC - 1)
+        pushStackAddr(regPC-1)
         regPC = fetchedAddress
     }
 
@@ -1358,12 +1284,12 @@ open class Cpu6502 : BusComponent() {
 
     protected fun iRts() {
         regPC = popStackAddr()
-        regPC = (regPC + 1) and 0xffff
+        regPC = (regPC+1) and 0xffff
     }
 
     protected open fun iSbc() {
         val operand = getFetched()
-        val tmp = (regA - operand - if (regP.C) 0 else 1) and 0xffff
+        val tmp = (regA-operand-if (regP.C) 0 else 1) and 0xffff
         regP.V = (regA xor operand) and (regA xor tmp) and 0b10000000 != 0
         if (regP.D) {
             // BCD subtract
@@ -1371,11 +1297,11 @@ open class Cpu6502 : BusComponent() {
             // and http://nesdev.com/6502.txt
             // and https://sourceforge.net/p/vice-emu/code/HEAD/tree/trunk/vice/src/6510core.c#l1396
             // (the implementation below is based on the code used by Vice)
-            var tmpA = ((regA and 0xf) - (operand and 0xf) - if (regP.C) 0 else 1) and 0xffff
+            var tmpA = ((regA and 0xf)-(operand and 0xf)-if (regP.C) 0 else 1) and 0xffff
             tmpA = if ((tmpA and 0x10) != 0) {
-                ((tmpA - 6) and 0xf) or (regA and 0xf0) - (operand and 0xf0) - 0x10
+                ((tmpA-6) and 0xf) or (regA and 0xf0)-(operand and 0xf0)-0x10
             } else {
-                (tmpA and 0xf) or (regA and 0xf0) - (operand and 0xf0)
+                (tmpA and 0xf) or (regA and 0xf0)-(operand and 0xf0)
             }
             if ((tmpA and 0x100) != 0) tmpA -= 0x60
             regA = tmpA and 0xff
@@ -1522,8 +1448,6 @@ open class Cpu6502 : BusComponent() {
 
     // invalid instruction (JAM / KIL)
     private fun iInvalid() {
-        throw InstructionError(
-            "invalid instruction encountered: opcode=${hexB(currentOpcode)} instr=${currentInstruction.mnemonic}"
-        )
+        throw InstructionError("invalid instruction encountered: opcode=${hexB(currentOpcode)} instr=${currentInstruction.mnemonic}")
     }
 }

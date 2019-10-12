@@ -10,7 +10,6 @@ object Version {
     }
 
     val copyright: String by lazy {
-        "KSim65 6502 cpu simulator v$version by Irmen de Jong (irmen@razorvine.net)" +
-                "\nThis software is free and licensed under the MIT open-source license\n"
+        "KSim65 6502 cpu simulator v$version by Irmen de Jong (irmen@razorvine.net)"+"\nThis software is free and licensed under the MIT open-source license\n"
     }
 }

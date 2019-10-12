@@ -19,8 +19,8 @@ import javax.swing.event.MouseInputListener
 object ScreenDefs {
     const val SCREEN_WIDTH_CHARS = 80
     const val SCREEN_HEIGHT_CHARS = 30
-    const val SCREEN_WIDTH = SCREEN_WIDTH_CHARS * 8
-    const val SCREEN_HEIGHT = SCREEN_HEIGHT_CHARS * 16
+    const val SCREEN_WIDTH = SCREEN_WIDTH_CHARS*8
+    const val SCREEN_HEIGHT = SCREEN_HEIGHT_CHARS*16
     const val DISPLAY_PIXEL_SCALING: Double = 1.5
     const val BORDER_SIZE = 32
 
@@ -31,7 +31,7 @@ object ScreenDefs {
 
     private fun loadCharacters(): Array<BufferedImage> {
         val img = ImageIO.read(javaClass.getResourceAsStream("/charset/unscii8x16.png"))
-        val charactersImage = BufferedImage(img.width, img.height, BufferedImage.TYPE_INT_ARGB).also {it.accelerationPriority=1.0f}
+        val charactersImage = BufferedImage(img.width, img.height, BufferedImage.TYPE_INT_ARGB).also { it.accelerationPriority = 1.0f }
         charactersImage.createGraphics().drawImage(img, 0, 0, null)
 
         val black = Color(0, 0, 0).rgb
@@ -40,18 +40,16 @@ object ScreenDefs {
         for (y in 0 until charactersImage.height) {
             for (x in 0 until charactersImage.width) {
                 val col = charactersImage.getRGB(x, y)
-                if (col == black)
-                    charactersImage.setRGB(x, y, nopixel)
-                else
-                    charactersImage.setRGB(x, y, foreground)
+                if (col == black) charactersImage.setRGB(x, y, nopixel)
+                else charactersImage.setRGB(x, y, foreground)
             }
         }
 
-        val numColumns = charactersImage.width / 8
+        val numColumns = charactersImage.width/8
         val charImages = (0..255).map {
-            val charX = it % numColumns
-            val charY = it / numColumns
-            charactersImage.getSubimage(charX * 8, charY * 16, 8, 16)
+            val charX = it%numColumns
+            val charY = it/numColumns
+            charactersImage.getSubimage(charX*8, charY*16, 8, 16)
         }
 
         return charImages.toTypedArray()
@@ -72,10 +70,8 @@ private class BitmapScreenPanel : JPanel() {
         image = gd.createCompatibleImage(ScreenDefs.SCREEN_WIDTH, ScreenDefs.SCREEN_HEIGHT, Transparency.OPAQUE)
         g2d = image.graphics as Graphics2D
 
-        val size = Dimension(
-            (image.width * ScreenDefs.DISPLAY_PIXEL_SCALING).toInt(),
-            (image.height * ScreenDefs.DISPLAY_PIXEL_SCALING).toInt()
-        )
+        val size =
+                Dimension((image.width*ScreenDefs.DISPLAY_PIXEL_SCALING).toInt(), (image.height*ScreenDefs.DISPLAY_PIXEL_SCALING).toInt())
         minimumSize = size
         maximumSize = size
         preferredSize = size
@@ -88,15 +84,13 @@ private class BitmapScreenPanel : JPanel() {
     override fun paint(graphics: Graphics) {
         val g2d = graphics as Graphics2D
         g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR)
-        g2d.drawImage(
-            image, 0, 0, (image.width * ScreenDefs.DISPLAY_PIXEL_SCALING).toInt(),
-            (image.height * ScreenDefs.DISPLAY_PIXEL_SCALING).toInt(), null
-        )
-        if(cursorState) {
-            val scx = (cursorX * ScreenDefs.DISPLAY_PIXEL_SCALING * 8).toInt()
-            val scy = (cursorY * ScreenDefs.DISPLAY_PIXEL_SCALING * 16).toInt()
-            val scw = (8 * ScreenDefs.DISPLAY_PIXEL_SCALING).toInt()
-            val sch = (16 * ScreenDefs.DISPLAY_PIXEL_SCALING).toInt()
+        g2d.drawImage(image, 0, 0, (image.width*ScreenDefs.DISPLAY_PIXEL_SCALING).toInt(),
+                      (image.height*ScreenDefs.DISPLAY_PIXEL_SCALING).toInt(), null)
+        if (cursorState) {
+            val scx = (cursorX*ScreenDefs.DISPLAY_PIXEL_SCALING*8).toInt()
+            val scy = (cursorY*ScreenDefs.DISPLAY_PIXEL_SCALING*16).toInt()
+            val scw = (8*ScreenDefs.DISPLAY_PIXEL_SCALING).toInt()
+            val sch = (16*ScreenDefs.DISPLAY_PIXEL_SCALING).toInt()
             g2d.setXORMode(Color.CYAN)
             g2d.fillRect(scx, scy, scw, sch)
             g2d.setPaintMode()
@@ -111,37 +105,31 @@ private class BitmapScreenPanel : JPanel() {
     }
 
     fun setPixel(x: Int, y: Int, onOff: Boolean) {
-        if (onOff)
-            image.setRGB(x, y, ScreenDefs.FG_COLOR.rgb)
-        else
-            image.setRGB(x, y, ScreenDefs.BG_COLOR.rgb)
+        if (onOff) image.setRGB(x, y, ScreenDefs.FG_COLOR.rgb)
+        else image.setRGB(x, y, ScreenDefs.BG_COLOR.rgb)
     }
 
     fun getPixel(x: Int, y: Int) = image.getRGB(x, y) != ScreenDefs.BG_COLOR.rgb
 
     fun setChar(x: Int, y: Int, character: Char) {
-        g2d.clearRect(8 * x, 16 * y, 8, 16)
+        g2d.clearRect(8*x, 16*y, 8, 16)
         val coloredImage = ScreenDefs.Characters[character.toInt()]
-        g2d.drawImage(coloredImage, 8 * x, 16 * y, null)
+        g2d.drawImage(coloredImage, 8*x, 16*y, null)
     }
 
     fun scrollUp() {
-        g2d.copyArea(0, 16, ScreenDefs.SCREEN_WIDTH, ScreenDefs.SCREEN_HEIGHT - 16, 0, -16)
+        g2d.copyArea(0, 16, ScreenDefs.SCREEN_WIDTH, ScreenDefs.SCREEN_HEIGHT-16, 0, -16)
         g2d.background = ScreenDefs.BG_COLOR
-        g2d.clearRect(0, ScreenDefs.SCREEN_HEIGHT - 16, ScreenDefs.SCREEN_WIDTH, 16)
+        g2d.clearRect(0, ScreenDefs.SCREEN_HEIGHT-16, ScreenDefs.SCREEN_WIDTH, 16)
     }
 
     fun mousePixelPosition(): Point? {
         val pos = mousePosition ?: return null
-        return Point(
-            (pos.x / ScreenDefs.DISPLAY_PIXEL_SCALING).toInt(),
-            (pos.y / ScreenDefs.DISPLAY_PIXEL_SCALING).toInt()
-        )
+        return Point((pos.x/ScreenDefs.DISPLAY_PIXEL_SCALING).toInt(), (pos.y/ScreenDefs.DISPLAY_PIXEL_SCALING).toInt())
     }
 
     fun cursorPos(x: Int, y: Int) {
-        if(x!=cursorX || y!=cursorY)
-            cursorState=true
+        if (x != cursorX || y != cursorY) cursorState = true
         cursorX = x
         cursorY = y
     }
@@ -151,7 +139,7 @@ private class BitmapScreenPanel : JPanel() {
     }
 }
 
-private class UnaliasedTextBox(rows: Int, columns: Int): JTextArea(rows, columns) {
+private class UnaliasedTextBox(rows: Int, columns: Int) : JTextArea(rows, columns) {
     override fun paintComponent(g: Graphics) {
         g as Graphics2D
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF)
@@ -179,7 +167,7 @@ class DebugWindow(private val vm: IVirtualMachine) : JFrame("Debugger - ksim65 v
     }
     private val stackpageTf = UnaliasedTextBox(8, 102).also {
         it.border = BorderFactory.createEtchedBorder()
-        it.isEnabled=false
+        it.isEnabled = false
         it.disabledTextColor = Color.DARK_GRAY
         it.font = Font(Font.MONOSPACED, Font.PLAIN, 12)
     }
@@ -214,11 +202,11 @@ class DebugWindow(private val vm: IVirtualMachine) : JFrame("Debugger - ksim65 v
             it.font = Font(Font.MONOSPACED, Font.PLAIN, 14)
             it.disabledTextColor = Color.DARK_GRAY
             it.isEnabled = false
-            if(it is JTextField) {
+            if (it is JTextField) {
                 it.columns = it.text.length
-            } else if(it is JTextArea) {
+            } else if (it is JTextArea) {
                 it.border = BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY),
-                    BorderFactory.createEmptyBorder(2,2,2,2))
+                                                               BorderFactory.createEmptyBorder(2, 2, 2, 2))
             }
             cpuPanel.add(it, gc)
             gc.gridy++
@@ -267,16 +255,15 @@ class DebugWindow(private val vm: IVirtualMachine) : JFrame("Debugger - ksim65 v
             output.append("\n")
             val command = input.text.trim()
             val result = vm.executeMonitorCommand(command)
-            if(result.echo)
-                output.append("> $command\n")
+            if (result.echo) output.append("> $command\n")
             output.append(result.output)
             input.text = result.prompt
         }
         monitorPanel.add(input)
 
-        gc.gridx=0
-        gc.gridy=0
-        gc.fill=GridBagConstraints.BOTH
+        gc.gridx = 0
+        gc.gridy = 0
+        gc.fill = GridBagConstraints.BOTH
         contentPane.add(cpuPanel, gc)
         gc.gridy++
         contentPane.add(zeropagePanel, gc)
@@ -288,26 +275,21 @@ class DebugWindow(private val vm: IVirtualMachine) : JFrame("Debugger - ksim65 v
     }
 
     override fun actionPerformed(e: ActionEvent) {
-        when(e.actionCommand) {
+        when (e.actionCommand) {
             "inject" -> {
                 val chooser = JFileChooser()
                 chooser.dialogTitle = "Choose binary program or .prg to load"
                 chooser.currentDirectory = File(".")
                 chooser.isMultiSelectionEnabled = false
                 val result = chooser.showOpenDialog(this)
-                if(result==JFileChooser.APPROVE_OPTION) {
-                    if(chooser.selectedFile.extension=="prg") {
+                if (result == JFileChooser.APPROVE_OPTION) {
+                    if (chooser.selectedFile.extension == "prg") {
                         vm.loadFileInRam(chooser.selectedFile, null)
                     } else {
-                        val addressStr = JOptionPane.showInputDialog(
-                            this,
-                            "The selected file isn't a .prg.\nSpecify memory load address (hexadecimal) manually.",
-                            "Load address",
-                            JOptionPane.QUESTION_MESSAGE,
-                            null,
-                            null,
-                            "$"
-                        ) as String
+                        val addressStr = JOptionPane.showInputDialog(this,
+                                                                     "The selected file isn't a .prg.\nSpecify memory load address (hexadecimal) manually.",
+                                                                     "Load address", JOptionPane.QUESTION_MESSAGE, null, null,
+                                                                     "$") as String
 
                         val loadAddress = parseInt(addressStr.removePrefix("$"), 16)
                         vm.loadFileInRam(chooser.selectedFile, loadAddress)
@@ -347,27 +329,25 @@ class DebugWindow(private val vm: IVirtualMachine) : JFrame("Debugger - ksim65 v
         regAtf.text = hexB(state.A)
         regXtf.text = hexB(state.X)
         regYtf.text = hexB(state.Y)
-        regPtf.text = "NV-BDIZC\n" + state.P.asInt().toString(2).padStart(8, '0')
+        regPtf.text = "NV-BDIZC\n"+state.P.asInt().toString(2).padStart(8, '0')
         regPCtf.text = hexW(state.PC)
         regSPtf.text = hexB(state.SP)
         val memory = bus.memoryComponentFor(state.PC)
         disassemTf.text = cpu.disassembleOneInstruction(memory.data, state.PC, memory.startAddress).first.substringAfter(' ').trim()
         val pages = vm.getZeroAndStackPages()
-        if(pages.isNotEmpty()) {
+        if (pages.isNotEmpty()) {
             val zpLines = (0..0xff step 32).map { location ->
-                " ${'$'}${location.toString(16).padStart(2, '0')}  " + (
-                        (0..31).joinToString(" ") { lineoffset ->
-                            pages[location + lineoffset].toString(16).padStart(2, '0')
-                        })
+                " ${'$'}${location.toString(16).padStart(2, '0')}  "+((0..31).joinToString(" ") { lineoffset ->
+                    pages[location+lineoffset].toString(16).padStart(2, '0')
+                })
             }
             val stackLines = (0x100..0x1ff step 32).map { location ->
-                "${'$'}${location.toString(16).padStart(2, '0')}  " + (
-                        (0..31).joinToString(" ") { lineoffset ->
-                            pages[location + lineoffset].toString(16).padStart(2, '0')
-                        })
+                "${'$'}${location.toString(16).padStart(2, '0')}  "+((0..31).joinToString(" ") { lineoffset ->
+                    pages[location+lineoffset].toString(16).padStart(2, '0')
+                })
             }
-            zeropageTf.text = zpLines.joinToString ("\n")
-            stackpageTf.text = stackLines.joinToString ("\n")
+            zeropageTf.text = zpLines.joinToString("\n")
+            stackpageTf.text = stackLines.joinToString("\n")
         }
 
         speedKhzTf.text = "%.1f".format(cpu.averageSpeedKhzSinceReset)
@@ -391,8 +371,8 @@ class MainWindow(title: String) : JFrame(title), KeyListener, MouseInputListener
         contentPane.background = ScreenDefs.BORDER_COLOR
         val gc = GridBagConstraints()
         gc.fill = GridBagConstraints.BOTH
-        gc.gridx=1
-        gc.gridy=1
+        gc.gridx = 1
+        gc.gridy = 1
         gc.insets = Insets(ScreenDefs.BORDER_SIZE, ScreenDefs.BORDER_SIZE, ScreenDefs.BORDER_SIZE, ScreenDefs.BORDER_SIZE)
         contentPane.add(canvas, gc)
         addKeyListener(this)
@@ -408,9 +388,9 @@ class MainWindow(title: String) : JFrame(title), KeyListener, MouseInputListener
     fun start(updateRate: Int) {
         // repaint the screen's back buffer
         var cursorBlink = 0L
-        val repaintTimer = javax.swing.Timer(1000 / updateRate) {
+        val repaintTimer = javax.swing.Timer(1000/updateRate) {
             repaint()
-            if(it.`when` - cursorBlink > 200L) {
+            if (it.`when`-cursorBlink > 200L) {
                 cursorBlink = it.`when`
                 canvas.blinkCursor()
             }
@@ -422,8 +402,7 @@ class MainWindow(title: String) : JFrame(title), KeyListener, MouseInputListener
     // keyboard events:
     override fun keyTyped(event: KeyEvent) {
         keyboardBuffer.add(event.keyChar)
-        while (keyboardBuffer.size > 8)
-            keyboardBuffer.pop()
+        while (keyboardBuffer.size > 8) keyboardBuffer.pop()
     }
 
     override fun keyPressed(event: KeyEvent) {}
@@ -432,8 +411,7 @@ class MainWindow(title: String) : JFrame(title), KeyListener, MouseInputListener
     // mouse events:
     override fun mousePressed(event: MouseEvent) {
         val pos = canvas.mousePixelPosition()
-        if (pos == null)
-            return
+        if (pos == null) return
         else {
             mousePos = pos
             leftButton = leftButton or SwingUtilities.isLeftMouseButton(event)
@@ -441,10 +419,10 @@ class MainWindow(title: String) : JFrame(title), KeyListener, MouseInputListener
             middleButton = middleButton or SwingUtilities.isMiddleMouseButton(event)
         }
     }
+
     override fun mouseReleased(event: MouseEvent) {
         val pos = canvas.mousePixelPosition()
-        if (pos == null)
-            return
+        if (pos == null) return
         else {
             mousePos = pos
             leftButton = leftButton xor SwingUtilities.isLeftMouseButton(event)
@@ -452,6 +430,7 @@ class MainWindow(title: String) : JFrame(title), KeyListener, MouseInputListener
             middleButton = middleButton xor SwingUtilities.isMiddleMouseButton(event)
         }
     }
+
     override fun mouseEntered(event: MouseEvent) {}
     override fun mouseExited(event: MouseEvent) {}
     override fun mouseDragged(event: MouseEvent) = mouseMoved(event)
@@ -459,15 +438,14 @@ class MainWindow(title: String) : JFrame(title), KeyListener, MouseInputListener
 
     override fun mouseMoved(event: MouseEvent) {
         val pos = canvas.mousePixelPosition()
-        if (pos == null)
-            return
-        else
-            mousePos = pos
+        if (pos == null) return
+        else mousePos = pos
     }
 
 
     // the overrides required for IHostDisplay:
     override fun clearScreen() = canvas.clearScreen()
+
     override fun setPixel(x: Int, y: Int) = canvas.setPixel(x, y, true)
     override fun clearPixel(x: Int, y: Int) = canvas.setPixel(x, y, false)
     override fun getPixel(x: Int, y: Int) = canvas.getPixel(x, y)
@@ -477,10 +455,8 @@ class MainWindow(title: String) : JFrame(title), KeyListener, MouseInputListener
     override fun mouse() = IHostInterface.MouseInfo(mousePos.x, mousePos.y, leftButton, rightButton, middleButton)
 
     override fun keyboard(): Char? {
-        return if (keyboardBuffer.isEmpty())
-            null
-        else
-            keyboardBuffer.pop()
+        return if (keyboardBuffer.isEmpty()) null
+        else keyboardBuffer.pop()
     }
 
 }

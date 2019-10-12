@@ -14,11 +14,10 @@ import razorvine.ksim65.IHostInterface
  *  04    buttons, bit 0 = left button, bit 1 = right button, bit 2 = middle button
  *  05    latch: when written, samples the current mouse position and button state.
  */
-class Mouse(startAddress: Address, endAddress: Address, private val host: IHostInterface) :
-    MemMappedComponent(startAddress, endAddress) {
+class Mouse(startAddress: Address, endAddress: Address, private val host: IHostInterface) : MemMappedComponent(startAddress, endAddress) {
 
     init {
-        require(endAddress - startAddress + 1 == 6) { "mouse needs exactly 6 memory bytes" }
+        require(endAddress-startAddress+1 == 6) { "mouse needs exactly 6 memory bytes" }
     }
 
     override fun clock() {}
@@ -27,7 +26,7 @@ class Mouse(startAddress: Address, endAddress: Address, private val host: IHostI
     private var mouse = host.mouse()
 
     override operator fun get(address: Address): UByte {
-        return when (address - startAddress) {
+        return when (address-startAddress) {
             0x00 -> (mouse.x and 0xff).toShort()
             0x01 -> (mouse.x ushr 8).toShort()
             0x02 -> (mouse.y and 0xff).toShort()
@@ -43,7 +42,6 @@ class Mouse(startAddress: Address, endAddress: Address, private val host: IHostI
     }
 
     override operator fun set(address: Address, data: UByte) {
-        if (address - startAddress == 0x05)
-            mouse = host.mouse()
+        if (address-startAddress == 0x05) mouse = host.mouse()
     }
 }

@@ -23,7 +23,7 @@ import java.time.LocalTime
 class RealTimeClock(startAddress: Address, endAddress: Address) : MemMappedComponent(startAddress, endAddress) {
 
     init {
-        require(endAddress - startAddress + 1 == 9) { "rtc needs exactly 9 memory bytes" }
+        require(endAddress-startAddress+1 == 9) { "rtc needs exactly 9 memory bytes" }
     }
 
     override fun clock() {
@@ -35,7 +35,7 @@ class RealTimeClock(startAddress: Address, endAddress: Address) : MemMappedCompo
     }
 
     override operator fun get(address: Address): UByte {
-        return when (address - startAddress) {
+        return when (address-startAddress) {
             0x00 -> {
                 val year = LocalDate.now().year
                 (year and 255).toShort()
@@ -50,11 +50,11 @@ class RealTimeClock(startAddress: Address, endAddress: Address) : MemMappedCompo
             0x05 -> LocalTime.now().minute.toShort()
             0x06 -> LocalTime.now().second.toShort()
             0x07 -> {
-                val ms = LocalTime.now().nano / 1000000
+                val ms = LocalTime.now().nano/1000000
                 (ms and 255).toShort()
             }
             0x08 -> {
-                val ms = LocalTime.now().nano / 1000000
+                val ms = LocalTime.now().nano/1000000
                 (ms ushr 8).toShort()
             }
             else -> 0xff

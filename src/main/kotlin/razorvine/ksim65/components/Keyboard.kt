@@ -14,21 +14,22 @@ import razorvine.ksim65.IHostInterface
  *  00    character from keyboard, 0 = no character/key pressed
  */
 class Keyboard(startAddress: Address, endAddress: Address, private val host: IHostInterface) :
-    MemMappedComponent(startAddress, endAddress) {
+        MemMappedComponent(startAddress, endAddress) {
 
     init {
-        require(endAddress - startAddress + 1 == 1) { "keyboard needs exactly 1 memory byte" }
+        require(endAddress-startAddress+1 == 1) { "keyboard needs exactly 1 memory byte" }
     }
 
     override fun clock() {}
     override fun reset() {}
 
     override operator fun get(address: Address): UByte {
-        return when(address-startAddress) {
+        return when (address-startAddress) {
             0x00 -> host.keyboard()?.toShort() ?: 0
             else -> 0xff
         }
     }
 
-    override operator fun set(address: Address, data: UByte) { /* read-only device */ }
+    override operator fun set(address: Address, data: UByte) { /* read-only device */
+    }
 }

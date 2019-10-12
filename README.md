@@ -22,7 +22,7 @@ Properties of this simulator:
 - Aims to implements all 6502 and 65c02 instructions, including the 'illegal' 6502 instructions (not yet done)
 - correct BCD mode for adc/sbc instructions on both cpu types   
 - passes several extensive unit test suites that verify instruction and cpu flags behavior
-- provide a few virtual example machines, one of which is a Commodore-64 (character display mode only for now)  
+- provide a few virtual example machines, one of which is a Commodore-64  
 
 
 ## Documentation
@@ -39,6 +39,9 @@ There's another one ``ehBasicMain`` that is configured to run the "enhanced 6502
 ![ehBasic](ehbasic.png)
 
 Finally there is a fairly functional C64 emulator running the actual roms (not included,
-but can be easily found elsewhere for example with the Vice emulator):
+but can be easily found elsewhere for example with the [Vice emulator](http://vice-emu.sourceforge.net/).
+The emulator supports character mode, bitmap mode (hires and multicolor), hardware sprites and
+various timers and IRQs.  It's not cycle perfect, and the video display is drawn on a per-frame basis,
+so raster splits/rasterbars are impossible. But many other things work fine.
 
 ![C64 emulation](c64.png)

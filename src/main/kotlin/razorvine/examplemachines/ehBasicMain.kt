@@ -22,9 +22,9 @@ class EhBasicMachine(title: String) {
     val rom = Rom(0xc000, 0xffff).also { it.load(javaClass.getResourceAsStream("/ehbasic_C000.bin").readBytes()) }
 
     private val hostDisplay = MainWindow(title)
-    private val display = Display(0xd000, 0xd00a, hostDisplay,
-        ScreenDefs.SCREEN_WIDTH_CHARS, ScreenDefs.SCREEN_HEIGHT_CHARS,
-        ScreenDefs.SCREEN_WIDTH, ScreenDefs.SCREEN_HEIGHT)
+    private val display =
+            Display(0xd000, 0xd00a, hostDisplay, ScreenDefs.SCREEN_WIDTH_CHARS, ScreenDefs.SCREEN_HEIGHT_CHARS, ScreenDefs.SCREEN_WIDTH,
+                    ScreenDefs.SCREEN_HEIGHT)
     private val keyboard = Keyboard(0xd400, 0xd400, hostDisplay)
     private var paused = false
 
@@ -53,16 +53,16 @@ class EhBasicMachine(title: String) {
         val desiredCyclesPerFrame = 500_000L/frameRate      // 500 khz
         val timer = java.util.Timer("cpu-cycle", true)
         timer.scheduleAtFixedRate(500, 1000/frameRate) {
-            if(!paused) {
+            if (!paused) {
                 try {
                     val prevCycles = cpu.totalCycles
-                    while (cpu.totalCycles - prevCycles < desiredCyclesPerFrame) {
+                    while (cpu.totalCycles-prevCycles < desiredCyclesPerFrame) {
                         step()
                     }
-                } catch(rx: RuntimeException) {
+                } catch (rx: RuntimeException) {
                     JOptionPane.showMessageDialog(hostDisplay, "Run time error: $rx", "Error during execution", JOptionPane.ERROR_MESSAGE)
                     this.cancel()
-                } catch(ex: Error) {
+                } catch (ex: Error) {
                     JOptionPane.showMessageDialog(hostDisplay, "Run time error: $ex", "Error during execution", JOptionPane.ERROR_MESSAGE)
                     this.cancel()
                 }

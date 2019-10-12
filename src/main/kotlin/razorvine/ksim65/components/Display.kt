@@ -28,18 +28,13 @@ import kotlin.math.min
  *  0a      r/w character at cursor pos, updates cursor position, scrolls up if necessary
  *          control chars: 8=backspace, 9=tab, 10=newline, 12=form feed (clear screen), 13=carriage return
  */
-class Display(
-    startAddress: Address, endAddress: Address,
-    private val host: IHostInterface,
-    private val charWidth: Int,
-    private val charHeight: Int,
-    private val pixelWidth: Int,
-    private val pixelHeight: Int
-) : MemMappedComponent(startAddress, endAddress) {
+class Display(startAddress: Address, endAddress: Address, private val host: IHostInterface, private val charWidth: Int,
+              private val charHeight: Int, private val pixelWidth: Int, private val pixelHeight: Int) :
+        MemMappedComponent(startAddress, endAddress) {
 
 
     init {
-        require(endAddress - startAddress + 1 == 11) { "display needs exactly 11 memory bytes" }
+        require(endAddress-startAddress+1 == 11) { "display needs exactly 11 memory bytes" }
     }
 
     private var cursorX = 0
@@ -69,11 +64,11 @@ class Display(
     }
 
     override operator fun get(address: Address): UByte {
-        return when(address-startAddress) {
+        return when (address-startAddress) {
             0x00 -> charposX.toShort()
             0x01 -> charposY.toShort()
             0x02 -> {
-                if(charposY in 0 until charHeight && charposX in 0 until charWidth) {
+                if (charposY in 0 until charHeight && charposX in 0 until charWidth) {
                     charMatrix[charposY][charposX]
                 } else 0xff
             }
@@ -81,11 +76,11 @@ class Display(
             0x04 -> (pixelX ushr 8).toShort()
             0x05 -> (pixelY and 0xff).toShort()
             0x06 -> (pixelY ushr 8).toShort()
-            0x07 -> if(host.getPixel(pixelX, pixelY)) 1 else 0
+            0x07 -> if (host.getPixel(pixelX, pixelY)) 1 else 0
             0x08 -> cursorX.toShort()
             0x09 -> cursorY.toShort()
             0x0a -> {
-                if(cursorY in 0 until charHeight && cursorX in 0 until charWidth) {
+                if (cursorY in 0 until charHeight && cursorX in 0 until charWidth) {
                     charMatrix[cursorY][cursorX]
                 } else 0xff
             }
@@ -94,11 +89,11 @@ class Display(
     }
 
     override operator fun set(address: Address, data: UByte) {
-        when(address-startAddress) {
+        when (address-startAddress) {
             0x00 -> charposX = data.toInt()
             0x01 -> charposY = data.toInt()
             0x02 -> {
-                if(charposY in 0 until charHeight && charposX in 0 until charWidth) {
+                if (charposY in 0 until charHeight && charposX in 0 until charWidth) {
                     charMatrix[charposY][charposX] = data
                     host.setChar(charposX, charposY, data.toChar())
                 }
@@ -108,7 +103,7 @@ class Display(
             0x05 -> pixelY = (pixelY and 0xff00) or data.toInt()
             0x06 -> pixelY = (pixelY and 0x00ff) or (data.toInt() shl 8)
             0x07 -> {
-                if(pixelX in 0 until ScreenDefs.SCREEN_WIDTH && pixelY in 0 until ScreenDefs.SCREEN_HEIGHT) {
+                if (pixelX in 0 until ScreenDefs.SCREEN_WIDTH && pixelY in 0 until ScreenDefs.SCREEN_HEIGHT) {
                     if (data == 0.toShort()) host.clearPixel(pixelX, pixelY)
                     else host.setPixel(pixelX, pixelY)
                 }
@@ -116,15 +111,15 @@ class Display(
             0x08 -> cursorX = min(data.toInt() and 65535, charWidth-1)
             0x09 -> cursorY = min(data.toInt() and 65535, charHeight-1)
             0x0a -> {
-                if(cursorY in 0 until charHeight && cursorX in 0 until charWidth) {
-                    when(data.toInt()) {
+                if (cursorY in 0 until charHeight && cursorX in 0 until charWidth) {
+                    when (data.toInt()) {
                         0x08 -> {
                             // backspace
                             cursorX--
-                            if(cursorX<0) {
-                                if(cursorY>0) {
+                            if (cursorX < 0) {
+                                if (cursorY > 0) {
                                     cursorY--
-                                    cursorX = charWidth - 1
+                                    cursorX = charWidth-1
                                 }
                             }
                             charMatrix[cursorY][cursorX] = ' '.toShort()
@@ -132,8 +127,8 @@ class Display(
                         }
                         0x09 -> {
                             // tab
-                            cursorX = (cursorX and 0b11111000) + 8
-                            if(cursorX >= charWidth) {
+                            cursorX = (cursorX and 0b11111000)+8
+                            if (cursorX >= charWidth) {
                                 cursorX = 0
                                 cursorDown()
                             }
@@ -150,7 +145,7 @@ class Display(
                             charMatrix[cursorY][cursorX] = data
                             host.setChar(cursorX, cursorY, data.toChar())
                             cursorX++
-                            if(cursorX >= charWidth) {
+                            if (cursorX >= charWidth) {
                                 cursorX = 0
                                 cursorDown()
                             }
@@ -164,12 +159,12 @@ class Display(
 
     private fun cursorDown() {
         cursorY++
-        while(cursorY >= charHeight) {
+        while (cursorY >= charHeight) {
             // scroll up 1 line
-            for(y in 0 .. charHeight-2) {
+            for (y in 0..charHeight-2) {
                 charMatrix[y+1].copyInto(charMatrix[y])
             }
-            for(x in 0 until charWidth) {
+            for (x in 0 until charWidth) {
                 charMatrix[charHeight-1][x] = ' '.toShort()
             }
             cursorY--

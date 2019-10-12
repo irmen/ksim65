@@ -26,17 +26,15 @@ class Timer(startAddress: Address, endAddress: Address, val cpu: Cpu6502) : MemM
         }
 
     init {
-        require(endAddress - startAddress + 1 == 4) { "timer needs exactly 4 memory bytes" }
+        require(endAddress-startAddress+1 == 4) { "timer needs exactly 4 memory bytes" }
     }
 
     override fun clock() {
         if (enabled && interval > 0) {
             counter++
             if (counter == interval) {
-                if (nmi)
-                    cpu.nmi()
-                else
-                    cpu.irq()
+                if (nmi) cpu.nmi()
+                else cpu.irq()
                 counter = 0
             }
         }
@@ -50,7 +48,7 @@ class Timer(startAddress: Address, endAddress: Address, val cpu: Cpu6502) : MemM
     }
 
     override operator fun get(address: Address): UByte {
-        return when (address - startAddress) {
+        return when (address-startAddress) {
             0x00 -> {
                 var data = 0
                 if (enabled) data = data or 0b00000001
@@ -65,7 +63,7 @@ class Timer(startAddress: Address, endAddress: Address, val cpu: Cpu6502) : MemM
     }
 
     override operator fun set(address: Address, data: UByte) {
-        when (address - startAddress) {
+        when (address-startAddress) {
             0x00 -> {
                 val i = data.toInt()
                 enabled = (i and 0b00000001) != 0

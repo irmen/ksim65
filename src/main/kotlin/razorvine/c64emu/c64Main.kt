@@ -59,10 +59,10 @@ class C64Machine(title: String) : IVirtualMachine {
 
         hostDisplay.iconImage = ImageIcon(javaClass.getResource("/icon.png")).image
         debugWindow.iconImage = hostDisplay.iconImage
-        debugWindow.setLocation(hostDisplay.location.x + hostDisplay.width, hostDisplay.location.y)
+        debugWindow.setLocation(hostDisplay.location.x+hostDisplay.width, hostDisplay.location.y)
         debugWindow.isVisible = true
         hostDisplay.isVisible = true
-        hostDisplay.start(30)
+        //hostDisplay.start(30)
     }
 
     private fun breakpointKernelLoad(cpu: Cpu6502, pc: Address): Cpu6502.BreakpointResultAction {
@@ -70,10 +70,10 @@ class C64Machine(title: String) : IVirtualMachine {
             val fnlen = ram[0xb7]   // file name length
             val fa = ram[0xba]      // device number
             val sa = ram[0xb9]      // secondary address
-            val txttab = ram[0x2b] + 256 * ram[0x2c]  // basic load address ($0801 usually)
-            val fnaddr = ram[0xbb] + 256 * ram[0xbc]  // file name address
+            val txttab = ram[0x2b]+256*ram[0x2c]  // basic load address ($0801 usually)
+            val fnaddr = ram[0xbb]+256*ram[0xbc]  // file name address
             return if (fnlen > 0) {
-                val filename = (0 until fnlen).map { ram[fnaddr + it].toChar() }.joinToString("")
+                val filename = (0 until fnlen).map { ram[fnaddr+it].toChar() }.joinToString("")
                 val loadEndAddress = searchAndLoadFile(filename, fa, sa, txttab)
                 if (loadEndAddress != null) {
                     ram[0x90] = 0  // status OK
@@ -87,16 +87,15 @@ class C64Machine(title: String) : IVirtualMachine {
 
     private fun breakpointKernelSave(cpu: Cpu6502, pc: Address): Cpu6502.BreakpointResultAction {
         val fnlen = ram[0xb7]   // file name length
-//        val fa = ram[0xba]      // device number
-//        val sa = ram[0xb9]      // secondary address
-        val fnaddr = ram[0xbb] + 256 * ram[0xbc]  // file name address
+        //        val fa = ram[0xba]      // device number
+        //        val sa = ram[0xb9]      // secondary address
+        val fnaddr = ram[0xbb]+256*ram[0xbc]  // file name address
         return if (fnlen > 0) {
-            val fromAddr = ram[cpu.regA] + 256 * ram[cpu.regA + 1]
-            val endAddr = cpu.regX + 256 * cpu.regY
+            val fromAddr = ram[cpu.regA]+256*ram[cpu.regA+1]
+            val endAddr = cpu.regX+256*cpu.regY
             val data = (fromAddr..endAddr).map { ram[it].toByte() }.toByteArray()
-            var filename = (0 until fnlen).map { ram[fnaddr + it].toChar() }.joinToString("").toLowerCase()
-            if (!filename.endsWith(".prg"))
-                filename += ".prg"
+            var filename = (0 until fnlen).map { ram[fnaddr+it].toChar() }.joinToString("").toLowerCase()
+            if (!filename.endsWith(".prg")) filename += ".prg"
             File(filename).outputStream().use {
                 it.write(fromAddr and 0xff)
                 it.write(fromAddr ushr 8)
@@ -111,35 +110,25 @@ class C64Machine(title: String) : IVirtualMachine {
         throw Cpu6502.InstructionError("BRK instruction hit at $${hexW(pc)}")
     }
 
-    private fun searchAndLoadFile(filename: String,
-                                  device: UByte, secondary: UByte, basicLoadAddress: Address): Address? {
+    private fun searchAndLoadFile(filename: String, device: UByte, secondary: UByte, basicLoadAddress: Address): Address? {
         when (filename) {
             "*" -> {
                 // load the first file in the directory
-                return searchAndLoadFile(
-                    File(".").listFiles()?.firstOrNull()?.name ?: "",
-                    device,
-                    secondary,
-                    basicLoadAddress
-                )
+                return searchAndLoadFile(File(".").listFiles()?.firstOrNull()?.name ?: "", device, secondary, basicLoadAddress)
             }
             "$" -> {
                 // load the directory
-                val files = File(".")
-                    .listFiles(FileFilter { it.isFile })!!
-                    .associate {
-                        val name = it.nameWithoutExtension.toUpperCase()
-                        val ext = it.extension.toUpperCase()
-                        val fileAndSize = Pair(it, it.length())
-                        if (name.isEmpty())
-                            Pair(".$ext", "") to fileAndSize
-                        else
-                            Pair(name, ext) to fileAndSize
-                    }
+                val files = File(".").listFiles(FileFilter { it.isFile })!!.associate {
+                    val name = it.nameWithoutExtension.toUpperCase()
+                    val ext = it.extension.toUpperCase()
+                    val fileAndSize = Pair(it, it.length())
+                    if (name.isEmpty()) Pair(".$ext", "") to fileAndSize
+                    else Pair(name, ext) to fileAndSize
+                }
                 val dirname = File(".").canonicalPath.substringAfterLast(File.separator).toUpperCase()
                 val dirlisting = makeDirListing(dirname, files, basicLoadAddress)
                 ram.load(dirlisting, basicLoadAddress)
-                return basicLoadAddress + dirlisting.size - 1
+                return basicLoadAddress+dirlisting.size-1
             }
             else -> {
                 fun findHostFile(filename: String): String? {
@@ -153,10 +142,10 @@ class C64Machine(title: String) : IVirtualMachine {
                 return try {
                     return if (secondary == 1.toShort()) {
                         val (loadAddress, size) = ram.loadPrg(hostFileName, null)
-                        loadAddress + size - 1
+                        loadAddress+size-1
                     } else {
                         val (loadAddress, size) = ram.loadPrg(hostFileName, basicLoadAddress)
-                        loadAddress + size - 1
+                        loadAddress+size-1
                     }
                 } catch (iox: IOException) {
                     println("LOAD ERROR $iox")
@@ -166,13 +155,12 @@ class C64Machine(title: String) : IVirtualMachine {
         }
     }
 
-    private fun makeDirListing(dirname: String,
-        files: Map<Pair<String, String>, Pair<File, Long>>, basicLoadAddress: Address): Array<UByte>
-    {
+    private fun makeDirListing(dirname: String, files: Map<Pair<String, String>, Pair<File, Long>>,
+                               basicLoadAddress: Address): Array<UByte> {
         var address = basicLoadAddress
         val listing = mutableListOf<UByte>()
         fun addLine(lineNumber: Int, line: String) {
-            address += line.length + 3
+            address += line.length+3
             listing.add((address and 0xff).toShort())
             listing.add((address ushr 8).toShort())
             listing.add((lineNumber and 0xff).toShort())
@@ -183,14 +171,14 @@ class C64Machine(title: String) : IVirtualMachine {
         addLine(0, "\u0012\"${dirname.take(16).padEnd(16)}\" 00 2A")
         var totalBlocks = 0
         files.forEach {
-            val blocksize = (it.value.second / 256).toInt()
+            val blocksize = (it.value.second/256).toInt()
             totalBlocks += blocksize
             val filename = it.key.first.take(16)
             val padding1 = "   ".substring(blocksize.toString().length)
             val padding2 = "                ".substring(filename.length)
             addLine(blocksize, "$padding1 \"$filename\" $padding2${it.key.second.take(3).padEnd(3)}")
         }
-        addLine(kotlin.math.max(0, 664 - totalBlocks), "BLOCKS FREE.")
+        addLine(kotlin.math.max(0, 664-totalBlocks), "BLOCKS FREE.")
         listing.add(0)
         listing.add(0)
         return listing.toTypedArray()
@@ -200,26 +188,23 @@ class C64Machine(title: String) : IVirtualMachine {
         val candidates = listOf("./roms", "~/roms/c64", "~/roms", "~/.vice/C64")
         candidates.forEach {
             val path = Paths.get(expandUser(it))
-            if (path.toFile().isDirectory)
-                return path
+            if (path.toFile().isDirectory) return path
         }
         throw FileNotFoundException("no roms directory found, tried: $candidates")
     }
 
     private fun expandUser(path: String): String {
         return when {
-            path.startsWith("~/") -> System.getProperty("user.home") + path.substring(1)
-            path.startsWith("~" + File.separatorChar) -> System.getProperty("user.home") + path.substring(1)
+            path.startsWith("~/") -> System.getProperty("user.home")+path.substring(1)
+            path.startsWith("~"+File.separatorChar) -> System.getProperty("user.home")+path.substring(1)
             path.startsWith("~") -> throw UnsupportedOperationException("home dir expansion not implemented for other users")
             else -> path
         }
     }
 
     override fun loadFileInRam(file: File, loadAddress: Address?) {
-        if (file.extension == "prg" && (loadAddress == null || loadAddress == 0x0801))
-            ram.loadPrg(file.inputStream(), null)
-        else
-            ram.load(file.readBytes(), loadAddress!!)
+        if (file.extension == "prg" && (loadAddress == null || loadAddress == 0x0801)) ram.loadPrg(file.inputStream(), null)
+        else ram.load(file.readBytes(), loadAddress!!)
     }
 
     override fun getZeroAndStackPages(): Array<UByte> = ram.getPages(0, 2)
@@ -243,29 +228,20 @@ class C64Machine(title: String) : IVirtualMachine {
         }.start()
 
         val timer = java.util.Timer("cpu-cycle", true)
-        timer.scheduleAtFixedRate(0, 1000L / VicII.framerate) {
+        timer.scheduleAtFixedRate(0, 1000L/VicII.framerate) {
             if (!paused) {
                 // we synchronise cpu cycles to the vertical blank of the Vic chip
                 // this should result in ~1 Mhz cpu speed
                 try {
                     while (vic.vsync) step()
                     while (!vic.vsync) step()
+                    hostDisplay.repaint()           // repaint synced with VIC vertical blank
                 } catch (rx: RuntimeException) {
-                    JOptionPane.showMessageDialog(
-                        hostDisplay,
-                        "Run time error: $rx",
-                        "Error during execution",
-                        JOptionPane.ERROR_MESSAGE
-                    )
+                    JOptionPane.showMessageDialog(hostDisplay, "Run time error: $rx", "Error during execution", JOptionPane.ERROR_MESSAGE)
                     this.cancel()
                     throw rx
                 } catch (ex: Error) {
-                    JOptionPane.showMessageDialog(
-                        hostDisplay,
-                        "Run time error: $ex",
-                        "Error during execution",
-                        JOptionPane.ERROR_MESSAGE
-                    )
+                    JOptionPane.showMessageDialog(hostDisplay, "Run time error: $ex", "Error during execution", JOptionPane.ERROR_MESSAGE)
                     this.cancel()
                     throw ex
                 }

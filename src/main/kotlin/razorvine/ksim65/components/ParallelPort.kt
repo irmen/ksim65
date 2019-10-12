@@ -12,22 +12,19 @@ class ParallelPort(startAddress: Address, endAddress: Address) : MemMappedCompon
     private var dataByte: UByte = 0
 
     init {
-        require(endAddress - startAddress + 1 == 2) { "parallel needs exactly 2 memory bytes (data + control)" }
+        require(endAddress-startAddress+1 == 2) { "parallel needs exactly 2 memory bytes (data + control)" }
     }
 
     override fun clock() {}
     override fun reset() {}
 
     override operator fun get(address: Address): UByte {
-        return if (address == startAddress)
-            dataByte
-        else
-            0xff
+        return if (address == startAddress) dataByte
+        else 0xff
     }
 
     override operator fun set(address: Address, data: UByte) {
-        if (address == startAddress)
-            dataByte = data
+        if (address == startAddress) dataByte = data
         else if (address == endAddress) {
             if ((data.toInt() and 1) == 1) {
                 val char = dataByte.toChar()

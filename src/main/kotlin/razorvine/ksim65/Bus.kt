@@ -60,11 +60,10 @@ class Bus {
     fun write(address: Address, data: UByte) {
         require(data in 0..255) { "data written to address $address must be a byte 0..255" }
         memComponents.forEach {
-            if (address >= it.startAddress && address <= it.endAddress)
-                it[address] = data
+            if (address >= it.startAddress && address <= it.endAddress) it[address] = data
         }
     }
 
     fun memoryComponentFor(address: Address) =
-        memComponents.first { it is MemoryComponent && address >= it.startAddress && address <= it.endAddress } as MemoryComponent
+            memComponents.first { it is MemoryComponent && address >= it.startAddress && address <= it.endAddress } as MemoryComponent
 }

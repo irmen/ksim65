@@ -36,19 +36,16 @@ abstract class MemMappedComponent(val startAddress: Address, val endAddress: Add
         require(startAddress >= 0 && endAddress <= 0xffff) { "can only have 16-bit address space" }
     }
 
-    fun hexDump(from: Address, to: Address, charmapper: ((Short)->Char)? = null) {
+    fun hexDump(from: Address, to: Address, charmapper: ((Short) -> Char)? = null) {
         (from..to).chunked(16).forEach {
             print("\$${it.first().toString(16).padStart(4, '0')}  ")
             val bytes = it.map { address -> get(address) }
             bytes.forEach { byte ->
-                print(byte.toString(16).padStart(2, '0') + " ")
+                print(byte.toString(16).padStart(2, '0')+" ")
             }
             print("  ")
-            val chars =
-                if(charmapper!=null)
-                    bytes.map { b -> charmapper(b) }
-                else
-                    bytes.map { b -> if(b in 32..255) b.toChar() else '.' }
+            val chars = if (charmapper != null) bytes.map { b -> charmapper(b) }
+            else bytes.map { b -> if (b in 32..255) b.toChar() else '.' }
             println(chars.joinToString(""))
         }
     }
@@ -57,13 +54,12 @@ abstract class MemMappedComponent(val startAddress: Address, val endAddress: Add
 /**
  * Base class for components that actually contain memory (RAM or ROM chips).
  */
-abstract class MemoryComponent(startAddress: Address, endAddress: Address) :
-    MemMappedComponent(startAddress, endAddress) {
+abstract class MemoryComponent(startAddress: Address, endAddress: Address) : MemMappedComponent(startAddress, endAddress) {
 
     abstract val data: Array<UByte>
 
     init {
-        require(startAddress and 0xff == 0 && endAddress and 0xff == 0xff) {"address range must span complete page(s)"}
+        require(startAddress and 0xff == 0 && endAddress and 0xff == 0xff) { "address range must span complete page(s)" }
     }
 
     fun getPages(page: Int, numPages: Int): Array<UByte> = data.copyOfRange(page*256, (page+numPages)*256)
