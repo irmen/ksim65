@@ -12,7 +12,7 @@ import javax.swing.JPanel
  * The rendering logic of the screen of the C64.
  * It supports: Character mode,
  * High res bitmap mode (320*200), Multicolor bitmap mode (160*200).
- * TODO: sprites.  Multicolor character mode.   Extended background color mode.
+ * TODO: Multicolor character mode.   Extended background color mode.   Custom charsets.
  */
 internal class Screen(private val chargenData: ByteArray, val ram: MemoryComponent) : JPanel() {
 
@@ -111,54 +111,50 @@ internal class Screen(private val chargenData: ByteArray, val ram: MemoryCompone
     }
 
     private fun renderSprites(vicBank: Address) {
-        val pixels: IntArray = (fullscreenImage.raster.dataBuffer as DataBufferInt).data
+        // TODO sprite-background priorities
+        // TODO multicolor sprites
+        val spriteImage = fullscreenG2d.deviceConfiguration.createCompatibleImage(24, 21, Transparency.TRANSLUCENT)
+        val spriteGfx = spriteImage.graphics
+        spriteGfx.color = Color(255, 255, 255, 0)
+        val spritePixels = (spriteImage.raster.dataBuffer as DataBufferInt).data
         val vicSPENA = ram[0xd015].toInt()
         val vicXXPAND = ram[0xd01d].toInt()
         val vicYXPAND = ram[0xd017].toInt()
-        for (i in 7 downTo 0) {
-            val bit = 1 shl i
-            if (vicSPENA and bit != 0) renderSprite(pixels, vicBank, i, vicXXPAND and bit != 0, vicYXPAND and bit != 0)
-        }
-    }
-
-    private fun renderSprite(pixels: IntArray, vicBank: Address, sprite: Int, expandX: Boolean, expandY: Boolean) {
-        val mx = ram[0xd010].toInt() and (1 shl sprite) != 0
-        var xstart = ram[0xd000+sprite*2].toInt()+if (mx) 256 else 0
-        var ystart = ram[0xd001+sprite*2].toInt()
-        if (xstart == 0 || xstart > 343 || ystart < 30 || ystart > 249) return
-        ystart -= 50
-        xstart -= 24
-        val sprptr = ram[vicBank+2040+sprite]*64
-        val color = ScreenDefs.colorPalette[ram[0xd027+sprite]].rgb
-        val offset = ScreenDefs.BORDER_SIZE+ScreenDefs.BORDER_SIZE*fullscreenImage.width+xstart+ystart*fullscreenImage.width
-        for (i in 0..62) {
-            val bits = ram[sprptr+i].toInt()
-            val x = (i%3)*if (expandX) 16 else 8
-            val y = (i/3)*if (expandY) 2 else 1
-            val pixOffset = offset+x+y*fullscreenImage.width
-            if (pixOffset < 0 || pixOffset >= pixels.size-fullscreenImage.width) break
-            if (expandX) {
-                for (px in 0..7) {
-                    if (bits and (0b10000000 ushr px) != 0) {
-                        pixels[pixOffset+px*2] = color
-                        pixels[pixOffset+1+px*2] = color
-                        if (expandY) {
-                            pixels[pixOffset+fullscreenImage.width+px*2] = color
-                            pixels[pixOffset+1+fullscreenImage.width+px*2] = color
-                        }
-                    }
-                }
-            } else {
-                for (px in 0..7) {
-                    if (bits and (0b10000000 ushr px) != 0) {
-                        pixels[pixOffset+px] = color
-                        if (expandY) pixels[pixOffset+fullscreenImage.width+px] = color
-                    }
+        for (sprite in 7 downTo 0) {
+            val bit = 1 shl sprite
+            if (vicSPENA and bit != 0) {
+                val mx = ram[0xd010].toInt() and (1 shl sprite) != 0
+                val xpos = ram[0xd000+sprite*2].toInt()+if (mx) 256 else 0
+                val ypos = ram[0xd001+sprite*2].toInt()
+                if(xpos in 1..343 && ypos in 30..249) {
+                    spriteGfx.fillRect(0, 0, 24, 21)
+                    renderSprite(sprite, spritePixels, vicBank)
+                    fullscreenG2d.drawImage(spriteImage,
+                                            xpos+ScreenDefs.BORDER_SIZE-24,
+                                            ypos+ScreenDefs.BORDER_SIZE-50,
+                                            if(vicXXPAND and bit == 0) 24 else 48,
+                                            if(vicYXPAND and bit == 0) 21 else 42,
+                                            null)
                 }
             }
         }
-        // TODO multicolor sprites
-        // TODO sprite-background priorities
+    }
+
+    private fun renderSprite(sprite: Int, spritePixels: IntArray, vicBank: Address) {
+        // note: the sprite pixels must all have been cleared to transparency already
+        val sprptr = ram[vicBank+2040+sprite]*64
+        val color = ScreenDefs.colorPalette[ram[0xd027+sprite]].rgb
+        for (i in spritePixels.indices step 8) {
+            val bits = ram[sprptr+i/8].toInt()
+            if (bits and 0b10000000 != 0) spritePixels[i] = color
+            if (bits and 0b01000000 != 0) spritePixels[i+1] = color
+            if (bits and 0b00100000 != 0) spritePixels[i+2] = color
+            if (bits and 0b00010000 != 0) spritePixels[i+3] = color
+            if (bits and 0b00001000 != 0) spritePixels[i+4] = color
+            if (bits and 0b00000100 != 0) spritePixels[i+5] = color
+            if (bits and 0b00000010 != 0) spritePixels[i+6] = color
+            if (bits and 0b00000001 != 0) spritePixels[i+7] = color
+        }
     }
 
     private fun renderCharacterMode(vicBank: Address, vicVMCSB: Int, multiColorMode: Boolean) {
