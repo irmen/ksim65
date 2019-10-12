@@ -30,6 +30,7 @@ allprojects {
     }
 }
 
+
 dependencies {
     // Use the Kotlin JDK 8 standard library.
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
@@ -56,7 +57,7 @@ tasks {
         // parallel tests.
         systemProperty("junit.jupiter.execution.parallel.enabled", "true")
         systemProperty("junit.jupiter.execution.parallel.mode.default", "concurrent")
-        maxParallelForks = max(1, Runtime.getRuntime().availableProcessors() / 2)
+        maxParallelForks = max(1, Runtime.getRuntime().availableProcessors()/2)
     }
 
     withType<KotlinCompile> {
@@ -76,14 +77,14 @@ val c64emuScript by tasks.registering(CreateStartScripts::class) {
     outputDir = File(project.buildDir, "bin")
     applicationName = "c64emu"
     mainClassName = "razorvine.c64emu.C64MainKt"
-    classpath = project.tasks["jar"].outputs.files + project.configurations.runtimeClasspath.get()
+    classpath = project.tasks["jar"].outputs.files+project.configurations.runtimeClasspath.get()
 }
 
 val ehbasicScript by tasks.registering(CreateStartScripts::class) {
     outputDir = File(project.buildDir, "bin")
     applicationName = "ehbasic"
     mainClassName = "razorvine.examplemachines.EhBasicMainKt"
-    classpath = project.tasks["jar"].outputs.files + project.configurations.runtimeClasspath.get()
+    classpath = project.tasks["jar"].outputs.files+project.configurations.runtimeClasspath.get()
 }
 
 application {
@@ -117,5 +118,19 @@ publishing {
             artifact(sourcesJar.get())
             artifact(dokkaDocs.get())
         }
+    }
+}
+
+bintray {
+    user = System.getenv("BINTRAY_USER")
+    key = System.getenv("BINTRAY_KEY")
+    setPublications(* publishing.publications.names.toTypedArray())
+    pkg = PackageConfig().also {
+        it.name = "ksim65"
+        it.repo = "maven"
+        it.setLicenses("MIT")
+        it.vcsUrl = "https://github.com/irmen/ksim65.git"
+        it.setLabels("6502", "retro", "emulation", "c64")
+        it.githubRepo = it.vcsUrl
     }
 }
