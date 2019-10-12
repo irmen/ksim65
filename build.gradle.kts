@@ -9,8 +9,8 @@ plugins {
     kotlin("jvm") version "1.3.50"
     `maven-publish`
     application
-    id("org.jetbrains.dokka") version "0.9.18"
-    id("com.jfrog.bintray") version "1.7.3"
+    id("org.jetbrains.dokka") version "0.10.0"
+    id("com.jfrog.bintray") version "1.8.4"
 }
 
 allprojects {
@@ -39,8 +39,8 @@ dependencies {
 
     // Use the Kotlin JUnit5 integration.
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.1.0")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.1.0")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.4.0")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.4.0")
 
     subprojects.forEach {
         archives(it)
@@ -49,11 +49,8 @@ dependencies {
 
 tasks {
     named<Test>("test") {
-        // Enable JUnit 5 (Gradle 4.6+).
         useJUnitPlatform()
-        // Always run tests, even when nothing changed.
         dependsOn("cleanTest")
-        // Show test results.
         testLogging.events("failed")
 
         // parallel tests.
@@ -69,7 +66,9 @@ tasks {
     named<DokkaTask>("dokka") {
         outputFormat = "html"
         outputDirectory = "$buildDir/kdoc"
-        skipEmptyPackages = true
+        configuration {
+            skipEmptyPackages = true
+        }
     }
 }
 

@@ -1,10 +1,11 @@
 import org.junit.jupiter.api.Disabled
-import org.junit.jupiter.api.TestInstance
+import org.junit.jupiter.api.parallel.Execution
+import org.junit.jupiter.api.parallel.ExecutionMode
 import kotlin.test.*
 
 
-@TestInstance(TestInstance.Lifecycle.PER_METHOD)
-@Disabled("this test suite takes a long time to complete")
+@Execution(ExecutionMode.CONCURRENT)
+@Disabled("this test suite is quite intensive and for regular test runs, the other tests are sufficient")
 class Test6502TestSuitePart2: FunctionalTestsBase() {
 
     @Test

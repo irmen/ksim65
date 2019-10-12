@@ -17,20 +17,6 @@ abstract class FunctionalTestsBase {
         cpu.addBreakpoint(0xffe4) { cpu, pc -> kernalStubs.handleBreakpoint(cpu, pc) }
         cpu.addBreakpoint(0xe16f) { cpu, pc -> kernalStubs.handleBreakpoint(cpu, pc) }
 
-        // create the system bus and add device to it.
-        // note that the order is relevant w.r.t. where reads and writes are going.
-        ram[0x02] = 0
-        ram[0xa002] = 0
-        ram[0xa003] = 0x80
-        ram[Cpu6502.IRQ_vector] = 0x48
-        ram[Cpu6502.IRQ_vector + 1] = 0xff
-        ram[Cpu6502.RESET_vector] = 0x01
-        ram[Cpu6502.RESET_vector + 1] = 0x08
-        ram[0x01fe] = 0xff
-        ram[0x01ff] = 0x7f
-        ram[0x8000] = 2
-        ram[0xa474] = 2
-
         // setup the irq/brk routine
         for(b in listOf(0x48, 0x8A, 0x48, 0x98, 0x48, 0xBA, 0xBD, 0x04,
                 0x01, 0x29, 0x10, 0xF0, 0x03, 0x6C, 0x16, 0x03,
@@ -43,6 +29,17 @@ abstract class FunctionalTestsBase {
 
     protected fun runTest(testprogram: String) {
         ram.loadPrg("src/test/kotlin/6502testsuite/$testprogram", null)
+        ram[0x02] = 0
+        ram[0xa002] = 0
+        ram[0xa003] = 0x80
+        ram[Cpu6502.IRQ_vector] = 0x48
+        ram[Cpu6502.IRQ_vector + 1] = 0xff
+        ram[Cpu6502.RESET_vector] = 0x01
+        ram[Cpu6502.RESET_vector + 1] = 0x08
+        ram[0x01fe] = 0xff
+        ram[0x01ff] = 0x7f
+        ram[0x8000] = 2
+        ram[0xa474] = 2
         bus.reset()
         cpu.regSP = 0xfd
         cpu.regP.fromInt(0b00100100)
