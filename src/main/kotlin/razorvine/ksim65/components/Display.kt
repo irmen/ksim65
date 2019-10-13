@@ -28,10 +28,9 @@ import kotlin.math.min
  *  0a      r/w character at cursor pos, updates cursor position, scrolls up if necessary
  *          control chars: 8=backspace, 9=tab, 10=newline, 12=form feed (clear screen), 13=carriage return
  */
-class Display(startAddress: Address, endAddress: Address, private val host: IHostInterface, private val charWidth: Int,
-              private val charHeight: Int, private val pixelWidth: Int, private val pixelHeight: Int) :
+class Display(startAddress: Address, endAddress: Address, private val host: IHostInterface,
+              private val charWidth: Int, private val charHeight: Int) :
         MemMappedComponent(startAddress, endAddress) {
-
 
     init {
         require(endAddress-startAddress+1 == 11) { "display needs exactly 11 memory bytes" }
