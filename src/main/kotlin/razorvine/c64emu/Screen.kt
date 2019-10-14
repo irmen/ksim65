@@ -12,7 +12,7 @@ import javax.swing.JPanel
  * The rendering logic of the screen of the C64.
  * It supports: Character mode,
  * High res bitmap mode (320*200), Multicolor bitmap mode (160*200).
- * TODO: Multicolor character mode.   Extended background color mode.   Custom charsets.
+ * TODO: Custom charsets from RAM.  Multicolor character mode.   Extended background color mode.
  */
 internal class Screen(private val chargenData: ByteArray, val ram: MemoryComponent) : JPanel() {
 
@@ -26,7 +26,6 @@ internal class Screen(private val chargenData: ByteArray, val ram: MemoryCompone
         val gd = ge.defaultScreenDevice.defaultConfiguration
         fullscreenImage = gd.createCompatibleImage(ScreenDefs.SCREEN_WIDTH+2*ScreenDefs.BORDER_SIZE,
                                                    ScreenDefs.SCREEN_HEIGHT+2*ScreenDefs.BORDER_SIZE, Transparency.OPAQUE)
-        fullscreenImage.accelerationPriority = 1.0f
         fullscreenG2d = fullscreenImage.graphics as Graphics2D
 
         val size = Dimension(fullscreenImage.width*ScreenDefs.DISPLAY_PIXEL_SCALING.toInt(),
@@ -40,9 +39,7 @@ internal class Screen(private val chargenData: ByteArray, val ram: MemoryCompone
     }
 
     private fun loadCharacters(shifted: Boolean): Array<BufferedImage> {
-        val chars = Array(256) {
-            BufferedImage(8, 8, BufferedImage.TYPE_BYTE_BINARY).also { it.accelerationPriority = 1.0f }
-        }
+        val chars = Array(256) { BufferedImage(8, 8, BufferedImage.TYPE_BYTE_BINARY) }
         val offset = if (shifted) 256*8 else 0
         for (char in 0..255) {
             for (line in 0..7) {
@@ -164,19 +161,13 @@ internal class Screen(private val chargenData: ByteArray, val ram: MemoryCompone
             // normal character mode
             val screenAddress = vicBank+(vicVMCSB ushr 4) shl 10
             val charsetAddress = (vicVMCSB and 0b00001110) shl 10
-            if (charsetAddress == 0x1000 || charsetAddress == 0x1800) {
-                // use built-in character ROM
-                for (y in 0 until ScreenDefs.SCREEN_HEIGHT_CHARS) {
-                    for (x in 0 until ScreenDefs.SCREEN_WIDTH_CHARS) {
-                        val char = ram[screenAddress+x+y*ScreenDefs.SCREEN_WIDTH_CHARS].toInt()
-                        val color = ram[0xd800+x+y*ScreenDefs.SCREEN_WIDTH_CHARS].toInt()   // colors always at $d800
-                        drawColoredChar(x, y, char, color, charsetAddress == 0x1800)
-                    }
+            for (y in 0 until ScreenDefs.SCREEN_HEIGHT_CHARS) {
+                for (x in 0 until ScreenDefs.SCREEN_WIDTH_CHARS) {
+                    val char = ram[screenAddress+x+y*ScreenDefs.SCREEN_WIDTH_CHARS].toInt()
+                    val color = ram[0xd800+x+y*ScreenDefs.SCREEN_WIDTH_CHARS].toInt()   // colors always at $d800
+                    drawColoredChar(x, y, char, color, vicBank + charsetAddress)
                 }
             }
-            /* else {
-                // TODO: custom charsets from RAM. Currently the charset ROM is just loaded externally.
-            } */
         }
     }
 
@@ -239,10 +230,15 @@ internal class Screen(private val chargenData: ByteArray, val ram: MemoryCompone
         pixels[offset+7] = fourColors[colors[3]]
     }
 
-    private val coloredCharacters = mutableMapOf<Triple<Int, Int, Boolean>, BufferedImage>()
+    private val coloredCharacterImageCache = mutableMapOf<Triple<Int, Int, Boolean>, BufferedImage>()
 
-    private fun drawColoredChar(x: Int, y: Int, char: Int, color: Int, shifted: Boolean) {
-        var cached = coloredCharacters[Triple(char, color, shifted)]
+    private fun drawColoredChar(x: Int, y: Int, char: Int, color: Int, charsetAddr: Address) {
+        // The vic 'sees' the charset rom at these addresses: $1000 + $1800, $9000 + $9800
+        // so we can use pre-loaded images to efficiently draw the characters.
+        // If the address is different, the vic takes charset data from RAM instead.
+        // TODO: currently custom charsets taken from RAM are not yet supported
+        val shifted = charsetAddr and 0x0800 != 0
+        var cached = coloredCharacterImageCache[Triple(char, color, shifted)]
         if (cached == null) {
             cached = if (shifted) shiftedCharacters[char] else normalCharacters[char]
             val colored = fullscreenG2d.deviceConfiguration.createCompatibleImage(8, 8, BufferedImage.BITMASK)
@@ -259,7 +255,7 @@ internal class Screen(private val chargenData: ByteArray, val ram: MemoryCompone
                     }
                 }
             }
-            coloredCharacters[Triple(char, color, shifted)] = colored
+            coloredCharacterImageCache[Triple(char, color, shifted)] = colored
             cached = colored
         }
         fullscreenG2d.drawImage(cached, x*8+ScreenDefs.BORDER_SIZE, y*8+ScreenDefs.BORDER_SIZE, null)
