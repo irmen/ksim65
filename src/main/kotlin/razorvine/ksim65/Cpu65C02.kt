@@ -15,12 +15,6 @@ class Cpu65C02 : Cpu6502() {
 
     var waiting: Wait = Wait.Normal
 
-    companion object {
-        const val NMI_vector = Cpu6502.NMI_vector
-        const val RESET_vector = Cpu6502.RESET_vector
-        const val IRQ_vector = Cpu6502.NMI_vector
-        const val resetCycles = Cpu6502.resetCycles
-    }
 
     /**
      * Process once clock cycle in the cpu

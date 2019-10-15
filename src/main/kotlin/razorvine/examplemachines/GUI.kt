@@ -70,8 +70,8 @@ private class BitmapScreenPanel : JPanel() {
         image = gd.createCompatibleImage(ScreenDefs.SCREEN_WIDTH, ScreenDefs.SCREEN_HEIGHT, Transparency.OPAQUE)
         g2d = image.graphics as Graphics2D
 
-        val size =
-                Dimension((image.width*ScreenDefs.DISPLAY_PIXEL_SCALING).toInt(), (image.height*ScreenDefs.DISPLAY_PIXEL_SCALING).toInt())
+        val size = Dimension((image.width*ScreenDefs.DISPLAY_PIXEL_SCALING).toInt(),
+                             (image.height*ScreenDefs.DISPLAY_PIXEL_SCALING).toInt())
         minimumSize = size
         maximumSize = size
         preferredSize = size

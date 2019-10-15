@@ -65,7 +65,7 @@ class Test65C02 : TestCommon6502() {
         memory[0xABCD] = 0x00
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(5 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(13L, mpu.totalCycles)
         assertEquals(0x00, mpu.regA)
         assertFalse(mpu.regP.C)
         assertFalse(mpu.regP.N)
@@ -83,7 +83,7 @@ class Test65C02 : TestCommon6502() {
         memory[0xABCD] = 0x00
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(5 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(13L, mpu.totalCycles)
         assertEquals(0x01, mpu.regA)
         assertFalse(mpu.regP.N)
         assertFalse(mpu.regP.Z)
@@ -100,7 +100,7 @@ class Test65C02 : TestCommon6502() {
         memory[0xABCD] = 0xFE
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(5 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(13L, mpu.totalCycles)
         assertEquals(0xFF, mpu.regA)
         assertTrue(mpu.regP.N)
         assertFalse(mpu.regP.C)
@@ -117,7 +117,7 @@ class Test65C02 : TestCommon6502() {
         memory[0xABCD] = 0xFF
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(5 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(13L, mpu.totalCycles)
         assertEquals(0x01, mpu.regA)
         assertTrue(mpu.regP.C)
         assertFalse(mpu.regP.N)
@@ -212,7 +212,7 @@ class Test65C02 : TestCommon6502() {
         memory[0xABCD] = 0x00
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(5 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(13L, mpu.totalCycles)
         assertEquals(0x00, mpu.regA)
         assertTrue(mpu.regP.Z)
         assertFalse(mpu.regP.N)
@@ -228,7 +228,7 @@ class Test65C02 : TestCommon6502() {
         memory[0xABCD] = 0xAA
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(5 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(13L, mpu.totalCycles)
         assertEquals(0xAA, mpu.regA)
         assertTrue(mpu.regP.N)
         assertFalse(mpu.regP.Z)
@@ -246,7 +246,7 @@ class Test65C02 : TestCommon6502() {
         mpu.regA = 0xFF
         mpu.step()
         assertTrue(mpu.regP.N)
-        assertEquals(4 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(12, mpu.totalCycles)
         assertEquals(0x0003, mpu.regPC)
     }
 
@@ -260,7 +260,7 @@ class Test65C02 : TestCommon6502() {
         mpu.regA = 0xFF
         mpu.step()
         assertFalse(mpu.regP.N)
-        assertEquals(4 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(12, mpu.totalCycles)
         assertEquals(0x0003, mpu.regPC)
     }
 
@@ -274,7 +274,7 @@ class Test65C02 : TestCommon6502() {
         mpu.regA = 0xFF
         mpu.step()
         assertTrue(mpu.regP.V)
-        assertEquals(4 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(12, mpu.totalCycles)
         assertEquals(0x0003, mpu.regPC)
     }
 
@@ -288,7 +288,7 @@ class Test65C02 : TestCommon6502() {
         mpu.regA = 0xFF
         mpu.step()
         assertFalse(mpu.regP.V)
-        assertEquals(4 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(12, mpu.totalCycles)
         assertEquals(0x0003, mpu.regPC)
     }
 
@@ -304,7 +304,7 @@ class Test65C02 : TestCommon6502() {
         assertTrue(mpu.regP.Z)
         assertEquals(0x01, mpu.regA)
         assertEquals(0x00, memory[0xFEED])
-        assertEquals(4 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(12, mpu.totalCycles)
         assertEquals(0x0003, mpu.regPC)
     }
 
@@ -320,7 +320,7 @@ class Test65C02 : TestCommon6502() {
         assertFalse(mpu.regP.Z) // result of AND is non-zero
         assertEquals(0x01, mpu.regA)
         assertEquals(0x01, memory[0xFEED])
-        assertEquals(4 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(12, mpu.totalCycles)
         assertEquals(0x0003, mpu.regPC)
     }
 
@@ -336,7 +336,7 @@ class Test65C02 : TestCommon6502() {
         assertTrue(mpu.regP.Z) // result of AND is zero
         assertEquals(0x01, mpu.regA)
         assertEquals(0x00, memory[0xFEED])
-        assertEquals(4 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(12, mpu.totalCycles)
         assertEquals(0x0003, mpu.regPC)
     }
 
@@ -353,7 +353,7 @@ class Test65C02 : TestCommon6502() {
         assertTrue(mpu.regP.N)
         assertTrue(mpu.regP.V)
         assertEquals(0x00, mpu.regA)
-        assertEquals(2 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(10, mpu.totalCycles)
         assertEquals(0x02, mpu.regPC)
     }
 
@@ -366,7 +366,7 @@ class Test65C02 : TestCommon6502() {
         mpu.step()
         assertTrue(mpu.regP.Z)
         assertEquals(0x01, mpu.regA)
-        assertEquals(2 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(10, mpu.totalCycles)
         assertEquals(0x02, mpu.regPC)
     }
 
@@ -379,7 +379,7 @@ class Test65C02 : TestCommon6502() {
         mpu.step()
         assertFalse(mpu.regP.Z) // result of AND is non-zero
         assertEquals(0x01, mpu.regA)
-        assertEquals(2 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(10, mpu.totalCycles)
         assertEquals(0x02, mpu.regPC)
     }
 
@@ -392,7 +392,7 @@ class Test65C02 : TestCommon6502() {
         mpu.step()
         assertTrue(mpu.regP.Z) // result of AND is zero
         assertEquals(0x01, mpu.regA)
-        assertEquals(2 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(10, mpu.totalCycles)
         assertEquals(0x02, mpu.regPC)
     }
 
@@ -408,7 +408,7 @@ class Test65C02 : TestCommon6502() {
         mpu.regA = 0xFF
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(4 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(12, mpu.totalCycles)
         assertTrue(mpu.regP.N)
     }
 
@@ -422,7 +422,7 @@ class Test65C02 : TestCommon6502() {
         mpu.regA = 0xFF
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(4 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(12, mpu.totalCycles)
         assertFalse(mpu.regP.N)
     }
 
@@ -436,7 +436,7 @@ class Test65C02 : TestCommon6502() {
         mpu.regA = 0xFF
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(4 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(12, mpu.totalCycles)
         assertTrue(mpu.regP.V)
     }
 
@@ -450,7 +450,7 @@ class Test65C02 : TestCommon6502() {
         mpu.regA = 0xFF
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(4 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(12, mpu.totalCycles)
         assertFalse(mpu.regP.V)
     }
 
@@ -465,7 +465,7 @@ class Test65C02 : TestCommon6502() {
         mpu.step()
         assertTrue(mpu.regP.Z)
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(4 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(12, mpu.totalCycles)
         assertEquals(0x01, mpu.regA)
         assertEquals(0x00, memory[0x0010 + mpu.regX])
     }
@@ -481,7 +481,7 @@ class Test65C02 : TestCommon6502() {
         mpu.step()
         assertFalse(mpu.regP.Z) // result of AND is non-zero
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(4 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(12, mpu.totalCycles)
         assertEquals(0x01, mpu.regA)
         assertEquals(0x01, memory[0x0010 + mpu.regX])
     }
@@ -496,7 +496,7 @@ class Test65C02 : TestCommon6502() {
         mpu.regA = 0x01
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(4 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(12, mpu.totalCycles)
         assertTrue(mpu.regP.Z) // result of AND is zero
         assertEquals(0x01, mpu.regA)
         assertEquals(0x00, memory[0x0010 + mpu.regX])
@@ -527,7 +527,7 @@ class Test65C02 : TestCommon6502() {
         memory[0xABCD] = 0x42
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(5 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(13L, mpu.totalCycles)
         assertEquals(0x42, mpu.regA)
         assertTrue(mpu.regP.Z)
         assertFalse(mpu.regP.N)
@@ -543,7 +543,7 @@ class Test65C02 : TestCommon6502() {
         memory[0xABCD] = 0x42
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(5 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(13L, mpu.totalCycles)
         assertEquals(0x43, mpu.regA)
         assertFalse(mpu.regP.Z)
         assertFalse(mpu.regP.N)
@@ -561,7 +561,7 @@ class Test65C02 : TestCommon6502() {
         memory[0xABCD] = 0xFF
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(5 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(13L, mpu.totalCycles)
         assertEquals(0x00, mpu.regA)
         assertEquals(0xFF, memory[0xABCD])
         assertTrue(mpu.regP.Z)
@@ -577,7 +577,7 @@ class Test65C02 : TestCommon6502() {
         memory[0xABCD] = 0xFF
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(5 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(13L, mpu.totalCycles)
         assertEquals(0xFF, mpu.regA)
         assertEquals(0xFF, memory[0xABCD])
         assertTrue(mpu.regP.N)
@@ -628,7 +628,7 @@ class Test65C02 : TestCommon6502() {
         writeMem(memory, 0, listOf(0x6c, 0xFF, 0x10))
         mpu.step()
         assertEquals(0xABCD, mpu.regPC)
-        assertEquals(6 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(14, mpu.totalCycles)
     }
 
     // JMP Indirect Absolute X-Indexed
@@ -642,7 +642,7 @@ class Test65C02 : TestCommon6502() {
         writeMem(memory, 0xABCF, listOf(0x34, 0x12))
         mpu.step()
         assertEquals(0x1234, mpu.regPC)
-        assertEquals(6 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(14, mpu.totalCycles)
     }
 
     // LDA Zero Page, Indirect
@@ -657,7 +657,7 @@ class Test65C02 : TestCommon6502() {
         memory[0xABCD] = 0x80
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(5 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(13L, mpu.totalCycles)
         assertEquals(0x80, mpu.regA)
         assertTrue(mpu.regP.N)
         assertFalse(mpu.regP.Z)
@@ -673,7 +673,7 @@ class Test65C02 : TestCommon6502() {
         memory[0xABCD] = 0x00
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(5 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(13L, mpu.totalCycles)
         assertEquals(0x00, mpu.regA)
         assertTrue(mpu.regP.Z)
         assertFalse(mpu.regP.N)
@@ -694,7 +694,7 @@ class Test65C02 : TestCommon6502() {
         memory[0xABCD] = 0x00
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(5 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(13L, mpu.totalCycles)
         assertEquals(0x00, mpu.regA)
         assertTrue(mpu.regP.Z)
     }
@@ -710,7 +710,7 @@ class Test65C02 : TestCommon6502() {
         memory[0xABCD] = 0x82
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(5 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(13L, mpu.totalCycles)
         assertEquals(0x83, mpu.regA)
         assertTrue(mpu.regP.N)
         assertFalse(mpu.regP.Z)
@@ -729,7 +729,7 @@ class Test65C02 : TestCommon6502() {
         assertEquals(0xAB, mpu.regX)
         assertEquals(0xAB, memory[0x01FF])
         assertEquals(0xFE, mpu.regSP)
-        assertEquals(3 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(11, mpu.totalCycles)
     }
 
     // PHY
@@ -745,7 +745,7 @@ class Test65C02 : TestCommon6502() {
         assertEquals(0xAB, mpu.regY)
         assertEquals(0xAB, memory[0x01FF])
         assertEquals(0xFE, mpu.regSP)
-        assertEquals(3 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(11, mpu.totalCycles)
     }
 
     // PLX
@@ -760,7 +760,7 @@ class Test65C02 : TestCommon6502() {
         assertEquals(0x0001, mpu.regPC)
         assertEquals(0xAB, mpu.regX)
         assertEquals(0xFF, mpu.regSP)
-        assertEquals(4 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(12, mpu.totalCycles)
     }
 
     // PLY
@@ -775,7 +775,7 @@ class Test65C02 : TestCommon6502() {
         assertEquals(0x0001, mpu.regPC)
         assertEquals(0xAB, mpu.regY)
         assertEquals(0xFF, mpu.regSP)
-        assertEquals(4 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(12, mpu.totalCycles)
     }
 
     // RMB0
@@ -787,7 +787,7 @@ class Test65C02 : TestCommon6502() {
         writeMem(memory, 0x0000, listOf(0x07, 0x43))
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(5 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(13L, mpu.totalCycles)
         val expected = 0b11111110
         assertEquals(expected, memory[0x0043].toInt())
     }
@@ -812,7 +812,7 @@ class Test65C02 : TestCommon6502() {
         writeMem(memory, 0x0000, listOf(0x17, 0x43))
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(5 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(13L, mpu.totalCycles)
         val expected = 0b11111101
         assertEquals(expected, memory[0x0043].toInt())
     }
@@ -837,7 +837,7 @@ class Test65C02 : TestCommon6502() {
         writeMem(memory, 0x0000, listOf(0x27, 0x43))
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(5 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(13L, mpu.totalCycles)
         val expected = 0b11111011.toShort()
         assertEquals(expected, memory[0x0043])
 
@@ -863,7 +863,7 @@ class Test65C02 : TestCommon6502() {
         writeMem(memory, 0x0000, listOf(0x37, 0x43))
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(5 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(13L, mpu.totalCycles)
         val expected = 0b11110111
         assertEquals(expected, memory[0x0043].toInt())
     }
@@ -888,7 +888,7 @@ class Test65C02 : TestCommon6502() {
         writeMem(memory, 0x0000, listOf(0x47, 0x43))
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(5 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(13L, mpu.totalCycles)
         val expected = 0b11101111
         assertEquals(expected, memory[0x0043].toInt())
     }
@@ -913,7 +913,7 @@ class Test65C02 : TestCommon6502() {
         writeMem(memory, 0x0000, listOf(0x57, 0x43))
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(5 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(13L, mpu.totalCycles)
         val expected = 0b11011111
         assertEquals(expected, memory[0x0043].toInt())
     }
@@ -938,7 +938,7 @@ class Test65C02 : TestCommon6502() {
         writeMem(memory, 0x0000, listOf(0x67, 0x43))
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(5 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(13L, mpu.totalCycles)
         val expected = 0b10111111.toShort()
         assertEquals(expected, memory[0x0043])
     }
@@ -963,7 +963,7 @@ class Test65C02 : TestCommon6502() {
         writeMem(memory, 0x0000, listOf(0x77, 0x43))
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(5 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(13L, mpu.totalCycles)
         val expected = 0b01111111
         assertEquals(expected, memory[0x0043].toInt())
 
@@ -994,7 +994,7 @@ class Test65C02 : TestCommon6502() {
         memory[0xFEED] = 0x00
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(5 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(13L, mpu.totalCycles)
         assertEquals(0xFF, memory[0xFEED])
         assertEquals(0xFF, mpu.regA)
         assertEquals(flags, mpu.regP.asInt())
@@ -1012,7 +1012,7 @@ class Test65C02 : TestCommon6502() {
         memory[0xFEED] = 0xFF
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(5 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(13L, mpu.totalCycles)
         assertEquals(0x00, memory[0xFEED])
         assertEquals(0x00, mpu.regA)
         assertEquals(flags, mpu.regP.asInt())
@@ -1027,7 +1027,7 @@ class Test65C02 : TestCommon6502() {
         writeMem(memory, 0x0000, listOf(0x87, 0x43))
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(5 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(13L, mpu.totalCycles)
         val expected = 0b00000001.toShort()
         assertEquals(expected, memory[0x0043])
     }
@@ -1052,7 +1052,7 @@ class Test65C02 : TestCommon6502() {
         writeMem(memory, 0x0000, listOf(0x97, 0x43))
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(5 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(13L, mpu.totalCycles)
         val expected = 0b00000010
         assertEquals(expected, memory[0x0043].toInt())
     }
@@ -1077,7 +1077,7 @@ class Test65C02 : TestCommon6502() {
         writeMem(memory, 0x0000, listOf(0xA7, 0x43))
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(5 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(13L, mpu.totalCycles)
         val expected = 0b00000100
         assertEquals(expected, memory[0x0043].toInt())
 
@@ -1103,7 +1103,7 @@ class Test65C02 : TestCommon6502() {
         writeMem(memory, 0x0000, listOf(0xB7, 0x43))
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(5 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(13L, mpu.totalCycles)
         val expected = 0b00001000
         assertEquals(expected, memory[0x0043].toInt())
 
@@ -1129,7 +1129,7 @@ class Test65C02 : TestCommon6502() {
         writeMem(memory, 0x0000, listOf(0xC7, 0x43))
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(5 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(13L, mpu.totalCycles)
         val expected = 0b00010000
         assertEquals(expected, memory[0x0043].toInt())
 
@@ -1155,7 +1155,7 @@ class Test65C02 : TestCommon6502() {
         writeMem(memory, 0x0000, listOf(0xD7, 0x43))
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(5 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(13L, mpu.totalCycles)
         val expected = 0b00100000
         assertEquals(expected, memory[0x0043].toInt())
     }
@@ -1180,7 +1180,7 @@ class Test65C02 : TestCommon6502() {
         writeMem(memory, 0x0000, listOf(0xE7, 0x43))
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(5 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(13L, mpu.totalCycles)
         val expected = 0b01000000
         assertEquals(expected, memory[0x0043].toInt())
     }
@@ -1205,7 +1205,7 @@ class Test65C02 : TestCommon6502() {
         writeMem(memory, 0x0000, listOf(0xF7, 0x43))
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(5 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(13L, mpu.totalCycles)
         val expected = 0b10000000
         assertEquals(expected, memory[0x0043].toInt())
     }
@@ -1235,7 +1235,7 @@ class Test65C02 : TestCommon6502() {
         memory[0xFEED] = 0x00
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(5 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(13L, mpu.totalCycles)
         assertEquals(0x00, mpu.regA)
         assertFalse(mpu.regP.N)
         assertTrue(mpu.regP.C)
@@ -1254,7 +1254,7 @@ class Test65C02 : TestCommon6502() {
         memory[0xFEED] = 0x01
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(5 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(13L, mpu.totalCycles)
         assertEquals(0x00, mpu.regA)
         assertFalse(mpu.regP.N)
         assertTrue(mpu.regP.C)
@@ -1273,7 +1273,7 @@ class Test65C02 : TestCommon6502() {
         memory[0xFEED] = 0x00
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(5 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(13L, mpu.totalCycles)
         assertEquals(0x00, mpu.regA)
         assertFalse(mpu.regP.N)
         assertTrue(mpu.regP.C)
@@ -1292,7 +1292,7 @@ class Test65C02 : TestCommon6502() {
         memory[0xFEED] = 0x02
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(5 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(13L, mpu.totalCycles)
         assertEquals(0x04, mpu.regA)
         assertFalse(mpu.regP.N)
         assertFalse(mpu.regP.Z)
@@ -1311,7 +1311,7 @@ class Test65C02 : TestCommon6502() {
         mpu.step()
         assertEquals(0x00, memory[0x0032])
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(3 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(11, mpu.totalCycles)
     }
 
     // STZ Zero Page, X-Indexed
@@ -1326,7 +1326,7 @@ class Test65C02 : TestCommon6502() {
         mpu.step()
         assertEquals(0x00, memory[0x0032])
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(4 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(12, mpu.totalCycles)
     }
 
     // STZ Absolute
@@ -1340,7 +1340,7 @@ class Test65C02 : TestCommon6502() {
         mpu.step()
         assertEquals(0x00, memory[0xFEED])
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(4 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(12, mpu.totalCycles)
     }
 
     // STZ Absolute, X-Indexed
@@ -1356,7 +1356,7 @@ class Test65C02 : TestCommon6502() {
         mpu.step()
         assertEquals(0x00, memory[0xFEED])
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(5 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(13L, mpu.totalCycles)
     }
 
     // TSB Zero Page
@@ -1372,7 +1372,7 @@ class Test65C02 : TestCommon6502() {
         assertEquals(0xF0, memory[0x00BB])
         assertFalse(mpu.regP.Z)
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(5 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(13L, mpu.totalCycles)
     }
 
     @Test
@@ -1386,7 +1386,7 @@ class Test65C02 : TestCommon6502() {
         assertEquals(0xE0, memory[0x00BB])
         assertTrue(mpu.regP.Z)
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(5 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(13L, mpu.totalCycles)
     }
 
     // TSB Absolute
@@ -1402,7 +1402,7 @@ class Test65C02 : TestCommon6502() {
         assertEquals(0xF0, memory[0xFEED])
         assertFalse(mpu.regP.Z)
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(6 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(14, mpu.totalCycles)
     }
 
     @Test
@@ -1416,7 +1416,7 @@ class Test65C02 : TestCommon6502() {
         assertEquals(0xE0, memory[0xFEED])
         assertTrue(mpu.regP.Z)
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(6 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(14, mpu.totalCycles)
     }
 
     // TRB Zero Page
@@ -1432,7 +1432,7 @@ class Test65C02 : TestCommon6502() {
         assertEquals(0x80, memory[0x00BB])
         assertFalse(mpu.regP.Z)
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(5 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(13L, mpu.totalCycles)
     }
 
     @Test
@@ -1446,7 +1446,7 @@ class Test65C02 : TestCommon6502() {
         assertEquals(0x80, memory[0x00BB])
         assertTrue(mpu.regP.Z)
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(5 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(13L, mpu.totalCycles)
     }
 
     // TRB Absolute
@@ -1462,7 +1462,7 @@ class Test65C02 : TestCommon6502() {
         assertEquals(0x80, memory[0xFEED])
         assertFalse(mpu.regP.Z)
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(6 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(14, mpu.totalCycles)
     }
 
     @Test
@@ -1476,7 +1476,7 @@ class Test65C02 : TestCommon6502() {
         assertEquals(0x80, memory[0xFEED])
         assertTrue(mpu.regP.Z)
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(6 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(14, mpu.totalCycles)
     }
 
     @Test
@@ -1518,7 +1518,7 @@ class Test65C02 : TestCommon6502() {
         writeMem(memory, 0x0000, listOf(0x80, 0x10))
         mpu.step()
         assertEquals(0x12, mpu.regPC)
-        assertEquals(3 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(11, mpu.totalCycles)
     }
 
     @Test
@@ -1528,7 +1528,7 @@ class Test65C02 : TestCommon6502() {
         mpu.regPC = 0x0204
         mpu.step()
         assertEquals(0x1F6, mpu.regPC)
-        assertEquals(3 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())  // Crossed boundry
+        assertEquals(11, mpu.totalCycles)  // Crossed boundry
     }
 
     // WAI
@@ -1543,7 +1543,7 @@ class Test65C02 : TestCommon6502() {
         mpu.step()
         assertEquals(Cpu65C02.Wait.Waiting, mpu.waiting)
         assertEquals(0x0205, mpu.regPC)
-        assertEquals(3 + Cpu65C02.resetCycles, mpu.totalCycles.toInt())
+        assertEquals(11, mpu.totalCycles)
     }
 
     //  BBR and BBS

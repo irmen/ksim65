@@ -26,7 +26,6 @@ open class Cpu6502 : BusComponent() {
         const val NMI_vector = 0xfffa
         const val RESET_vector = 0xfffc
         const val IRQ_vector = 0xfffe
-        const val resetCycles = 8
     }
 
     class StatusRegister(var C: Boolean = false, var Z: Boolean = false, var I: Boolean = false, var D: Boolean = false,
@@ -73,15 +72,17 @@ open class Cpu6502 : BusComponent() {
 
     class State(val A: UByte, val X: UByte, val Y: UByte, val SP: Address, val P: StatusRegister, val PC: Address, val cycles: Long) {
         override fun toString(): String {
-            return "cycle:$cycles - pc=${hexW(PC)} "+"A=${hexB(A)} "+"X=${hexB(X)} "+"Y=${hexB(Y)} "+"SP=${hexB(
-                    SP)} "+" n="+(if (P.N) "1" else "0")+" v="+(if (P.V) "1" else "0")+" b="+(if (P.B) "1" else "0")+" d="+(if (P.D) "1" else "0")+" i="+(if (P.I) "1" else "0")+" z="+(if (P.Z) "1" else "0")+" c="+(if (P.C) "1" else "0")
+            return "cycle:$cycles - pc=${hexW(PC)} "+"A=${hexB(A)} "+"X=${hexB(X)} "+"Y=${hexB(Y)} "+
+                   "SP=${hexB(SP)} "+" n="+(if (P.N) "1" else "0")+" v="+(if (P.V) "1" else "0")+
+                   " b="+(if (P.B) "1" else "0")+" d="+(if (P.D) "1" else "0")+" i="+(if (P.I) "1" else "0")+
+                   " z="+(if (P.Z) "1" else "0")+" c="+(if (P.C) "1" else "0")
         }
     }
 
     enum class AddrMode {
-        Imp, Acc, Imm, Zp, Zpr,        // special addressing mode used by the 65C02
-        ZpX, ZpY, Rel, Abs, AbsX, AbsY, Ind, IzX, IzY, Izp,         // special addressing mode used by the 65C02
-        IaX,         // special addressing mode used by the 65C02
+        Imp, Acc, Imm, Zp, ZpX, ZpY, Rel, Abs, AbsX, AbsY, Ind, IzX, IzY,
+        // modes used only by the 65C02:
+        Zpr, Izp, IaX
     }
 
     class Instruction(val mnemonic: String, val mode: AddrMode, val cycles: Int)
@@ -97,9 +98,7 @@ open class Cpu6502 : BusComponent() {
     var instrCycles: Int = 0
         protected set
 
-    protected lateinit var currentInstruction: Instruction
-    val currentMnemonic: String
-        get() = currentInstruction.mnemonic
+    lateinit var currentInstruction: Instruction
 
     val averageSpeedKhzSinceReset: Double
         get() = totalCycles.toDouble()/(System.nanoTime()-resetTime)*1_000_000
@@ -125,9 +124,7 @@ open class Cpu6502 : BusComponent() {
 
     private val breakpoints = mutableMapOf<Address, BreakpointHandler>()
 
-    fun addBreakpoint(address: Address, handler: BreakpointHandler) {
-        breakpoints[address] = handler
-    }
+    fun addBreakpoint(address: Address, handler: BreakpointHandler) { breakpoints[address] = handler }
 
     fun removeBreakpoint(address: Address) = breakpoints.remove(address)
 
@@ -136,13 +133,11 @@ open class Cpu6502 : BusComponent() {
     fun disassemble(memory: Array<UByte>, baseAddress: Address, from: Address, to: Address): Pair<List<String>, Address> {
         var location = from
         val result = mutableListOf<String>()
-
         while (location <= to) {
             val dis = disassembleOneInstruction(memory, location, baseAddress)
             result.add(dis.first)
             location += dis.second
         }
-
         return Pair(result, location)
     }
 
@@ -170,7 +165,7 @@ open class Cpu6502 : BusComponent() {
                 Pair(line+"${hexB(zpAddr)} $spacing2 ${opcode.mnemonic}  \$${hexB(zpAddr)}", 2)
             }
             AddrMode.Zpr -> {
-                // addressing mode used by the 65C02, put here for convenience
+                // addressing mode used by the 65C02, put here for convenience rather than the subclass
                 val zpAddr = memory[location+1]
                 val rel = memory[location+2]
                 val target = if (rel <= 0x7f) location+3+rel+baseAddress
@@ -178,12 +173,12 @@ open class Cpu6502 : BusComponent() {
                 Pair(line+"${hexB(zpAddr)} ${hexB(rel)} $spacing3 ${opcode.mnemonic}  \$${hexB(zpAddr)}, \$${hexW(target, true)}", 3)
             }
             AddrMode.Izp -> {
-                // addressing mode used by the 65C02, put here for convenience
+                // addressing mode used by the 65C02, put here for convenience rather than the subclass
                 val zpAddr = memory[location+1]
                 Pair(line+"${hexB(zpAddr)} $spacing2 ${opcode.mnemonic}  \$(${hexB(zpAddr)})", 2)
             }
             AddrMode.IaX -> {
-                // addressing mode used by the 65C02, put here for convenience
+                // addressing mode used by the 65C02, put here for convenience rather than the subclass
                 val lo = memory[location+1]
                 val hi = memory[location+2]
                 val absAddr = lo.toInt() or (hi.toInt() shl 8)
@@ -254,7 +249,7 @@ open class Cpu6502 : BusComponent() {
         regA = 0
         regX = 0
         regY = 0
-        instrCycles = resetCycles       // a reset takes time as well
+        instrCycles = 8       // a reset takes 8 clock cycles
         currentOpcode = 0
         currentInstruction = instructions[0]
         totalCycles = 0
