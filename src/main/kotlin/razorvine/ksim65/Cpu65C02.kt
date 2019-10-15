@@ -4,7 +4,6 @@ import razorvine.ksim65.components.Address
 
 /**
  * 65C02 cpu simulation (the CMOS version of the 6502).
- * TODO: add the optional additional cycles to certain instructions and addressing modes
  */
 class Cpu65C02 : Cpu6502() {
     override val name = "65C02"
@@ -56,9 +55,10 @@ class Cpu65C02 : Cpu6502() {
     // branch-relative address fetched by the ZpR addressing mode
     private var fetchedAddressZpr: Address = 0
 
-    override fun applyAddressingMode(addrMode: AddrMode) {
-        when (addrMode) {
-            AddrMode.Imp, AddrMode.Acc, AddrMode.Imm, AddrMode.Zp, AddrMode.ZpX, AddrMode.ZpY, AddrMode.Rel, AddrMode.Abs, AddrMode.AbsX, AddrMode.AbsY, AddrMode.IzX, AddrMode.IzY -> {
+    override fun applyAddressingMode(addrMode: AddrMode): Boolean {
+        return when (addrMode) {
+            AddrMode.Imp, AddrMode.Acc, AddrMode.Imm, AddrMode.Zp, AddrMode.ZpX, AddrMode.ZpY,
+            AddrMode.Rel, AddrMode.Abs, AddrMode.AbsX, AddrMode.AbsY, AddrMode.IzX, AddrMode.IzY -> {
                 super.applyAddressingMode(addrMode)
             }
             AddrMode.Ind -> {
@@ -69,15 +69,16 @@ class Cpu65C02 : Cpu6502() {
                 lo = read(fetchedAddress)
                 hi = read(fetchedAddress+1)
                 fetchedAddress = lo or (hi shl 8)
+                false
             }
             AddrMode.Zpr -> {
                 // addressing mode used by the 65C02 only
-                // combination of zp addresssing + relative branch addressing
+                // combination of zp addressing + relative branch addressing
                 fetchedAddress = readPc()
                 val relative = readPc()
-                fetchedAddressZpr = if (relative >= 0x80) {
-                    regPC-(256-relative) and 0xffff
-                } else regPC+relative and 0xffff
+                fetchedAddressZpr =
+                        if (relative >= 0x80) regPC-(256-relative) and 0xffff else regPC+relative and 0xffff
+                false
             }
             AddrMode.Izp -> {
                 // addressing mode used by the 65C02 only
@@ -85,6 +86,7 @@ class Cpu65C02 : Cpu6502() {
                 val lo = read((fetchedAddress) and 0xff)
                 val hi = read((fetchedAddress+1) and 0xff)
                 fetchedAddress = lo or (hi shl 8)
+                false
             }
             AddrMode.IaX -> {
                 // addressing mode used by the 65C02 only
@@ -94,11 +96,13 @@ class Cpu65C02 : Cpu6502() {
                 lo = read((fetchedAddress+regX) and 0xffff)
                 hi = read((fetchedAddress+regX+1) and 0xffff)
                 fetchedAddress = lo or (hi shl 8)
+                // if this address is a different page, extra clock cycle:
+                (fetchedAddress and 0xff00) != hi shl 8
             }
         }
     }
 
-    override fun dispatchOpcode(opcode: Int) {
+    override fun dispatchOpcode(opcode: Int): Boolean {
         when (opcode) {
             0x00 -> iBrk()
             0x01 -> iOra()
@@ -356,9 +360,9 @@ class Cpu65C02 : Cpu6502() {
             0xfd -> iSbc()
             0xfe -> iInc()
             0xff -> iBbs7()
-            else -> { /* can't occur */
-            }
+            else -> { /* can't occur */ }
         }
+        return false        //  TODO determine if instructions can cause extra clock cycle
     }
 
     // opcode list:  http://www.oxyron.de/html/opcodesc02.html

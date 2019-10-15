@@ -9,7 +9,6 @@ import razorvine.ksim65.components.UByte
 /**
  * 6502 cpu simulation (the NMOS version) including the 'illegal' opcodes.
  * TODO: actually implement the illegal opcodes, see http://www.ffd2.com/fridge/docs/6502-NMOS.extra.opcodes
- * TODO: add the optional additional cycles to certain instructions and addressing modes
  */
 open class Cpu6502 : BusComponent() {
     open val name = "6502"
@@ -285,8 +284,10 @@ open class Cpu6502 : BusComponent() {
 
             regPC++
             instrCycles = currentInstruction.cycles
-            applyAddressingMode(currentInstruction.mode)
-            dispatchOpcode(currentOpcode)
+            val extraCycleFromAddr = applyAddressingMode(currentInstruction.mode)
+            val extraCycleFromInstr = dispatchOpcode(currentOpcode)
+            if(extraCycleFromAddr and extraCycleFromInstr)
+                instrCycles++
         }
 
         instrCycles--
@@ -631,45 +632,57 @@ open class Cpu6502 : BusComponent() {
             /* fe */  Instruction("inc", AddrMode.AbsX, 7),
             /* ff */  Instruction("isc", AddrMode.AbsX, 7)).toTypedArray()
 
-    protected open fun applyAddressingMode(addrMode: AddrMode) {
-        when (addrMode) {
+    protected open fun applyAddressingMode(addrMode: AddrMode): Boolean {
+        // an addressing mode can cause an extra clock cycle on certain instructions
+        return when (addrMode) {
             AddrMode.Imp, AddrMode.Acc -> {
                 fetchedData = regA
+                false
             }
             AddrMode.Imm -> {
                 fetchedData = readPc()
+                false
             }
             AddrMode.Zp -> {
                 fetchedAddress = readPc()
+                false
             }
             AddrMode.ZpX -> {
                 // note: zeropage index will not leave Zp when page boundary is crossed
                 fetchedAddress = (readPc()+regX) and 0xff
+                false
             }
             AddrMode.ZpY -> {
                 // note: zeropage index will not leave Zp when page boundary is crossed
                 fetchedAddress = (readPc()+regY) and 0xff
+                false
             }
             AddrMode.Rel -> {
                 val relative = readPc()
                 fetchedAddress = if (relative >= 0x80) {
                     regPC-(256-relative) and 0xffff
                 } else regPC+relative and 0xffff
+                false
             }
             AddrMode.Abs -> {
                 val lo = readPc()
                 val hi = readPc()
                 fetchedAddress = lo or (hi shl 8)
+                false
             }
             AddrMode.AbsX -> {
                 val lo = readPc()
                 val hi = readPc()
                 fetchedAddress = regX+(lo or (hi shl 8)) and 0xffff
+                // if this address is a different page, extra clock cycle:
+                (fetchedAddress and 0xff00) != hi shl 8
             }
             AddrMode.AbsY -> {
                 val lo = readPc()
                 val hi = readPc()
                 fetchedAddress = regY+(lo or (hi shl 8)) and 0xffff
+                // if this address is a different page, extra clock cycle:
+                (fetchedAddress and 0xff00) != hi shl 8
             }
             AddrMode.Ind -> {
                 var lo = readPc()
@@ -686,6 +699,7 @@ open class Cpu6502 : BusComponent() {
                     hi = read(fetchedAddress+1)
                 }
                 fetchedAddress = lo or (hi shl 8)
+                false
             }
             AddrMode.IzX -> {
                 // note: not able to fetch an address which crosses the (zero)page boundary
@@ -693,6 +707,7 @@ open class Cpu6502 : BusComponent() {
                 val lo = read((fetchedAddress+regX) and 0xff)
                 val hi = read((fetchedAddress+regX+1) and 0xff)
                 fetchedAddress = lo or (hi shl 8)
+                false
             }
             AddrMode.IzY -> {
                 // note: not able to fetch an address which crosses the (zero)page boundary
@@ -700,6 +715,7 @@ open class Cpu6502 : BusComponent() {
                 val lo = read(fetchedAddress)
                 val hi = read((fetchedAddress+1) and 0xff)
                 fetchedAddress = regY+(lo or (hi shl 8)) and 0xffff
+                false
             }
             AddrMode.Zpr, AddrMode.Izp, AddrMode.IaX -> {
                 // addressing mode used by the 65C02 only
@@ -708,7 +724,7 @@ open class Cpu6502 : BusComponent() {
         }
     }
 
-    protected open fun dispatchOpcode(opcode: Int) {
+    protected open fun dispatchOpcode(opcode: Int): Boolean {
         when (opcode) {
             0x00 -> iBrk()
             0x01 -> iOra()
@@ -966,9 +982,9 @@ open class Cpu6502 : BusComponent() {
             0xfd -> iSbc()
             0xfe -> iInc()
             0xff -> iIsc()
-            else -> { /* can't occur */
-            }
+            else -> { /* can't occur */ }
         }
+        return false        //  TODO determine if instructions can cause extra clock cycle
     }
 
 
