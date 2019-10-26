@@ -236,7 +236,7 @@ internal class Screen(private val chargenData: ByteArray, val ram: MemoryCompone
         // The vic 'sees' the charset rom at these addresses: $1000 + $1800, $9000 + $9800
         // so we can use pre-loaded images to efficiently draw the characters.
         // If the address is different, the vic takes charset data from RAM instead.
-        // TODO: currently custom charsets taken from RAM are not yet supported
+        // TODO: currently custom charsets taken from RAM aren't supported
         val shifted = charsetAddr and 0x0800 != 0
         var cached = coloredCharacterImageCache[Triple(char, color, shifted)]
         if (cached == null) {

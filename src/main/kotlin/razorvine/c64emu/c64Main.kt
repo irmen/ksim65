@@ -37,6 +37,7 @@ class C64Machine(title: String) : IVirtualMachine {
     val cia2 = Cia(2, 0xdd00, 0xddff, cpu)
     val basicRom = Rom(0xa000, 0xbfff).also { it.load(basicData) }
     val kernalRom = Rom(0xe000, 0xffff).also { it.load(kernalData) }
+    val cpuIoPort = CpuIoPort(cpu)
 
     private val debugWindow = DebugWindow(this)
     private val hostDisplay = MainC64Window(title, chargenData, ram, cpu, cia1)
@@ -53,6 +54,7 @@ class C64Machine(title: String) : IVirtualMachine {
         bus += vic
         bus += cia1
         bus += cia2
+        bus += cpuIoPort
         bus += ram
         bus += cpu
         bus.reset()
