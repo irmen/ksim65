@@ -39,9 +39,9 @@ class C64Machine(title: String) : IVirtualMachine {
     val kernalRom = Rom(0xe000, 0xffff).also { it.load(kernalData) }
     val cpuIoPort = CpuIoPort(cpu)
 
+    private val monitor = Monitor(bus, cpu)
     private val debugWindow = DebugWindow(this)
     private val hostDisplay = MainC64Window(title, chargenData, ram, cpu, cia1)
-    private val monitor = Monitor(bus, cpu)
     private var paused = false
 
     init {
