@@ -19,7 +19,7 @@ object ScreenDefs {
     const val SCREEN_HEIGHT_CHARS = 30
     const val SCREEN_WIDTH = SCREEN_WIDTH_CHARS*8
     const val SCREEN_HEIGHT = SCREEN_HEIGHT_CHARS*16
-    const val DISPLAY_PIXEL_SCALING: Double = 1.5
+    const val PIXEL_SCALING = 1.5
     const val BORDER_SIZE = 32
 
     val BG_COLOR = Color(0, 10, 20)
@@ -68,8 +68,8 @@ private class BitmapScreenPanel : JPanel() {
         image = gd.createCompatibleImage(ScreenDefs.SCREEN_WIDTH, ScreenDefs.SCREEN_HEIGHT, Transparency.OPAQUE)
         g2d = image.graphics as Graphics2D
 
-        val size = Dimension((image.width*ScreenDefs.DISPLAY_PIXEL_SCALING).toInt(),
-                             (image.height*ScreenDefs.DISPLAY_PIXEL_SCALING).toInt())
+        val size = Dimension((image.width*ScreenDefs.PIXEL_SCALING).toInt(),
+                             (image.height*ScreenDefs.PIXEL_SCALING).toInt())
         minimumSize = size
         maximumSize = size
         preferredSize = size
@@ -82,13 +82,13 @@ private class BitmapScreenPanel : JPanel() {
     override fun paint(graphics: Graphics) {
         val g2d = graphics as Graphics2D
         g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR)
-        g2d.drawImage(image, 0, 0, (image.width*ScreenDefs.DISPLAY_PIXEL_SCALING).toInt(),
-                      (image.height*ScreenDefs.DISPLAY_PIXEL_SCALING).toInt(), null)
+        g2d.drawImage(image, 0, 0, (image.width*ScreenDefs.PIXEL_SCALING).toInt(),
+                      (image.height*ScreenDefs.PIXEL_SCALING).toInt(), null)
         if (cursorState) {
-            val scx = (cursorX*ScreenDefs.DISPLAY_PIXEL_SCALING*8).toInt()
-            val scy = (cursorY*ScreenDefs.DISPLAY_PIXEL_SCALING*16).toInt()
-            val scw = (8*ScreenDefs.DISPLAY_PIXEL_SCALING).toInt()
-            val sch = (16*ScreenDefs.DISPLAY_PIXEL_SCALING).toInt()
+            val scx = (cursorX*ScreenDefs.PIXEL_SCALING*8).toInt()
+            val scy = (cursorY*ScreenDefs.PIXEL_SCALING*16).toInt()
+            val scw = (8*ScreenDefs.PIXEL_SCALING).toInt()
+            val sch = (16*ScreenDefs.PIXEL_SCALING).toInt()
             g2d.setXORMode(Color.CYAN)
             g2d.fillRect(scx, scy, scw, sch)
             g2d.setPaintMode()
@@ -123,7 +123,7 @@ private class BitmapScreenPanel : JPanel() {
 
     fun mousePixelPosition(): Point? {
         val pos = mousePosition ?: return null
-        return Point((pos.x/ScreenDefs.DISPLAY_PIXEL_SCALING).toInt(), (pos.y/ScreenDefs.DISPLAY_PIXEL_SCALING).toInt())
+        return Point((pos.x/ScreenDefs.PIXEL_SCALING).toInt(), (pos.y/ScreenDefs.PIXEL_SCALING).toInt())
     }
 
     fun cursorPos(x: Int, y: Int) {

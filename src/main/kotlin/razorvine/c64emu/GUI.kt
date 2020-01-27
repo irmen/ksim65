@@ -21,7 +21,8 @@ object ScreenDefs {
     const val SCREEN_HEIGHT_CHARS = 25
     const val SCREEN_WIDTH = SCREEN_WIDTH_CHARS*8
     const val SCREEN_HEIGHT = SCREEN_HEIGHT_CHARS*8
-    const val DISPLAY_PIXEL_SCALING: Double = 3.0
+    const val PIXEL_SCALING = 3.0
+    const val ASPECT_RATIO = 1.06       // c64 PAL pixels are slightly taller than wide
     const val BORDER_SIZE = 24
 
     class Palette {

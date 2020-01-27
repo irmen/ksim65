@@ -28,8 +28,8 @@ internal class Screen(private val chargenData: ByteArray, val ram: MemoryCompone
                                                    ScreenDefs.SCREEN_HEIGHT+2*ScreenDefs.BORDER_SIZE, Transparency.OPAQUE)
         fullscreenG2d = fullscreenImage.graphics as Graphics2D
 
-        val size = Dimension(fullscreenImage.width*ScreenDefs.DISPLAY_PIXEL_SCALING.toInt(),
-                             fullscreenImage.height*ScreenDefs.DISPLAY_PIXEL_SCALING.toInt())
+        val size = Dimension(fullscreenImage.width*ScreenDefs.PIXEL_SCALING.toInt(),
+                             (fullscreenImage.height*ScreenDefs.ASPECT_RATIO*ScreenDefs.PIXEL_SCALING).toInt())
         minimumSize = size
         maximumSize = size
         preferredSize = size
@@ -84,13 +84,13 @@ internal class Screen(private val chargenData: ByteArray, val ram: MemoryCompone
 
         // scale and draw the image to the window, and simulate a slight scanline effect
         windowG2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR)
-        windowG2d.drawImage(fullscreenImage, 0, 0, (fullscreenImage.width*ScreenDefs.DISPLAY_PIXEL_SCALING).toInt(),
-                            (fullscreenImage.height*ScreenDefs.DISPLAY_PIXEL_SCALING).toInt(), null)
+        windowG2d.drawImage(fullscreenImage, 0, 0, (fullscreenImage.width*ScreenDefs.PIXEL_SCALING).toInt(),
+                            (fullscreenImage.height*ScreenDefs.ASPECT_RATIO*ScreenDefs.PIXEL_SCALING).toInt(), null)
         windowG2d.color = Color(0, 0, 0, 40)
         windowG2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR)
-        val width = fullscreenImage.width*ScreenDefs.DISPLAY_PIXEL_SCALING.toInt()
-        val height = fullscreenImage.height*ScreenDefs.DISPLAY_PIXEL_SCALING.toInt()
-        for (y in 0 until height step ScreenDefs.DISPLAY_PIXEL_SCALING.toInt()) {
+        val width = fullscreenImage.width*ScreenDefs.PIXEL_SCALING.toInt()
+        val height = (fullscreenImage.height*ScreenDefs.ASPECT_RATIO*ScreenDefs.PIXEL_SCALING).toInt()
+        for (y in 0 until height step (ScreenDefs.ASPECT_RATIO*ScreenDefs.PIXEL_SCALING).toInt()) {
             windowG2d.drawLine(0, y, width, y)
         }
         Toolkit.getDefaultToolkit().sync()
