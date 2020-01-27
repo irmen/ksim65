@@ -108,21 +108,20 @@ class Monitor(val bus: Bus, val cpu: Cpu6502) {
 
         val address = parseNumber(parts[0])
         val mnemonic = parts[1].toLowerCase()
-        when {
-            parts.size == 2 -> {
+        when (parts.size) {
+            2 -> {
                 // implied or acc
                 var instruction = instructions[Pair(mnemonic, Cpu6502.AddrMode.Imp)]
                 if (instruction == null) instruction = instructions[Pair(mnemonic, Cpu6502.AddrMode.Acc)]
                 if (instruction == null) return IVirtualMachine.MonitorCmdResult("?invalid instruction", command, false)
                 bus.write(address, instruction.toShort())
             }
-            parts.size == 3 -> {
+            3 -> {
                 val arg = parts[2]
                 when {
                     arg.startsWith('#') -> {
                         // immediate
-                        val instruction = instructions[Pair(mnemonic, Cpu6502.AddrMode.Imm)] ?: return IVirtualMachine.MonitorCmdResult(
-                                "?invalid instruction", command, false)
+                        val instruction = instructions[Pair(mnemonic, Cpu6502.AddrMode.Imm)] ?: return IVirtualMachine.MonitorCmdResult("?invalid instruction", command, false)
                         bus.write(address, instruction.toShort())
                         bus.write(address+1, parseNumber(arg.substring(1), true).toShort())
                     }
@@ -133,8 +132,7 @@ class Monitor(val bus: Bus, val cpu: Cpu6502) {
                         } catch (x: NumberFormatException) {
                             return IVirtualMachine.MonitorCmdResult("?invalid instruction", command, false)
                         }
-                        val instruction = instructions[Pair(mnemonic, Cpu6502.AddrMode.IzX)] ?: return IVirtualMachine.MonitorCmdResult(
-                                "?invalid instruction", command, false)
+                        val instruction = instructions[Pair(mnemonic, Cpu6502.AddrMode.IzX)] ?: return IVirtualMachine.MonitorCmdResult("?invalid instruction", command, false)
                         bus.write(address, instruction.toShort())
                         bus.write(address+1, indAddress.toShort())
                     }
@@ -145,8 +143,7 @@ class Monitor(val bus: Bus, val cpu: Cpu6502) {
                         } catch (x: NumberFormatException) {
                             return IVirtualMachine.MonitorCmdResult("?invalid instruction", command, false)
                         }
-                        val instruction = instructions[Pair(mnemonic, Cpu6502.AddrMode.IzY)] ?: return IVirtualMachine.MonitorCmdResult(
-                                "?invalid instruction", command, false)
+                        val instruction = instructions[Pair(mnemonic, Cpu6502.AddrMode.IzY)] ?: return IVirtualMachine.MonitorCmdResult("?invalid instruction", command, false)
                         bus.write(address, instruction.toShort())
                         bus.write(address+1, indAddress.toShort())
                     }
@@ -164,8 +161,7 @@ class Monitor(val bus: Bus, val cpu: Cpu6502) {
                             bus.write(address+1, indAddress.toShort())
                         } else {
                             val instruction =
-                                    instructions[Pair(mnemonic, Cpu6502.AddrMode.AbsX)] ?: return IVirtualMachine.MonitorCmdResult(
-                                            "?invalid instruction", command, false)
+                                    instructions[Pair(mnemonic, Cpu6502.AddrMode.AbsX)] ?: return IVirtualMachine.MonitorCmdResult("?invalid instruction", command, false)
                             bus.write(address, instruction.toShort())
                             bus.write(address+1, (indAddress and 255).toShort())
                             bus.write(address+2, (indAddress ushr 8).toShort())
@@ -185,8 +181,7 @@ class Monitor(val bus: Bus, val cpu: Cpu6502) {
                             bus.write(address+1, indAddress.toShort())
                         } else {
                             val instruction =
-                                    instructions[Pair(mnemonic, Cpu6502.AddrMode.AbsY)] ?: return IVirtualMachine.MonitorCmdResult(
-                                            "?invalid instruction", command, false)
+                                    instructions[Pair(mnemonic, Cpu6502.AddrMode.AbsY)] ?: return IVirtualMachine.MonitorCmdResult("?invalid instruction", command, false)
                             bus.write(address, instruction.toShort())
                             bus.write(address+1, (indAddress and 255).toShort())
                             bus.write(address+2, (indAddress ushr 8).toShort())
@@ -199,8 +194,7 @@ class Monitor(val bus: Bus, val cpu: Cpu6502) {
                         } catch (x: NumberFormatException) {
                             return IVirtualMachine.MonitorCmdResult("?invalid instruction", command, false)
                         }
-                        val instruction = instructions[Pair(mnemonic, Cpu6502.AddrMode.Ind)] ?: return IVirtualMachine.MonitorCmdResult(
-                                "?invalid instruction", command, false)
+                        val instruction = instructions[Pair(mnemonic, Cpu6502.AddrMode.Ind)] ?: return IVirtualMachine.MonitorCmdResult("?invalid instruction", command, false)
                         bus.write(address, instruction.toShort())
                         bus.write(address+1, (indAddress and 255).toShort())
                         bus.write(address+2, (indAddress ushr 8).toShort())
@@ -230,8 +224,7 @@ class Monitor(val bus: Bus, val cpu: Cpu6502) {
                                 bus.write(address+1, absAddress.toShort())
                             } else {
                                 val absInstr =
-                                        instructions[Pair(mnemonic, Cpu6502.AddrMode.Abs)] ?: return IVirtualMachine.MonitorCmdResult(
-                                                "?invalid instruction", command, false)
+                                        instructions[Pair(mnemonic, Cpu6502.AddrMode.Abs)] ?: return IVirtualMachine.MonitorCmdResult("?invalid instruction", command, false)
                                 bus.write(address, absInstr.toShort())
                                 bus.write(address+1, (absAddress and 255).toShort())
                                 bus.write(address+2, (absAddress ushr 8).toShort())

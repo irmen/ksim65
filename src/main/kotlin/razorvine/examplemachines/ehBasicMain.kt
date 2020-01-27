@@ -67,7 +67,7 @@ class EhBasicMachine(title: String) {
     }
 }
 
-fun main(args: Array<String>) {
+fun main() {
     val machine = EhBasicMachine("KSim65 demo virtual machine - using ksim65 v${Version.version}")
     machine.start()
 }

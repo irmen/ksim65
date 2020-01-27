@@ -637,7 +637,7 @@ class Cpu65C02 : Cpu6502() {
         pushStack(regP)
         regP.I = true     // interrupts are now disabled
         regP.D = false    // this is different from NMOS 6502
-        regPC = readWord(if (nmi) Cpu6502.NMI_vector else Cpu6502.IRQ_vector)
+        regPC = readWord(if (nmi) NMI_vector else IRQ_vector)
         pendingInterrupt = null
     }
 

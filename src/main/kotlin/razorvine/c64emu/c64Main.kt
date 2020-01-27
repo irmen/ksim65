@@ -252,7 +252,7 @@ class C64Machine(title: String) : IVirtualMachine {
     }
 }
 
-fun main(args: Array<String>) {
+fun main() {
     val machine = C64Machine("virtual Commodore-64 - using KSim65 v${Version.version}")
     machine.start()
 }

@@ -82,7 +82,7 @@ internal class Screen(private val chargenData: ByteArray, val ram: MemoryCompone
             renderBorder()
         }
 
-        // scale and draw the image to the window, and simulate a slight scanline effect
+        // scale and draw the image to the window, and simulate a slight scan-line effect
         windowG2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR)
         windowG2d.drawImage(fullscreenImage, 0, 0, (fullscreenImage.width*ScreenDefs.PIXEL_SCALING).toInt(),
                             (fullscreenImage.height*ScreenDefs.ASPECT_RATIO*ScreenDefs.PIXEL_SCALING).toInt(), null)
@@ -238,26 +238,37 @@ internal class Screen(private val chargenData: ByteArray, val ram: MemoryCompone
         // If the address is different, the vic takes charset data from RAM instead.
         // TODO: currently custom charsets taken from RAM aren't supported
         val shifted = charsetAddr and 0x0800 != 0
-        var cached = coloredCharacterImageCache[Triple(char, color, shifted)]
-        if (cached == null) {
-            cached = if (shifted) shiftedCharacters[char] else normalCharacters[char]
-            val colored = fullscreenG2d.deviceConfiguration.createCompatibleImage(8, 8, BufferedImage.BITMASK)
-            val sourceRaster = cached.raster
-            val coloredRaster = colored.raster
-            val pixelArray = IntArray(4)
+        val charImage = getCharImage(char, color, shifted)
+        fullscreenG2d.drawImage(charImage, x*8+ScreenDefs.BORDER_SIZE, y*8+ScreenDefs.BORDER_SIZE, null)
+    }
+
+    private fun getCharImage(char: Int, color: Int, shifted: Boolean): BufferedImage {
+        val key = Triple(char, color, shifted)
+
+        fun makeCachedImage(): BufferedImage         {
+            val monoImg = if (shifted) shiftedCharacters[char] else normalCharacters[char]
+            val coloredImg = fullscreenG2d.deviceConfiguration.createCompatibleImage(8, 8, BufferedImage.BITMASK)
+            val srcPixel = IntArray(4)
+            val rgbs = IntArray(4)
             val javaColor = ScreenDefs.colorPalette[color]
-            val coloredPixel = listOf(javaColor.red, javaColor.green, javaColor.blue, javaColor.alpha).toIntArray()
+            rgbs[0] = javaColor.red
+            rgbs[1] = javaColor.green
+            rgbs[2] = javaColor.blue
+            rgbs[3] = javaColor.alpha
+            val sourceRaster = monoImg.raster
+            val coloredRaster = coloredImg.raster
             for (pixelY in 0..7) {
                 for (pixelX in 0..7) {
-                    val source = sourceRaster.getPixel(pixelX, pixelY, pixelArray)
+                    val source = sourceRaster.getPixel(pixelX, pixelY, srcPixel)
                     if (source[0] != 0) {
-                        coloredRaster.setPixel(pixelX, pixelY, coloredPixel)
+                        coloredRaster.setPixel(pixelX, pixelY, rgbs)
                     }
                 }
             }
-            coloredCharacterImageCache[Triple(char, color, shifted)] = colored
-            cached = colored
+            coloredCharacterImageCache[key] = coloredImg
+            return coloredImg
         }
-        fullscreenG2d.drawImage(cached, x*8+ScreenDefs.BORDER_SIZE, y*8+ScreenDefs.BORDER_SIZE, null)
+
+        return coloredCharacterImageCache[key] ?: makeCachedImage()
     }
 }

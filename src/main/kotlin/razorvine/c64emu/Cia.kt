@@ -316,40 +316,39 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address, val cpu: 
         ) hostKeyPresses.clear()
 
         // try to remap the keys a bit so a modern PC keyboard maps better to the keys of the C64
-        when {
-            event.keyChar == '@' -> {
+        when (event.keyChar) {
+            '@' -> {
                 unregister(KeyEvent.VK_SHIFT)
                 register(event.id, HostKeyPress(KeyEvent.VK_AT))
             }
-            event.keyChar == '^' -> {
+            '^' -> {
                 unregister(KeyEvent.VK_SHIFT)
                 register(event.id, HostKeyPress(KeyEvent.VK_CIRCUMFLEX))
             }
-            event.keyChar == '*' -> {
+            '*' -> {
                 unregister(KeyEvent.VK_SHIFT)
                 register(event.id, HostKeyPress(KeyEvent.VK_ASTERISK))
             }
-            event.keyChar == '+' -> {
+            '+' -> {
                 unregister(KeyEvent.VK_SHIFT)
                 register(event.id, HostKeyPress(KeyEvent.VK_PLUS))
             }
-            event.keyChar == ':' -> {
+            ':' -> {
                 unregister(KeyEvent.VK_SHIFT)
                 register(event.id, HostKeyPress(KeyEvent.VK_COLON))
             }
-            event.keyChar == '~' -> {
+            '~' -> {
                 unregister(KeyEvent.VK_SHIFT)
                 register(event.id, HostKeyPress(KeyEvent.VK_DEAD_TILDE))
             }
-            event.keyChar == '&' -> register(event.id, shift, HostKeyPress(KeyEvent.VK_6))
-            event.keyChar == '(' -> register(event.id, shift, HostKeyPress(KeyEvent.VK_8))
-            event.keyChar == ')' -> register(event.id, shift, HostKeyPress(KeyEvent.VK_9))
-            event.keyChar == '[' -> register(event.id, shift, HostKeyPress(KeyEvent.VK_COLON))
-            event.keyChar == ']' -> register(event.id, shift, HostKeyPress(KeyEvent.VK_SEMICOLON))
-            event.keyChar == '"' -> register(event.id, HostKeyPress(KeyEvent.VK_2))
-            event.keyChar == '\'' -> register(event.id, shift, HostKeyPress(KeyEvent.VK_7))
-            else ->
-                // F2 = shift+F1
+            '&' -> register(event.id, shift, HostKeyPress(KeyEvent.VK_6))
+            '(' -> register(event.id, shift, HostKeyPress(KeyEvent.VK_8))
+            ')' -> register(event.id, shift, HostKeyPress(KeyEvent.VK_9))
+            '[' -> register(event.id, shift, HostKeyPress(KeyEvent.VK_COLON))
+            ']' -> register(event.id, shift, HostKeyPress(KeyEvent.VK_SEMICOLON))
+            '"' -> register(event.id, HostKeyPress(KeyEvent.VK_2))
+            '\'' -> register(event.id, shift, HostKeyPress(KeyEvent.VK_7))
+            else -> // F2 = shift+F1
                 // F4 = shift+F3
                 // F6 = shift+F5
                 // F8 = shift+F7

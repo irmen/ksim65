@@ -93,7 +93,7 @@ class VirtualMachine(title: String) : IVirtualMachine {
     }
 }
 
-fun main(args: Array<String>) {
+fun main() {
     val machine = VirtualMachine("KSim65 demo virtual machine - using ksim65 v${Version.version}")
     machine.start()
 }
