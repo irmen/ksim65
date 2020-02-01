@@ -124,7 +124,9 @@ publishing {
 bintray {
     user = System.getenv("BINTRAY_USER")
     key = System.getenv("BINTRAY_KEY")
+
     setPublications(* publishing.publications.names.toTypedArray())
+    // setConfigurations("archives")
     pkg = PackageConfig().also {
         it.name = "ksim65"
         it.repo = "maven"
