@@ -47,7 +47,7 @@ class VirtualMachine(title: String) : IVirtualMachine {
         hostDisplay.start(30)
     }
 
-    override fun getZeroAndStackPages(): Array<UByte> = ram.getPages(0, 2)
+    override fun getZeroAndStackPages(): Array<UByte> = ram.getBlock(0, 512)
 
     override fun loadFileInRam(file: File, loadAddress: Address?) {
         if (file.extension == "prg" && loadAddress == null) ram.loadPrg(file.inputStream(), null)

@@ -209,7 +209,7 @@ class C64Machine(title: String) : IVirtualMachine {
         else ram.load(file.readBytes(), loadAddress!!)
     }
 
-    override fun getZeroAndStackPages(): Array<UByte> = ram.getPages(0, 2)
+    override fun getZeroAndStackPages(): Array<UByte> = ram.getBlock(0, 512)
 
     override fun pause(paused: Boolean) {
         this.paused = paused

@@ -123,15 +123,11 @@ internal class Screen(private val chargenData: ByteArray, val ram: MemoryCompone
                 val mx = ram[0xd010].toInt() and (1 shl sprite) != 0
                 val xpos = ram[0xd000+sprite*2].toInt()+if (mx) 256 else 0
                 val ypos = ram[0xd001+sprite*2].toInt()
-                if(xpos in 1..343 && ypos in 30..249) {
+                if (xpos in 1..343 && ypos in 30..249) {
                     spriteGfx.fillRect(0, 0, 24, 21)
                     renderSprite(sprite, spritePixels, vicBank)
-                    fullscreenG2d.drawImage(spriteImage,
-                                            xpos+ScreenDefs.BORDER_SIZE-24,
-                                            ypos+ScreenDefs.BORDER_SIZE-50,
-                                            if(vicXXPAND and bit == 0) 24 else 48,
-                                            if(vicYXPAND and bit == 0) 21 else 42,
-                                            null)
+                    fullscreenG2d.drawImage(spriteImage, xpos+ScreenDefs.BORDER_SIZE-24, ypos+ScreenDefs.BORDER_SIZE-50,
+                                            if (vicXXPAND and bit == 0) 24 else 48, if (vicYXPAND and bit == 0) 21 else 42, null)
                 }
             }
         }
@@ -140,9 +136,10 @@ internal class Screen(private val chargenData: ByteArray, val ram: MemoryCompone
     private fun renderSprite(sprite: Int, spritePixels: IntArray, vicBank: Address) {
         // note: the sprite pixels must all have been cleared to transparency already
         val sprptr = ram[vicBank+2040+sprite]*64
+        val sprdata = ram.getBlock(sprptr, 21*3)
         val color = ScreenDefs.colorPalette[ram[0xd027+sprite]].rgb
         for (i in spritePixels.indices step 8) {
-            val bits = ram[sprptr+i/8].toInt()
+            val bits = sprdata[i/8].toInt()
             if (bits and 0b10000000 != 0) spritePixels[i] = color
             if (bits and 0b01000000 != 0) spritePixels[i+1] = color
             if (bits and 0b00100000 != 0) spritePixels[i+2] = color
@@ -165,15 +162,15 @@ internal class Screen(private val chargenData: ByteArray, val ram: MemoryCompone
                 for (x in 0 until ScreenDefs.SCREEN_WIDTH_CHARS) {
                     val char = ram[screenAddress+x+y*ScreenDefs.SCREEN_WIDTH_CHARS].toInt()
                     val color = ram[0xd800+x+y*ScreenDefs.SCREEN_WIDTH_CHARS].toInt()   // colors always at $d800
-                    drawColoredChar(x, y, char, color, vicBank + charsetAddress)
+                    drawColoredChar(x, y, char, color, vicBank+charsetAddress)
                 }
             }
         }
     }
 
     private fun renderBitmapMode(vicBank: Address, vicVMCSB: Int, multiColorMode: Boolean) {
-        val bitmap = ram.getPages((vicBank ushr 8)+if (vicVMCSB and 0b00001000 != 0) 32 else 0, 32)
-        val colorBytes = ram.getPages((vicBank ushr 8)+((vicVMCSB ushr 4) shl 2), 4)
+        val bitmap = ram.getBlock(vicBank+if (vicVMCSB and 0b00001000 != 0) 32*256 else 0, 32*256)
+        val colorBytes = ram.getBlock(vicBank+((vicVMCSB ushr 4) shl 2)*256, 4*256)
         val pixels: IntArray = (fullscreenImage.raster.dataBuffer as DataBufferInt).data
         val screenColor = ScreenDefs.colorPalette[ram[0xd021]].rgb
         if (multiColorMode) {
@@ -238,16 +235,36 @@ internal class Screen(private val chargenData: ByteArray, val ram: MemoryCompone
         // If the address is different, the vic takes charset data from RAM instead (thus allowing user defined charsets)
         // A user-supplied character set in RAM must begin at an address that is 2048 byte aligned,
         // and lies within the same 16K VIC bank as the screen character memory.
-        // TODO: currently custom charsets taken from RAM aren't supported
-        val shifted = charsetAddr and 0x0800 != 0
-        val charImage = getCharImage(char, color, shifted)
-        fullscreenG2d.drawImage(charImage, x*8+ScreenDefs.BORDER_SIZE, y*8+ScreenDefs.BORDER_SIZE, null)
+        when (charsetAddr) {
+            0x1000, 0x1800, 0x9000, 0x9800 -> {
+                val charImage = getCharImage(char, color, charsetAddr and 0x0800 != 0)
+                fullscreenG2d.drawImage(charImage, x*8+ScreenDefs.BORDER_SIZE, y*8+ScreenDefs.BORDER_SIZE, null)
+            }
+            else -> {
+                // TODO: currently custom charsets taken from RAM aren't supported yet (need to read the char pixels)
+                fullscreenG2d.drawImage(placeholderUserCharacter, x*8+ScreenDefs.BORDER_SIZE, y*8+ScreenDefs.BORDER_SIZE, null)
+            }
+        }
+    }
+
+    // TODO: temporary placeholder for user-defined charset
+    private val placeholderUserCharacter: BufferedImage by lazy {
+        val img = fullscreenG2d.deviceConfiguration.createCompatibleImage(8, 8, BufferedImage.BITMASK)
+        with(img.graphics) {
+            color = Color.DARK_GRAY
+            fillRect(0, 0, 8, 8)
+        }
+        for (x in 0..7) {
+            img.setRGB(x, x, Color.RED.rgb)
+            img.setRGB(7-x, x, Color.RED.rgb)
+        }
+        img
     }
 
     private fun getCharImage(char: Int, color: Int, shifted: Boolean): BufferedImage {
         val key = Triple(char, color, shifted)
 
-        fun makeCachedImage(): BufferedImage         {
+        fun makeCachedImage(): BufferedImage {
             val monoImg = if (shifted) shiftedCharacters[char] else normalCharacters[char]
             val coloredImg = fullscreenG2d.deviceConfiguration.createCompatibleImage(8, 8, BufferedImage.BITMASK)
             val srcPixel = IntArray(4)

@@ -62,5 +62,5 @@ abstract class MemoryComponent(startAddress: Address, endAddress: Address) : Mem
         require(startAddress and 0xff == 0 && endAddress and 0xff == 0xff) { "address range must span complete page(s)" }
     }
 
-    fun getPages(page: Int, numPages: Int): Array<UByte> = data.copyOfRange(page*256, (page+numPages)*256)
+    fun getBlock(start: Int, length: Int): Array<UByte> = data.copyOfRange(start, start+length)
 }
