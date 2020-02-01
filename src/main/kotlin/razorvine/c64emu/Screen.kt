@@ -233,9 +233,11 @@ internal class Screen(private val chargenData: ByteArray, val ram: MemoryCompone
     private val coloredCharacterImageCache = mutableMapOf<Triple<Int, Int, Boolean>, BufferedImage>()
 
     private fun drawColoredChar(x: Int, y: Int, char: Int, color: Int, charsetAddr: Address) {
-        // The vic 'sees' the charset rom at these addresses: $1000 + $1800, $9000 + $9800
-        // so we can use pre-loaded images to efficiently draw the characters.
-        // If the address is different, the vic takes charset data from RAM instead.
+        // The vic 'sees' the charset ROM at these addresses: $1000(normal) + $1800(shifted), $9000(normal) + $9800(shifted)
+        // so we can use pre-loaded images to efficiently draw the default ROM characters.
+        // If the address is different, the vic takes charset data from RAM instead (thus allowing user defined charsets)
+        // A user-supplied character set in RAM must begin at an address that is 2048 byte aligned,
+        // and lies within the same 16K VIC bank as the screen character memory.
         // TODO: currently custom charsets taken from RAM aren't supported
         val shifted = charsetAddr and 0x0800 != 0
         val charImage = getCharImage(char, color, shifted)
