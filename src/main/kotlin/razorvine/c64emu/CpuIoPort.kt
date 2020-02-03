@@ -14,9 +14,12 @@ class CpuIoPort(val cpu: Cpu6502) : MemMappedComponent(0x0000, 0x0001) {
 
     private var dataDirections: Int = 0
     private var ioPort: Int = 0
-    private var loram: Boolean = false  // Bit 0: LORAM signal.  Selects ROM or RAM at 40960 ($A000).  1=BASIC, 0=RAM
-    private var hiram: Boolean = false  // Bit 1: HIRAM signal.  Selects ROM or RAM at 57344 ($E000).  1=Kernal, 0=RAM
-    private var charen: Boolean = false // Bit 2: CHAREN signal.  Selects character ROM or I/O devices.  1=I/O, 0=ROM
+    var loram: Boolean = false  // Bit 0: LORAM signal.  Selects ROM or RAM at 40960 ($A000).  1=BASIC, 0=RAM
+        private set
+    var hiram: Boolean = false  // Bit 1: HIRAM signal.  Selects ROM or RAM at 57344 ($E000).  1=Kernal, 0=RAM
+        private set
+    var charen: Boolean = false // Bit 2: CHAREN signal.  Selects character ROM or I/O devices.  1=I/O, 0=ROM
+        private set
 
     override fun clock() { }
     override fun reset() { }

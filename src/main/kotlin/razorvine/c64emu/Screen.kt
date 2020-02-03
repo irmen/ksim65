@@ -12,7 +12,7 @@ import javax.swing.JPanel
  * The rendering logic of the screen of the C64.
  * It supports: Character mode,
  * High res bitmap mode (320*200), Multicolor bitmap mode (160*200).
- * TODO: Custom charsets from RAM.  Multicolor character mode.   Extended background color mode.
+ * TODO: Multicolor character mode.   Extended background color mode.
  */
 internal class Screen(private val chargenData: ByteArray, val ram: MemoryComponent) : JPanel() {
 
@@ -140,14 +140,7 @@ internal class Screen(private val chargenData: ByteArray, val ram: MemoryCompone
         val color = ScreenDefs.colorPalette[ram[0xd027+sprite]].rgb
         for (i in spritePixels.indices step 8) {
             val bits = sprdata[i/8].toInt()
-            if (bits and 0b10000000 != 0) spritePixels[i] = color
-            if (bits and 0b01000000 != 0) spritePixels[i+1] = color
-            if (bits and 0b00100000 != 0) spritePixels[i+2] = color
-            if (bits and 0b00010000 != 0) spritePixels[i+3] = color
-            if (bits and 0b00001000 != 0) spritePixels[i+4] = color
-            if (bits and 0b00000100 != 0) spritePixels[i+5] = color
-            if (bits and 0b00000010 != 0) spritePixels[i+6] = color
-            if (bits and 0b00000001 != 0) spritePixels[i+7] = color
+            bits2Pixels(bits, spritePixels, i, color)
         }
     }
 
@@ -237,31 +230,44 @@ internal class Screen(private val chargenData: ByteArray, val ram: MemoryCompone
         // and lies within the same 16K VIC bank as the screen character memory.
         when (charsetAddr) {
             0x1000, 0x1800, 0x9000, 0x9800 -> {
-                val charImage = getCharImage(char, color, charsetAddr and 0x0800 != 0)
+                val charImage = getCharFromROM(char, color, charsetAddr and 0x0800 != 0)
                 fullscreenG2d.drawImage(charImage, x*8+ScreenDefs.BORDER_SIZE, y*8+ScreenDefs.BORDER_SIZE, null)
             }
             else -> {
-                // TODO: currently custom charsets taken from RAM aren't supported yet (need to read the char pixels)
-                fullscreenG2d.drawImage(placeholderUserCharacter, x*8+ScreenDefs.BORDER_SIZE, y*8+ScreenDefs.BORDER_SIZE, null)
+                val charImg = getCharFromRAM(char, color, charsetAddr)
+                fullscreenG2d.drawImage(charImg, x*8+ScreenDefs.BORDER_SIZE, y*8+ScreenDefs.BORDER_SIZE, null)
             }
         }
     }
 
-    // TODO: temporary placeholder for user-defined charset
-    private val placeholderUserCharacter: BufferedImage by lazy {
-        val img = fullscreenG2d.deviceConfiguration.createCompatibleImage(8, 8, BufferedImage.BITMASK)
-        with(img.graphics) {
-            color = Color.DARK_GRAY
-            fillRect(0, 0, 8, 8)
+    private val userCharacter = fullscreenG2d.deviceConfiguration.createCompatibleImage(8, 8, BufferedImage.BITMASK)
+
+    private fun getCharFromRAM(char: Int, color: Int, charsetAddr: Address): BufferedImage {
+        val chardefBytes = ram.getBlock(charsetAddr+char*8, 8)
+        val charPixels = (userCharacter.raster.dataBuffer as DataBufferInt).data
+        val rgb = ScreenDefs.colorPalette[color].rgb
+        val gfx = userCharacter.graphics
+        gfx.color = ScreenDefs.colorPalette[ram[0xd021]]
+        gfx.fillRect(0, 0, 8, 8)
+        for (y in 0..7) {
+            val bits = chardefBytes[y].toInt()
+            bits2Pixels(bits, charPixels, y*8, rgb)
         }
-        for (x in 0..7) {
-            img.setRGB(x, x, Color.RED.rgb)
-            img.setRGB(7-x, x, Color.RED.rgb)
-        }
-        img
+        return userCharacter
     }
 
-    private fun getCharImage(char: Int, color: Int, shifted: Boolean): BufferedImage {
+    private fun bits2Pixels(bits: Int, bitmap: IntArray, yoffset: Int, colorRgb: Int) {
+        if (bits and 0b10000000 != 0) bitmap[yoffset] = colorRgb
+        if (bits and 0b01000000 != 0) bitmap[yoffset+1] = colorRgb
+        if (bits and 0b00100000 != 0) bitmap[yoffset+2] = colorRgb
+        if (bits and 0b00010000 != 0) bitmap[yoffset+3] = colorRgb
+        if (bits and 0b00001000 != 0) bitmap[yoffset+4] = colorRgb
+        if (bits and 0b00000100 != 0) bitmap[yoffset+5] = colorRgb
+        if (bits and 0b00000010 != 0) bitmap[yoffset+6] = colorRgb
+        if (bits and 0b00000001 != 0) bitmap[yoffset+7] = colorRgb
+    }
+
+    private fun getCharFromROM(char: Int, color: Int, shifted: Boolean): BufferedImage {
         val key = Triple(char, color, shifted)
 
         fun makeCachedImage(): BufferedImage {
