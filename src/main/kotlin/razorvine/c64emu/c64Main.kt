@@ -29,15 +29,15 @@ class C64Machine(title: String) : IVirtualMachine {
     private val basicData = romsPath.resolve("basic").toFile().readBytes()
     private val kernalData = romsPath.resolve("kernal").toFile().readBytes()
 
-    override val bus = Bus()
     override val cpu = Cpu6502()
+    val cpuIoPort = CpuIoPort(cpu)
+    override val bus = Bus6510(cpuIoPort, chargenData)
     val ram = Ram(0x0000, 0xffff)
     val vic = VicII(0xd000, 0xd3ff, cpu)
     val cia1 = Cia(1, 0xdc00, 0xdcff, cpu)
     val cia2 = Cia(2, 0xdd00, 0xddff, cpu)
     val basicRom = Rom(0xa000, 0xbfff).also { it.load(basicData) }
     val kernalRom = Rom(0xe000, 0xffff).also { it.load(kernalData) }
-    val cpuIoPort = CpuIoPort(cpu)
 
     private val monitor = Monitor(bus, cpu)
     private val debugWindow = DebugWindow(this)

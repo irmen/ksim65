@@ -12,7 +12,7 @@ import razorvine.ksim65.components.*
  * NOTE: currently the bus address mapping is STATIC: there is no possibility for Bank-switching.
  *       (such as what the C-64 has; the ability to swap ROMs in and out of the address space).
  */
-class Bus {
+open class Bus {
 
     private val allComponents = mutableListOf<BusComponent>()
     private val memComponents = mutableListOf<MemMappedComponent>()
@@ -42,7 +42,7 @@ class Bus {
      * The first registered memory mapped component that listens to that address, will respond.
      * If no component is available, some CPUs generate a BUS ERROR but we return 0xff instead.
      */
-    fun read(address: Address): UByte {
+    open fun read(address: Address): UByte {
         memComponents.forEach {
             if (address >= it.startAddress && address <= it.endAddress) {
                 val data = it[address]
@@ -57,7 +57,7 @@ class Bus {
      * Write a data byte to the given address.
      * All memory mapped components that are mapped to the address, will receive the data.
      */
-    fun write(address: Address, data: UByte) {
+    open fun write(address: Address, data: UByte) {
         require(data in 0..255) { "data written to address $address must be a byte 0..255" }
         memComponents.forEach {
             if (address >= it.startAddress && address <= it.endAddress) it[address] = data

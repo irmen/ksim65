@@ -8,7 +8,6 @@ import razorvine.ksim65.components.UByte
 /**
  * The 6510's IO port located at $00/$01
  * Controlling the memory layout, and cassette port (not processed at all).
- * TODO: actually mapping the roms in and out of the address space. This requires some MMU type logic in the Bus class.
  */
 class CpuIoPort(val cpu: Cpu6502) : MemMappedComponent(0x0000, 0x0001) {
 
