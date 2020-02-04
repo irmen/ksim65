@@ -27,12 +27,7 @@ class Rom(startAddress: Address, endAddress: Address, initialData: Array<UByte>?
         load(bytes)
     }
 
-    fun load(data: Array<UByte>) = data.forEachIndexed { index, byte ->
-        this.data[index] = byte
-    }
+    fun load(data: Array<UByte>) = data.copyInto(this.data)
 
-    fun load(data: ByteArray) = data.forEachIndexed { index, byte ->
-        this.data[index] = if (byte >= 0) byte.toShort()
-        else (256+byte).toShort()
-    }
+    fun load(data: ByteArray) = data.map { (it.toInt() and 255).toShort() }.toTypedArray().copyInto(this.data)
 }
