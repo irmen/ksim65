@@ -62,8 +62,8 @@ class Display(startAddress: Address, endAddress: Address, private val host: IHos
         host.clearScreen()
     }
 
-    override operator fun get(address: Address): UByte {
-        return when (address-startAddress) {
+    override operator fun get(offset: Int): UByte {
+        return when (offset) {
             0x00 -> charposX.toShort()
             0x01 -> charposY.toShort()
             0x02 -> {
@@ -87,8 +87,8 @@ class Display(startAddress: Address, endAddress: Address, private val host: IHos
         }
     }
 
-    override operator fun set(address: Address, data: UByte) {
-        when (address-startAddress) {
+    override operator fun set(offset: Int, data: UByte) {
+        when (offset) {
             0x00 -> charposX = data.toInt()
             0x01 -> charposY = data.toInt()
             0x02 -> {

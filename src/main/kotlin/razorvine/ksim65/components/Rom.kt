@@ -12,9 +12,8 @@ class Rom(startAddress: Address, endAddress: Address, initialData: Array<UByte>?
         require(endAddress-startAddress+1 == data.size) { "rom address range doesn't match size of data bytes" }
     }
 
-    override operator fun get(address: Address): UByte = data[address-startAddress]
-    override operator fun set(address: Address, data: UByte) { /* read-only */
-    }
+    override operator fun get(offset: Int): UByte = data[offset]
+    override operator fun set(offset: Int, data: UByte) { /* read-only */ }
 
     override fun clock() {}
     override fun reset() {}

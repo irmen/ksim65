@@ -50,8 +50,8 @@ class VicII(startAddress: Address, endAddress: Address, val cpu: Cpu6502) : MemM
         interruptStatusRegisterD019 = 0
     }
 
-    override fun get(address: Address): UByte {
-        return when (val register = (address-startAddress) and 63) {
+    override operator fun get(offset: Int): UByte {
+        return when (val register = offset and 63) {
             0x11 -> (0b00011011 or ((currentRasterLine and 0b100000000) ushr 1)).toShort()
             0x12 -> {
                 (currentRasterLine and 255).toShort()
@@ -61,8 +61,8 @@ class VicII(startAddress: Address, endAddress: Address, val cpu: Cpu6502) : MemM
         }
     }
 
-    override fun set(address: Address, data: UByte) {
-        val register = (address-startAddress) and 63
+    override operator fun set(offset: Int, data: UByte) {
+        val register = offset and 63
         ramBuffer[register] = data
         when (register) {
             0x11 -> {

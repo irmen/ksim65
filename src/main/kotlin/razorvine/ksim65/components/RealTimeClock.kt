@@ -34,8 +34,8 @@ class RealTimeClock(startAddress: Address, endAddress: Address) : MemMappedCompo
         /* never reset */
     }
 
-    override operator fun get(address: Address): UByte {
-        return when (address-startAddress) {
+    override operator fun get(offset: Int): UByte {
+        return when (offset) {
             0x00 -> {
                 val year = LocalDate.now().year
                 (year and 255).toShort()
@@ -61,7 +61,5 @@ class RealTimeClock(startAddress: Address, endAddress: Address) : MemMappedCompo
         }
     }
 
-    override operator fun set(address: Address, data: UByte) {
-        /* real time clock can't be set */
-    }
+    override operator fun set(offset: Int, data: UByte) { /* real time clock can't be set */ }
 }

@@ -1,7 +1,6 @@
 package razorvine.c64emu
 
 import razorvine.ksim65.Cpu6502
-import razorvine.ksim65.components.Address
 import razorvine.ksim65.components.MemMappedComponent
 import razorvine.ksim65.components.UByte
 
@@ -23,14 +22,14 @@ class CpuIoPort(val cpu: Cpu6502) : MemMappedComponent(0x0000, 0x0001) {
     override fun clock() { }
     override fun reset() { }
 
-    override fun get(address: Address): UByte {
-        return if(address==0) dataDirections.toShort() else {
+    override operator fun get(offset: Int): UByte {
+        return if(offset==0) dataDirections.toShort() else {
             (ioPort or dataDirections.inv() and 0b00111111).toShort()
         }
     }
 
-    override fun set(address: Address, data: UByte) {
-        if(address==0) {
+    override operator fun set(offset: Int, data: UByte) {
+        if(offset==0) {
             dataDirections = data.toInt()
             determineRoms()
         } else {

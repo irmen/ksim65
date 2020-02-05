@@ -10,10 +10,10 @@ import java.io.InputStream
 class Ram(startAddress: Address, endAddress: Address) : MemoryComponent(startAddress, endAddress) {
     override val data = Array<UByte>(endAddress-startAddress+1) { 0 }
 
-    override operator fun get(address: Address): UByte = data[address-startAddress]
+    override operator fun get(offset: Int): UByte = data[offset]
 
-    override operator fun set(address: Address, data: UByte) {
-        this.data[address-startAddress] = data
+    override operator fun set(offset: Int, data: UByte) {
+        this.data[offset] = data
     }
 
     override fun clock() {}

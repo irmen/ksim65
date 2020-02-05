@@ -2,6 +2,7 @@ package razorvine.c64emu
 
 import razorvine.ksim65.components.Address
 import razorvine.ksim65.components.MemoryComponent
+import razorvine.ksim65.components.Rom
 import razorvine.ksim65.components.UByte
 import java.awt.*
 import java.awt.image.BufferedImage
@@ -14,7 +15,7 @@ import javax.swing.JPanel
  * High res bitmap mode (320*200), Multicolor bitmap mode (160*200).
  * TODO: Multicolor character mode.   Extended background color mode.
  */
-internal class Screen(private val chargenData: ByteArray, val ram: MemoryComponent) : JPanel() {
+internal class Screen(private val chargen: Rom, val ram: MemoryComponent) : JPanel() {
 
     private val fullscreenImage: BufferedImage
     private val fullscreenG2d: Graphics2D
@@ -43,7 +44,7 @@ internal class Screen(private val chargenData: ByteArray, val ram: MemoryCompone
         val offset = if (shifted) 256*8 else 0
         for (char in 0..255) {
             for (line in 0..7) {
-                val charbyte = chargenData[offset+char*8+line].toInt()
+                val charbyte = chargen[offset+char*8+line].toInt()
                 for (x in 0..7) {
                     if (charbyte and (0b10000000 ushr x) != 0) chars[char].setRGB(x, line, 0xffffff)
                 }

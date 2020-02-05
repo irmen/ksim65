@@ -25,8 +25,8 @@ class Mouse(startAddress: Address, endAddress: Address, private val host: IHostI
 
     private var mouse = host.mouse()
 
-    override operator fun get(address: Address): UByte {
-        return when (address-startAddress) {
+    override operator fun get(offset: Int): UByte {
+        return when (offset) {
             0x00 -> (mouse.x and 0xff).toShort()
             0x01 -> (mouse.x ushr 8).toShort()
             0x02 -> (mouse.y and 0xff).toShort()
@@ -41,7 +41,7 @@ class Mouse(startAddress: Address, endAddress: Address, private val host: IHostI
         }
     }
 
-    override operator fun set(address: Address, data: UByte) {
-        if (address-startAddress == 0x05) mouse = host.mouse()
+    override operator fun set(offset: Int, data: UByte) {
+        if (offset == 0x05) mouse = host.mouse()
     }
 }

@@ -18,14 +18,14 @@ class ParallelPort(startAddress: Address, endAddress: Address) : MemMappedCompon
     override fun clock() {}
     override fun reset() {}
 
-    override operator fun get(address: Address): UByte {
-        return if (address == startAddress) dataByte
+    override operator fun get(offset: Int): UByte {
+        return if (offset == 0) dataByte
         else 0xff
     }
 
-    override operator fun set(address: Address, data: UByte) {
-        if (address == startAddress) dataByte = data
-        else if (address == endAddress) {
+    override operator fun set(offset: Int, data: UByte) {
+        if (offset == 0) dataByte = data
+        else if (offset == 1) {
             if ((data.toInt() and 1) == 1) {
                 val char = dataByte.toChar()
                 println("PARALLEL WRITE: '$char'")

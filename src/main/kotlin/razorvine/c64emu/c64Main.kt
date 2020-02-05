@@ -25,23 +25,31 @@ import kotlin.concurrent.scheduleAtFixedRate
  */
 class C64Machine(title: String) : IVirtualMachine {
     private val romsPath = determineRomPath()
-    private val chargenData = romsPath.resolve("chargen").toFile().readBytes()
-    private val basicData = romsPath.resolve("basic").toFile().readBytes()
-    private val kernalData = romsPath.resolve("kernal").toFile().readBytes()
+
+    private val chargenRom = Rom(0xd000, 0xdfff).also {
+        val chargenData = romsPath.resolve("chargen").toFile().readBytes()
+        it.load(chargenData)
+    }
+    private val basicRom = Rom(0xa000, 0xbfff).also {
+        val basicData = romsPath.resolve("basic").toFile().readBytes()
+        it.load(basicData)
+    }
+    private val kernalRom = Rom(0xe000, 0xffff).also {
+        val kernalData = romsPath.resolve("kernal").toFile().readBytes()
+        it.load(kernalData)
+    }
 
     override val cpu = Cpu6502()
     val cpuIoPort = CpuIoPort(cpu)
-    override val bus = Bus6510(cpuIoPort, chargenData)
+    override val bus = Bus6510(cpuIoPort, chargenRom, basicRom, kernalRom)
     val ram = Ram(0x0000, 0xffff)
     val vic = VicII(0xd000, 0xd3ff, cpu)
     val cia1 = Cia(1, 0xdc00, 0xdcff, cpu)
     val cia2 = Cia(2, 0xdd00, 0xddff, cpu)
-    val basicRom = Rom(0xa000, 0xbfff).also { it.load(basicData) }
-    val kernalRom = Rom(0xe000, 0xffff).also { it.load(kernalData) }
 
     private val monitor = Monitor(bus, cpu)
     private val debugWindow = DebugWindow(this)
-    private val hostDisplay = MainC64Window(title, chargenData, ram, cpu, cia1)
+    private val hostDisplay = MainC64Window(title, chargenRom, ram, cpu, cia1)
     private var paused = false
 
     init {
@@ -49,8 +57,8 @@ class C64Machine(title: String) : IVirtualMachine {
         cpu.addBreakpoint(0xffd8, ::breakpointKernelSave)       // intercept SAVE subroutine in the kernal
         cpu.breakpointForBRK = ::breakpointBRK
 
-        bus += basicRom
-        bus += kernalRom
+        bus += basicRom // TODO remove this
+        bus += kernalRom  // TODO remove this
         bus += vic
         bus += cia1
         bus += cia2

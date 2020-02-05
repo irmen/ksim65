@@ -47,8 +47,8 @@ class Timer(startAddress: Address, endAddress: Address, val cpu: Cpu6502) : MemM
         nmi = false
     }
 
-    override operator fun get(address: Address): UByte {
-        return when (address-startAddress) {
+    override operator fun get(offset: Int): UByte {
+        return when (offset) {
             0x00 -> {
                 var data = 0
                 if (enabled) data = data or 0b00000001
@@ -62,8 +62,8 @@ class Timer(startAddress: Address, endAddress: Address, val cpu: Cpu6502) : MemM
         }
     }
 
-    override operator fun set(address: Address, data: UByte) {
-        when (address-startAddress) {
+    override operator fun set(offset: Int, data: UByte) {
+        when (offset) {
             0x00 -> {
                 val i = data.toInt()
                 enabled = (i and 0b00000001) != 0

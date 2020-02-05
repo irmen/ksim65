@@ -2,6 +2,7 @@ package razorvine.c64emu
 
 import razorvine.ksim65.Cpu6502
 import razorvine.ksim65.components.MemoryComponent
+import razorvine.ksim65.components.Rom
 import razorvine.ksim65.components.UByte
 import java.awt.Color
 import java.awt.KeyboardFocusManager
@@ -52,14 +53,14 @@ object ScreenDefs {
     val colorPalette = Palette()
 }
 
-class MainC64Window(title: String, chargenData: ByteArray, val ram: MemoryComponent, val cpu: Cpu6502, val keypressCia: Cia) :
+class MainC64Window(title: String, chargen: Rom, val ram: MemoryComponent, val cpu: Cpu6502, val keypressCia: Cia) :
         JFrame(title), KeyListener {
     init {
         defaultCloseOperation = EXIT_ON_CLOSE
         isResizable = false
         isFocusable = true
 
-        add(Screen(chargenData, ram))
+        add(Screen(chargen, ram))
         addKeyListener(this)
         pack()
         setLocationRelativeTo(null)

@@ -45,7 +45,7 @@ open class Bus {
     open fun read(address: Address): UByte {
         memComponents.forEach {
             if (address >= it.startAddress && address <= it.endAddress) {
-                val data = it[address]
+                val data = it[address - it.startAddress]
                 require(data in 0..255) { "data at address $address must be a byte 0..255, but is $data" }
                 return data
             }
@@ -60,7 +60,8 @@ open class Bus {
     open fun write(address: Address, data: UByte) {
         require(data in 0..255) { "data written to address $address must be a byte 0..255" }
         memComponents.forEach {
-            if (address >= it.startAddress && address <= it.endAddress) it[address] = data
+            if (address >= it.startAddress && address <= it.endAddress)
+                it[address-it.startAddress] = data
         }
     }
 

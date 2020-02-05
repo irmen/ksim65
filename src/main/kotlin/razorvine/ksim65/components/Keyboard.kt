@@ -23,13 +23,12 @@ class Keyboard(startAddress: Address, endAddress: Address, private val host: IHo
     override fun clock() {}
     override fun reset() {}
 
-    override operator fun get(address: Address): UByte {
-        return when (address-startAddress) {
+    override operator fun get(offset: Int): UByte {
+        return when (offset) {
             0x00 -> host.keyboard()?.toShort() ?: 0
             else -> 0xff
         }
     }
 
-    override operator fun set(address: Address, data: UByte) { /* read-only device */
-    }
+    override operator fun set(offset: Int, data: UByte) { /* read-only device */ }
 }

@@ -125,7 +125,7 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address, val cpu: 
         timerBset = 0
     }
 
-    override fun get(address: Address): UByte {
+    override operator fun get(offset: Int): UByte {
         fun scanColumn(vararg keys: HostKeyPress): UByte {
             var bits = 0b10000000
             var presses = 0
@@ -136,7 +136,7 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address, val cpu: 
             return (presses.inv() and 255).toShort()
         }
 
-        val register = (address-startAddress) and 15
+        val register = offset and 15
         if (number == 1 && register == 0x01) {
             // register 1 on CIA#1 is the keyboard data port
             // if bit is cleared in PRA, contains keys pressed in that column of the matrix
@@ -235,8 +235,8 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address, val cpu: 
         return tens*10+ones
     }
 
-    override fun set(address: Address, data: UByte) {
-        val register = (address-startAddress) and 15
+    override operator fun set(offset: Int, data: UByte) {
+        val register = offset and 15
         if (number == 1 && register == 0x00) {
             // PRA data port A (select keyboard matrix column)
             regPRA = data.toInt()

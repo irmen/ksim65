@@ -28,8 +28,8 @@ abstract class BusComponent {
  * Most I/O components fall into this category.
  */
 abstract class MemMappedComponent(val startAddress: Address, val endAddress: Address) : BusComponent() {
-    abstract operator fun get(address: Address): UByte
-    abstract operator fun set(address: Address, data: UByte)
+    abstract operator fun get(offset: Int): UByte
+    abstract operator fun set(offset: Int, data: UByte)
 
     init {
         require(endAddress >= startAddress)
@@ -39,7 +39,7 @@ abstract class MemMappedComponent(val startAddress: Address, val endAddress: Add
     fun hexDump(from: Address, to: Address, charmapper: ((Short) -> Char)? = null) {
         (from..to).chunked(16).forEach {
             print("\$${it.first().toString(16).padStart(4, '0')}  ")
-            val bytes = it.map { address -> get(address) }
+            val bytes = it.map { address -> get(address - startAddress) }
             bytes.forEach { byte ->
                 print(byte.toString(16).padStart(2, '0')+" ")
             }
