@@ -134,5 +134,10 @@ bintray {
         it.vcsUrl = "https://github.com/irmen/ksim65.git"
         it.setLabels("6502", "retro", "emulation", "c64")
         it.githubRepo = it.vcsUrl
+        it.version = VersionConfig().also {
+            it.gpg = GpgConfig().also {
+                it.sign = true
+            }
+        }
     }
 }
