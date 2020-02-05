@@ -53,7 +53,7 @@ object ScreenDefs {
     val colorPalette = Palette()
 }
 
-class MainC64Window(title: String, chargen: Rom, val ram: MemoryComponent, val cpu: Cpu6502, val keypressCia: Cia) :
+class MainC64Window(title: String, chargen: Rom, val ram: MemoryComponent, val cpu: Cpu6502, private val keypressCia: Cia) :
         JFrame(title), KeyListener {
     init {
         defaultCloseOperation = EXIT_ON_CLOSE

@@ -41,8 +41,14 @@ class C64Machine(title: String) : IVirtualMachine {
 
     override val cpu = Cpu6502()
     val cpuIoPort = CpuIoPort(cpu)
+
+    // This bus contains "mmu" logic to control the memory bank switching controlled by the 6510's io port in $00/$01.
+    // Therefore we provide it the various roms directly and not "connect" these to the bus in the default way.
     override val bus = Bus6510(cpuIoPort, chargenRom, basicRom, kernalRom)
+
+    // the C64 has 64KB of RAM.  Some of it may be banked out and replaced by ROM.
     val ram = Ram(0x0000, 0xffff)
+
     val vic = VicII(0xd000, 0xd3ff, cpu)
     val cia1 = Cia(1, 0xdc00, 0xdcff, cpu)
     val cia2 = Cia(2, 0xdd00, 0xddff, cpu)
@@ -57,13 +63,11 @@ class C64Machine(title: String) : IVirtualMachine {
         cpu.addBreakpoint(0xffd8, ::breakpointKernelSave)       // intercept SAVE subroutine in the kernal
         cpu.breakpointForBRK = ::breakpointBRK
 
-        bus += basicRom // TODO remove this
-        bus += kernalRom  // TODO remove this
         bus += vic
         bus += cia1
         bus += cia2
         bus += cpuIoPort
-        bus += ram
+        bus += ram      // note: the ROMs are mapped depending on the cpu's io port
         bus += cpu
         bus.reset()
 
