@@ -52,7 +52,7 @@ class Test6502Klaus2m5Functional {
     }
 
     @Test
-    fun testFunctional65C02() {
+    fun testExtendedOpcodes65C02() {
         val cpu = Cpu65C02()
         val bus = Bus()
         val ram = Ram(0, 0xffff)
@@ -61,28 +61,22 @@ class Test6502Klaus2m5Functional {
         bus.add(ram)
         cpu.reset()
         cpu.regPC = 0x0400
-        cpu.addBreakpoint(0x24f1) { _, _ ->
-            // reaching this address means successful test result
-            if(cpu.currentOpcode==0x4c)
-                throw SuccessfulTestResult()
-            Cpu6502.BreakpointResultAction(null, null)
-        }
-
         try {
-            while (cpu.totalCycles < 100000000) {
-                cpu.clock()
-            }
-        } catch (sx: SuccessfulTestResult) {
-            println("test successful")
-            return
+            do {
+                val previousPC = cpu.regPC
+                cpu.step()
+            } while(cpu.regPC!=previousPC)
         } catch(nx: NotImplementedError) {
             println("encountered a not yet implemented feature: ${nx.message}")
         }
 
-        println(cpu.snapshot())
-        val d = cpu.disassemble(ram, max(0, cpu.regPC-20), min(65535, cpu.regPC+20))
-        println(d.first.joinToString ("\n"))
-        fail("test failed")
+        // the test is successful if address 0x24f1 is reached ("success" label in source code)
+        if(cpu.regPC!=0x24f1) {
+            println(cpu.snapshot())
+            val d = cpu.disassemble(ram, max(0, cpu.regPC-20), min(65535, cpu.regPC+20))
+            println(d.first.joinToString("\n"))
+            fail("test failed")
+        }
     }
 
     @Test
@@ -96,28 +90,22 @@ class Test6502Klaus2m5Functional {
         bus.add(ram)
         cpu.reset()
         cpu.regPC = 0x0400
-//        cpu.addBreakpoint(0x3469) { _, _ ->
-//            // reaching this address means successful test result
-//            if(cpu.currentOpcode==0x4c)
-//                throw SuccessfulTestResult()
-//            Cpu6502.BreakpointResultAction(null, null)
-//        }
-
         try {
-            while (cpu.totalCycles < 100000000) {
-                cpu.clock()
-            }
-        } catch (sx: SuccessfulTestResult) {
-            println("test successful  ${cpu.totalCycles}")
-            return
+            do {
+                val previousPC = cpu.regPC
+                cpu.step()
+            } while(cpu.regPC!=previousPC)
         } catch(nx: NotImplementedError) {
             println("encountered a not yet implemented feature: ${nx.message}")
         }
 
-        println(cpu.snapshot())
-        val d = cpu.disassemble(ram, max(0, cpu.regPC-20), min(65535, cpu.regPC+20))
-        println(d.first.joinToString ("\n"))
-        fail("test failed")
+        // the test is successful if address 0x06f5 is reached ("success" label in source code)
+        if(cpu.regPC!=0x06f5) {
+            println(cpu.snapshot())
+            val d = cpu.disassemble(ram, max(0, cpu.regPC-20), min(65535, cpu.regPC+20))
+            println(d.first.joinToString("\n"))
+            fail("test failed")
+        }
     }
 
     @Test

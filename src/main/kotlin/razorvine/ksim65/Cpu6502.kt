@@ -94,6 +94,8 @@ open class Cpu6502 : BusComponent() {
     val regP = StatusRegister()
     var currentOpcode: Int = 0
         protected set
+    var currentOpcodeAddress: Address = 0    // the PC can be changed already depending on the addressing mode
+        protected set
     var instrCycles: Int = 0
         protected set
 
@@ -167,8 +169,7 @@ open class Cpu6502 : BusComponent() {
                 // addressing mode used by the 65C02, put here for convenience rather than the subclass
                 val zpAddr = memory[location+1]
                 val rel = memory[location+2]
-                val target = if (rel <= 0x7f) location+3+rel+baseAddress
-                else location+3-(256-rel)+baseAddress
+                val target = (if (rel <= 0x7f) location+3+rel+baseAddress else location+3-(256-rel)+baseAddress) and 0xffff
                 Pair(line+"${hexB(zpAddr)} ${hexB(rel)} $spacing3 ${opcode.mnemonic}  \$${hexB(zpAddr)}, \$${hexW(target, true)}", 3)
             }
             AddrMode.Izp -> {
@@ -193,8 +194,7 @@ open class Cpu6502 : BusComponent() {
             }
             AddrMode.Rel -> {
                 val rel = memory[location+1]
-                val target = if (rel <= 0x7f) location+2+rel+baseAddress
-                else location+2-(256-rel)+baseAddress
+                val target = (if (rel <= 0x7f) location+2+rel+baseAddress else location+2-(256-rel)+baseAddress) and 0xffff
                 Pair(line+"${hexB(rel)} $spacing2 ${opcode.mnemonic}  \$${hexW(target, true)}", 2)
             }
             AddrMode.Abs -> {
@@ -268,6 +268,7 @@ open class Cpu6502 : BusComponent() {
                 currentInstruction = instructions[0]
             } else {
                 // no interrupt, fetch next instruction from memory
+                currentOpcodeAddress = regPC
                 currentOpcode = read(regPC)
                 currentInstruction = instructions[currentOpcode]
 
@@ -1386,75 +1387,75 @@ open class Cpu6502 : BusComponent() {
     // unofficial/illegal 6502 instructions
 
     private fun iAhx() {
-        TODO("ahx - ('illegal' instruction)")
+        TODO("\$${hexB(currentOpcode)} - ahx - ('illegal' instruction) @ \$${hexW(currentOpcodeAddress)}")
     }
 
     private fun iAlr() {
-        TODO("alr=asr - ('illegal' instruction)")
+        TODO("\$${hexB(currentOpcode)} - alr=asr - ('illegal' instruction) @ \$${hexW(currentOpcodeAddress)}")
     }
 
     private fun iAnc() {
-        TODO("anc - ('illegal' instruction)")
+        TODO("\$${hexB(currentOpcode)} - anc - ('illegal' instruction) @ \$${hexW(currentOpcodeAddress)}")
     }
 
     private fun iArr() {
-        TODO("arr - ('illegal' instruction)")
+        TODO("\$${hexB(currentOpcode)} - arr - ('illegal' instruction) @ \$${hexW(currentOpcodeAddress)}")
     }
 
     private fun iAxs() {
-        TODO("axs - ('illegal' instruction)")
+        TODO("\$${hexB(currentOpcode)} - axs - ('illegal' instruction) @ \$${hexW(currentOpcodeAddress)}")
     }
 
     private fun iDcp() {
-        TODO("dcp - ('illegal' instruction)")
+        TODO("\$${hexB(currentOpcode)} - dcp - ('illegal' instruction) @ \$${hexW(currentOpcodeAddress)}")
     }
 
     private fun iIsc() {
-        TODO("isc=isb - ('illegal' instruction)")
+        TODO("\$${hexB(currentOpcode)} - isc=isb - ('illegal' instruction) @ \$${hexW(currentOpcodeAddress)}")
     }
 
     private fun iLas() {
-        TODO("las=lar - ('illegal' instruction)")
+        TODO("\$${hexB(currentOpcode)} - las=lar - ('illegal' instruction) @ \$${hexW(currentOpcodeAddress)}")
     }
 
     private fun iLax() {
-        TODO("lax - ('illegal' instruction)")
+        TODO("\$${hexB(currentOpcode)} - lax - ('illegal' instruction) @ \$${hexW(currentOpcodeAddress)}")
     }
 
     private fun iRla() {
-        TODO("rla - ('illegal' instruction)")
+        TODO("\$${hexB(currentOpcode)} - rla - ('illegal' instruction) @ \$${hexW(currentOpcodeAddress)}")
     }
 
     private fun iRra() {
-        TODO("rra - ('illegal' instruction)")
+        TODO("\$${hexB(currentOpcode)} - rra - ('illegal' instruction) @ \$${hexW(currentOpcodeAddress)}")
     }
 
     private fun iSax() {
-        TODO("sax - ('illegal' instruction)")
+        TODO("\$${hexB(currentOpcode)} - sax - ('illegal' instruction) @ \$${hexW(currentOpcodeAddress)}")
     }
 
     private fun iShx() {
-        TODO("shx - ('illegal' instruction)")
+        TODO("\$${hexB(currentOpcode)} - shx - ('illegal' instruction) @ \$${hexW(currentOpcodeAddress)}")
     }
 
     private fun iShy() {
-        TODO("shy - ('illegal' instruction)")
+        TODO("\$${hexB(currentOpcode)} - shy - ('illegal' instruction) @ \$${hexW(currentOpcodeAddress)}")
     }
 
     private fun iSlo() {
-        TODO("slo=aso - ('illegal' instruction)")
+        TODO("\$${hexB(currentOpcode)} - slo=aso - ('illegal' instruction) @ \$${hexW(currentOpcodeAddress)}")
     }
 
     private fun iSre() {
-        TODO("sre=lse - ('illegal' instruction)")
+        TODO("\$${hexB(currentOpcode)} - sre=lse - ('illegal' instruction) @ \$${hexW(currentOpcodeAddress)}")
     }
 
     private fun iTas() {
-        TODO("tas - ('illegal' instruction)")
+        TODO("\$${hexB(currentOpcode)} - tas - ('illegal' instruction) @ \$${hexW(currentOpcodeAddress)}")
     }
 
     private fun iXaa() {
-        TODO("xaa - ('illegal' instruction)")
+        TODO("\$${hexB(currentOpcode)} - xaa - ('illegal' instruction) @ \$${hexW(currentOpcodeAddress)}")
     }
 
     // invalid instruction (JAM / KIL)

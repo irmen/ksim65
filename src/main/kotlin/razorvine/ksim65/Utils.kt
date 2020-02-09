@@ -14,7 +14,7 @@ fun hexB(number: Short): String = hexB(number.toInt())
 fun hexB(number: Int): String {
     val hexdigits = "0123456789abcdef"
     val loNibble = number and 15
-    val hiNibble = number ushr 4
+    val hiNibble = (number and 65535) ushr 4
     return hexdigits[hiNibble].toString()+hexdigits[loNibble]
 }
 
