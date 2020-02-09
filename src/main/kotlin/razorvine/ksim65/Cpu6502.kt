@@ -8,7 +8,7 @@ import razorvine.ksim65.components.UByte
 
 /**
  * 6502 cpu simulation (the NMOS version) including the 'illegal' opcodes.
- * TODO: actually implement the illegal opcodes, see http://www.ffd2.com/fridge/docs/6502-NMOS.extra.opcodes
+ * TODO: actually implement the illegal opcodes, see http://www.ffd2.com/fridge/docs/6502-NMOS.extra.opcodes or https://sourceforge.net/p/moarnes/code/ci/master/tree/src/6502.c
  */
 open class Cpu6502 : BusComponent() {
     open val name = "6502"
@@ -1458,8 +1458,8 @@ open class Cpu6502 : BusComponent() {
         TODO("\$${hexB(currentOpcode)} - xaa - ('illegal' instruction) @ \$${hexW(currentOpcodeAddress)}")
     }
 
-    // invalid instruction (JAM / KIL)
+    // invalid instruction (JAM / KIL / HLT)
     private fun iInvalid() {
-        throw InstructionError("invalid instruction encountered: opcode=${hexB(currentOpcode)} instr=${currentInstruction.mnemonic}")
+        throw InstructionError("invalid instruction encountered: opcode=${hexB(currentOpcode)} instr=${currentInstruction.mnemonic} @ ${hexW(currentOpcodeAddress)}")
     }
 }

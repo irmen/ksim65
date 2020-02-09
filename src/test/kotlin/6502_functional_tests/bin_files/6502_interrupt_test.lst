@@ -23,7 +23,7 @@ AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood       
                         
                         ; This program is designed to test IRQ and NMI of a 6502 emulator. It requires
                         ; an internal or external feedback register to the IRQ & NMI inputs
-                        ; 
+                        ;
                         ; version 15-aug-2014
                         ; contact info at http://2m5.de or email K@2m5.de
                         ;
@@ -87,10 +87,10 @@ bffc =                  I_port      = $bffc     ;feedback port address
                         
                         ;configure memory - try to stay away from memory used by the system
                         ;zero_page memory start address, 6 consecutive Bytes required
-000a =                  zero_page = $a  
+0000 =                  zero_page = $0
                         
                         ;data_segment memory start address, 4 consecutive Bytes required
-0200 =                  data_segment = $200  
+0200 =                  data_segment = $200
                         
                         ;code_segment memory start address
 0400 =                  code_segment = $400
@@ -195,21 +195,21 @@ bffc =                  I_port      = $bffc     ;feedback port address
                             else
                                 bss                 ;uninitialized segment, copy of data at end of code!
                             endif
-000a =                          org zero_page
+0000 =                          org zero_page
                         ;BRK, IRQ, NMI test interrupt save
-000a :                  zpt
-000a : 00               irq_a   ds  1               ;a register
-000b : 00               irq_x   ds  1               ;x register
-000c : 00               irq_f   ds  1               ;flags
-000d : 00               nmi_a   ds  1               ;a register
-000e : 00               nmi_x   ds  1               ;x register
-000f : 00               nmi_f   ds  1               ;flags
-0010 :                  zp_bss
+0000 :                  zpt
+0000 : 00               irq_a   ds  1               ;a register
+0001 : 00               irq_x   ds  1               ;x register
+0002 : 00               irq_f   ds  1               ;flags
+0003 : 00               nmi_a   ds  1               ;a register
+0004 : 00               nmi_x   ds  1               ;x register
+0005 : 00               nmi_f   ds  1               ;flags
+0006 :                  zp_bss
                         
                         ;fixed stack locations
 01fe =                  lst_f   equ $1fe            ;last flags before interrupt
 01ff =                  lst_a   equ $1ff            ;last accumulator before interrupt
-                            
+                        
 0200 =                          org data_segment
                         ;concurrent NMI, IRQ & BRK test result
 0200 : 00               nmi_count   ds  1           ;lowest number handled first, $ff = never
@@ -226,7 +226,7 @@ bffc =                  I_port      = $bffc     ;feedback port address
 0403 : 8d0302                   sta I_src
 0406 : a2ff                     ldx #$ff
 0408 : 9a                       txs
-                            
+                        
                         ;initialize I/O for report channel
                             if report = 1
                                 jsr report_init
@@ -267,7 +267,7 @@ bffc =                  I_port      = $bffc     ;feedback port address
                                 and #I_filter
                                 ora #(1<<IRQ_bit)
                                 sta I_ddr
-                              endif    
+                              endif
                             else                ;open collector, 0 -> I_DDR or I_port to force interrupt
                               if I_ddr != 0     ;with DDR
                         I_set   macro  ibit     ;ibit = interrupt bit
@@ -282,7 +282,7 @@ bffc =                  I_port      = $bffc     ;feedback port address
                         I_clr   macro  ibit     ;ibit = interrupt bit
                                 lda I_ddr       ;turn off interrupt by bit
                                 and #I_filter-(1<<ibit)
-                                sta I_ddr 
+                                sta I_ddr
                                 endm
                                 I_clr   IRQ_bit ;turn off IRQ
                                 lda I_port      ;precharge IRQ
@@ -333,7 +333,7 @@ bffc =                  I_port      = $bffc     ;feedback port address
                                 and #I_filter
                                 ora #(1<<IRQ_bit|1<<NMI_bit)
                                 sta I_ddr
-                              endif    
+                              endif
                             else                ;open collector, 0 -> I_DDR or I_port to force interrupt
                               if I_ddr != 0     ;with DDR
                         I_set   macro  ibit     ;ibit = interrupt bit
@@ -352,7 +352,7 @@ bffc =                  I_port      = $bffc     ;feedback port address
                         I_clr   macro  ibit     ;ibit = interrupt bit
                                 lda I_ddr       ;turn off interrupt by bit
                                 and #I_filter-(1<<ibit)
-                                sta I_ddr 
+                                sta I_ddr
                                 endm
                                 I_clr   IRQ_bit ;turn off IRQ & NMI
                                 I_clr   NMI_bit
@@ -391,7 +391,7 @@ bffc =                  I_port      = $bffc     ;feedback port address
                               endif
                             endif
                           endif
-                          
+                        
                         ; IRQ integrity test
                         ; test for clear flags seen in IRQ vector
 0419 : a902                     lda #2          ;set expected interrupt source IRQ
@@ -425,7 +425,7 @@ bffc =                  I_port      = $bffc     ;feedback port address
                                 trap_ne         ;returned SP
 0439 : d0fe            >        bne *           ;failed not equal (non zero)
                         
-043b : a50c                     lda irq_f       ;flags seen in IRQ vector
+043b : a502                     lda irq_f       ;flags seen in IRQ vector
                               if D_clear = 1
                                 and #decmode
                                 trap_ne         ;D-flag not cleared
@@ -492,7 +492,7 @@ bffc =                  I_port      = $bffc     ;feedback port address
                                 trap_ne         ;returned flags
 047c : d0fe            >        bne *           ;failed not equal (non zero)
                         
-047e : a50a                     lda irq_a       ;accu seen in IRQ vector
+047e : a500                     lda irq_a       ;accu seen in IRQ vector
 0480 : cdff01                   cmp lst_a
                                 trap_ne         ;IRQ A received
 0483 : d0fe            >        bne *           ;failed not equal (non zero)
@@ -549,7 +549,7 @@ bffc =                  I_port      = $bffc     ;feedback port address
                                 trap_ne         ;returned flags
 04bd : d0fe            >        bne *           ;failed not equal (non zero)
                         
-04bf : a50a                     lda irq_a       ;accu seen in IRQ vector
+04bf : a500                     lda irq_a       ;accu seen in IRQ vector
 04c1 : cdff01                   cmp lst_a
                                 trap_ne         ;IRQ A received
 04c4 : d0fe            >        bne *           ;failed not equal (non zero)
@@ -588,7 +588,7 @@ bffc =                  I_port      = $bffc     ;feedback port address
                                 trap_ne         ;returned SP
 04e9 : d0fe            >        bne *           ;failed not equal (non zero)
                         
-04eb : a50c                     lda irq_f       ;flags seen in IRQ vector
+04eb : a502                     lda irq_f       ;flags seen in IRQ vector
                               if D_clear = 1
                                 and #decmode
                                 trap_ne         ;D-flag not cleared
@@ -631,7 +631,7 @@ bffc =                  I_port      = $bffc     ;feedback port address
                                 trap_ne         ;returned SP
 050f : d0fe            >        bne *           ;failed not equal (non zero)
                         
-0511 : a50c                     lda irq_f       ;flags seen in IRQ vector
+0511 : a502                     lda irq_f       ;flags seen in IRQ vector
                               if D_clear = 1
                                 and #decmode
                                 trap_ne         ;D-flag not cleared
@@ -690,7 +690,7 @@ bffc =                  I_port      = $bffc     ;feedback port address
                                 trap_ne         ;returned flags
 054a : d0fe            >        bne *           ;failed not equal (non zero)
                         
-054c : a50a                     lda irq_a       ;accu seen in IRQ vector
+054c : a500                     lda irq_a       ;accu seen in IRQ vector
 054e : cdff01                   cmp lst_a
                                 trap_ne         ;IRQ A received
 0551 : d0fe            >        bne *           ;failed not equal (non zero)
@@ -739,7 +739,7 @@ bffc =                  I_port      = $bffc     ;feedback port address
                                 trap_ne         ;returned flags
 0583 : d0fe            >        bne *           ;failed not equal (non zero)
                         
-0585 : a50a                     lda irq_a       ;accu seen in IRQ vector
+0585 : a500                     lda irq_a       ;accu seen in IRQ vector
 0587 : cdff01                   cmp lst_a
                                 trap_ne         ;IRQ A received
 058a : d0fe            >        bne *           ;failed not equal (non zero)
@@ -770,7 +770,7 @@ bffc =                  I_port      = $bffc     ;feedback port address
                                 trap_ne         ;returned SP
 05a7 : d0fe            >        bne *           ;failed not equal (non zero)
                         
-05a9 : a50c                     lda irq_f       ;flags seen in IRQ vector
+05a9 : a502                     lda irq_f       ;flags seen in IRQ vector
                               if D_clear = 1
                                 and #decmode
                                 trap_ne         ;D-flag not cleared
@@ -793,7 +793,7 @@ bffc =                  I_port      = $bffc     ;feedback port address
                                 ldx #0
                                 lda #0
                                 sta I_src
-                                push_stat intdis        
+                                push_stat intdis
                                 I_set IRQ_bit   ;IRQ pending
                                 inx
                                 inx
@@ -817,7 +817,7 @@ bffc =                  I_port      = $bffc     ;feedback port address
                                 sta nmi_count
                                 sta irq_count
                                 sta brk_count
-                                push_stat 0        
+                                push_stat 0
                                 I_set IRQ_bit   ;trigger IRQ
                             else
                         ; NMI integrity test
@@ -853,7 +853,7 @@ bffc =                  I_port      = $bffc     ;feedback port address
                                 trap_ne         ;returned SP
 05d5 : d0fe            >        bne *           ;failed not equal (non zero)
                         
-05d7 : a50f                     lda nmi_f       ;flags seen in NMI vector
+05d7 : a505                     lda nmi_f       ;flags seen in NMI vector
                               if D_clear = 1
                                 and #decmode
                                 trap_ne         ;D-flag not cleared
@@ -920,7 +920,7 @@ bffc =                  I_port      = $bffc     ;feedback port address
                                 trap_ne         ;returned flags
 0618 : d0fe            >        bne *           ;failed not equal (non zero)
                         
-061a : a50d                     lda nmi_a       ;accu seen in NMI vector
+061a : a503                     lda nmi_a       ;accu seen in NMI vector
 061c : cdff01                   cmp lst_a
                                 trap_ne         ;NMI A received
 061f : d0fe            >        bne *           ;failed not equal (non zero)
@@ -977,7 +977,7 @@ bffc =                  I_port      = $bffc     ;feedback port address
                                 trap_ne         ;returned flags
 0659 : d0fe            >        bne *           ;failed not equal (non zero)
                         
-065b : a50d                     lda nmi_a       ;accu seen in NMI vector
+065b : a503                     lda nmi_a       ;accu seen in NMI vector
 065d : cdff01                   cmp lst_a
                                 trap_ne         ;NMI A received
 0660 : d0fe            >        bne *           ;failed not equal (non zero)
@@ -1016,7 +1016,7 @@ bffc =                  I_port      = $bffc     ;feedback port address
                                 trap_ne         ;returned SP
 0685 : d0fe            >        bne *           ;failed not equal (non zero)
                         
-0687 : a50f                     lda nmi_f       ;flags seen in NMI vector
+0687 : a505                     lda nmi_f       ;flags seen in NMI vector
                               if D_clear = 1
                                 and #decmode
                                 trap_ne         ;D-flag not cleared
@@ -1038,8 +1038,8 @@ bffc =                  I_port      = $bffc     ;feedback port address
 0693 : a200                     ldx #0
 0695 : a904                     lda #4          ;set expected interrupt NMI only
 0697 : 8d0302                   sta I_src
-                                push_stat intdis        
-069a : a904            >            lda #intdis        
+                                push_stat intdis
+069a : a904            >            lda #intdis
 069c : 48              >            pha         ;use stack to load status
                         
                                 I_set 8         ;both interrupts pending
@@ -1117,23 +1117,23 @@ bffc =                  I_port      = $bffc     ;feedback port address
 06f3 : d0fe            >        bne *           ;failed not equal (non zero)
                         
                         
-                        ; S U C C E S S ************************************************       
-                        ; -------------       
+                        ; S U C C E S S ************************************************
+                        ; -------------
                                 success         ;if you get here everything went well
 06f5 : 4cf506          >        jmp *           ;test passed, no errors
                         
-                        ; -------------       
-                        ; S U C C E S S ************************************************       
+                        ; -------------
+                        ; S U C C E S S ************************************************
                         ; check data_segment +0 to +2 for sequence of concurrent interrupts
                         ; e.g. 0x200 = NMI, 0x201 = IRQ, 0x202 = BRK, lower values = earlier
-06f8 : 4c0004                   jmp start       ;run again      
+06f8 : 4c0004                   jmp start       ;run again
                         
                         ; manual tests for the WAI opcode of the 65c02
                         
-                        wai     macro   
+                        wai     macro
                                 db  $cb         ;WAI opcode
                                 endm
-                                
+                        
                         ; requires single step operation, report = 0
                         ;   set PC to the 1st instruction of the test
                         ;   step to the WAI opcode, then manually tie the IRQ input low
@@ -1164,7 +1164,7 @@ bffc =                  I_port      = $bffc     ;feedback port address
                                 success
 070f : 4c0f07          >        jmp *           ;test passed, no errors
                         
-                                
+                        
                         ; WAI with interrupts enabled
 0712 : a2ff                     ldx #$ff
 0714 : 9a                       txs
@@ -1194,13 +1194,13 @@ bffc =                  I_port      = $bffc     ;feedback port address
                                 success
 072c : 4c2c07          >        jmp *           ;test passed, no errors
                         
-                                
+                        
                         ; manual test for the STP opcode of the 65c02
                         
-                        stp     macro   
+                        stp     macro
                                 db  $db         ;STP opcode
                                 endm
-                                
+                        
                         ; set PC to the 1st instruction of the test, then run
 072f : ea                       nop
 0730 : ea                       nop
@@ -1230,13 +1230,13 @@ bffc =                  I_port      = $bffc     ;feedback port address
 073a : 88                       dey
 073b : 88                       dey
 073c : 88                       dey
-073d : 850d                     sta nmi_a       ;save regsters during NMI
-073f : 860e                     stx nmi_x
+073d : 8503                     sta nmi_a       ;save regsters during NMI
+073f : 8604                     stx nmi_x
 0741 : 68                       pla
 0742 : 48                       pha
-0743 : 850f                     sta nmi_f
+0743 : 8505                     sta nmi_f
 0745 : ad0302                   lda I_src       ;NMI expected?
-0748 : 2904                     and #4   
+0748 : 2904                     and #4
                                 trap_eq         ;unexpexted NMI - check stack for conditions
 074a : f0fe            >        beq *           ;failed equal (zero)
                         
@@ -1249,7 +1249,7 @@ bffc =                  I_port      = $bffc     ;feedback port address
 0752 : 68                       pla             ;return with other flags reversed
 0753 : 49c3                     eor #m8-fai-decmode
 0755 : 48                       pha
-0756 : ba                       tsx        
+0756 : ba                       tsx
 0757 : bd0201                   lda $102,x     ;test break on stack
 075a : 2910                     and #break
                                 trap_ne         ;unexpected B-flag! - this may fail on a real 6502
@@ -1259,12 +1259,12 @@ bffc =                  I_port      = $bffc     ;feedback port address
 075e : ad0302                   lda I_src       ;mark expected NMI has occured
 0761 : 29fb                     and #$ff-4
 0763 : 8d0302                   sta I_src
-                                I_clr   NMI_bit   
+                                I_clr   NMI_bit
 0766 : adfcbf          >        lda I_port      ;turn off interrupt by bit
-0769 : 297d            >        and #I_filter-(1<<NMI_bit   )
+0769 : 297d            >        and #I_filter-(1<<NMI_bit)
 076b : 8dfcbf          >        sta I_port
                         
-076e : a60e                     ldx nmi_x
+076e : a604                     ldx nmi_x
 0770 : e8                       inx
 0771 : 8e0002                   stx nmi_count
 0774 : a949                     lda #'I'        ;mark (NM)I
@@ -1276,7 +1276,7 @@ bffc =                  I_port      = $bffc     ;feedback port address
                                 trap            ;unexpected RESET
 0778 : 4c7807          >        jmp *           ;failed anyway
                         
-                                
+                        
 077b : 88                       dey
 077c : 88                       dey
 077d :                  irq_trap                ;BRK & IRQ test
@@ -1284,13 +1284,13 @@ bffc =                  I_port      = $bffc     ;feedback port address
 077e : 88                       dey
 077f : 88                       dey
 0780 : 88                       dey
-0781 : 850a                     sta irq_a       ;save registers during IRQ/BRK
-0783 : 860b                     stx irq_x
+0781 : 8500                     sta irq_a       ;save registers during IRQ/BRK
+0783 : 8601                     stx irq_x
 0785 : 68                       pla
 0786 : 48                       pha
-0787 : 850c                     sta irq_f
+0787 : 8502                     sta irq_f
 0789 : ad0302                   lda I_src       ;IRQ expected?
-078c : 2903                     and #3   
+078c : 2903                     and #3
                                 trap_eq         ;unexpexted IRQ/BRK - check stack for conditions
 078e : f0fe            >        beq *           ;failed equal (zero)
                         
@@ -1302,32 +1302,32 @@ bffc =                  I_port      = $bffc     ;feedback port address
                         
 0796 : 68                       pla             ;return with other flags reversed
 0797 : 49c3                     eor #m8-fai-decmode
-0799 : 48                       pha        
+0799 : 48                       pha
 079a : ba                       tsx
 079b : bd0201                   lda $102,x      ;test break on stack
 079e : 2910                     and #break
 07a0 : d021                     bne brk_trap
-                                
+                        
 07a2 : ad0302                   lda I_src       ;IRQ expected?
-07a5 : 2902                     and #2   
+07a5 : 2902                     and #2
                                 trap_eq         ;unexpexted IRQ - check stack for conditions
 07a7 : f0fe            >        beq *           ;failed equal (zero)
                         
 07a9 : ad0302                   lda I_src       ;mark expected IRQ has occured
 07ac : 29fd                     and #$ff-2
 07ae : 8d0302                   sta I_src
-                                I_clr   IRQ_bit   
+                                I_clr   IRQ_bit
 07b1 : adfcbf          >        lda I_port      ;turn off interrupt by bit
-07b4 : 297e            >        and #I_filter-(1<<IRQ_bit   )
+07b4 : 297e            >        and #I_filter-(1<<IRQ_bit)
 07b6 : 8dfcbf          >        sta I_port
                         
-07b9 : a60b                     ldx irq_x
+07b9 : a601                     ldx irq_x
 07bb : e8                       inx
 07bc : 8e0102                   stx irq_count
 07bf : a951                     lda #'Q'        ;mark (IR)Q
 07c1 : 28                       plp             ;should be reversed by rti
 07c2 : 40                       rti
-                                
+                        
 07c3 :                  brk_trap
 07c3 : ad0302                   lda I_src       ;break expected?
 07c6 : 2901                     and #1
@@ -1337,20 +1337,20 @@ bffc =                  I_port      = $bffc     ;feedback port address
 07ca : ad0302                   lda I_src       ;mark expected BRK has occured
 07cd : 29fe                     and #$ff-1
 07cf : 8d0302                   sta I_src
-07d2 : a60b                     ldx irq_x
+07d2 : a601                     ldx irq_x
 07d4 : e8                       inx
-07d5 : 8e0202                   stx brk_count   
-07d8 : a50a                     lda irq_a
+07d5 : 8e0202                   stx brk_count
+07d8 : a500                     lda irq_a
 07da : a94b                     lda #'K'        ;mark (BR)K
 07dc : 28                       plp             ;should be reversed by rti
 07dd : 40                       rti
-                                
+                        
                             if report = 1
                         rep_int = 1
                                 include "report.i65"
                             endif
                         
-                                
+                        
                         ;system vectors
                             if (load_data_direct = 1)
 fffa =                          org $fffa
@@ -1364,12 +1364,12 @@ fffe : 7d07                     dw  irq_trap
                                 dw  res_trap
                                 dw  irq_trap
                             endif
-                            
+                        
 fffa =                          end start
-                                
-                            
+                        
+                        
 No errors in pass 2.
-Wrote binary from address $000a through $ffff.
-Total size 65526 bytes.
+Wrote binary from address $0000 through $ffff.
+Total size 65536 bytes.
 Program start address is at $0400 (1024).
 

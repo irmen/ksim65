@@ -19,7 +19,7 @@
 
 ; This program is designed to test IRQ and NMI of a 6502 emulator. It requires
 ; an internal or external feedback register to the IRQ & NMI inputs
-; 
+;
 ; version 15-aug-2014
 ; contact info at http://2m5.de or email K@2m5.de
 ;
@@ -83,10 +83,10 @@ D_clear     = 0         ;0 = not cleared (NMOS), 1 = cleared (CMOS)
 
 ;configure memory - try to stay away from memory used by the system
 ;zero_page memory start address, 6 consecutive Bytes required
-zero_page = $a  
+zero_page = $0
 
 ;data_segment memory start address, 4 consecutive Bytes required
-data_segment = $200  
+data_segment = $200
 
 ;code_segment memory start address
 code_segment = $400
@@ -205,7 +205,7 @@ zp_bss
 ;fixed stack locations
 lst_f   equ $1fe            ;last flags before interrupt
 lst_a   equ $1ff            ;last accumulator before interrupt
-    
+
         org data_segment
 ;concurrent NMI, IRQ & BRK test result
 nmi_count   ds  1           ;lowest number handled first, $ff = never
@@ -222,7 +222,7 @@ start   cld
         sta I_src
         ldx #$ff
         txs
-    
+
 ;initialize I/O for report channel
     if report = 1
         jsr report_init
@@ -263,7 +263,7 @@ I_clr   macro  ibit     ;ibit = interrupt bit
         and #I_filter
         ora #(1<<IRQ_bit)
         sta I_ddr
-      endif    
+      endif
     else                ;open collector, 0 -> I_DDR or I_port to force interrupt
       if I_ddr != 0     ;with DDR
 I_set   macro  ibit     ;ibit = interrupt bit
@@ -278,7 +278,7 @@ I_set   macro  ibit     ;ibit = interrupt bit
 I_clr   macro  ibit     ;ibit = interrupt bit
         lda I_ddr       ;turn off interrupt by bit
         and #I_filter-(1<<ibit)
-        sta I_ddr 
+        sta I_ddr
         endm
         I_clr   IRQ_bit ;turn off IRQ
         lda I_port      ;precharge IRQ
@@ -329,7 +329,7 @@ I_clr   macro  ibit     ;ibit = interrupt bit
         and #I_filter
         ora #(1<<IRQ_bit|1<<NMI_bit)
         sta I_ddr
-      endif    
+      endif
     else                ;open collector, 0 -> I_DDR or I_port to force interrupt
       if I_ddr != 0     ;with DDR
 I_set   macro  ibit     ;ibit = interrupt bit
@@ -348,7 +348,7 @@ I_set   macro  ibit     ;ibit = interrupt bit
 I_clr   macro  ibit     ;ibit = interrupt bit
         lda I_ddr       ;turn off interrupt by bit
         and #I_filter-(1<<ibit)
-        sta I_ddr 
+        sta I_ddr
         endm
         I_clr   IRQ_bit ;turn off IRQ & NMI
         I_clr   NMI_bit
@@ -379,7 +379,7 @@ I_clr   macro  ibit     ;ibit = interrupt bit
       endif
     endif
   endif
-  
+
 ; IRQ integrity test
 ; test for clear flags seen in IRQ vector
         lda #2          ;set expected interrupt source IRQ
@@ -633,7 +633,7 @@ I_clr   macro  ibit     ;ibit = interrupt bit
         ldx #0
         lda #0
         sta I_src
-        push_stat intdis        
+        push_stat intdis
         I_set IRQ_bit   ;IRQ pending
         inx
         inx
@@ -657,7 +657,7 @@ I_clr   macro  ibit     ;ibit = interrupt bit
         sta nmi_count
         sta irq_count
         sta brk_count
-        push_stat 0        
+        push_stat 0
         I_set IRQ_bit   ;trigger IRQ
     else
 ; NMI integrity test
@@ -782,7 +782,7 @@ I_clr   macro  ibit     ;ibit = interrupt bit
         ldx #0
         lda #4          ;set expected interrupt NMI only
         sta I_src
-        push_stat intdis        
+        push_stat intdis
         I_set 8         ;both interrupts pending
         inx
         inx
@@ -825,21 +825,21 @@ I_clr   macro  ibit     ;ibit = interrupt bit
 ;may fail due to a bug on a real NMOS 6502 - NMI could mask BRK
         trap_ne         ;lost an interrupt
 
-; S U C C E S S ************************************************       
-; -------------       
+; S U C C E S S ************************************************
+; -------------
         success         ;if you get here everything went well
-; -------------       
-; S U C C E S S ************************************************       
+; -------------
+; S U C C E S S ************************************************
 ; check data_segment +0 to +2 for sequence of concurrent interrupts
 ; e.g. 0x200 = NMI, 0x201 = IRQ, 0x202 = BRK, lower values = earlier
-        jmp start       ;run again      
+        jmp start       ;run again
 
 ; manual tests for the WAI opcode of the 65c02
 
-wai     macro   
+wai     macro
         db  $cb         ;WAI opcode
         endm
-        
+
 ; requires single step operation, report = 0
 ;   set PC to the 1st instruction of the test
 ;   step to the WAI opcode, then manually tie the IRQ input low
@@ -860,7 +860,7 @@ wai     macro
         trap_ne         ;skipped opcodes!
 
         success
-        
+
 ; WAI with interrupts enabled
         ldx #$ff
         txs
@@ -878,13 +878,13 @@ wai     macro
         trap_ne         ;skipped opcodes!
 
         success
-        
+
 ; manual test for the STP opcode of the 65c02
 
-stp     macro   
+stp     macro
         db  $db         ;STP opcode
         endm
-        
+
 ; set PC to the 1st instruction of the test, then run
         nop
         nop
@@ -916,7 +916,7 @@ nmi_trap
         pha
         sta nmi_f
         lda I_src       ;NMI expected?
-        and #4   
+        and #4
         trap_eq         ;unexpexted NMI - check stack for conditions
         pla             ;test I-flag was set
         pha
@@ -925,7 +925,7 @@ nmi_trap
         pla             ;return with other flags reversed
         eor #m8-fai-decmode
         pha
-        tsx        
+        tsx
         lda $102,x     ;test break on stack
         and #break
         trap_ne         ;unexpected B-flag! - this may fail on a real 6502
@@ -933,7 +933,7 @@ nmi_trap
         lda I_src       ;mark expected NMI has occured
         and #$ff-4
         sta I_src
-        I_clr   NMI_bit   
+        I_clr   NMI_bit
         ldx nmi_x
         inx
         stx nmi_count
@@ -944,7 +944,7 @@ nmi_trap
 
 res_trap
         trap            ;unexpected RESET
-        
+
         dey
         dey
 irq_trap                ;BRK & IRQ test
@@ -958,7 +958,7 @@ irq_trap                ;BRK & IRQ test
         pha
         sta irq_f
         lda I_src       ;IRQ expected?
-        and #3   
+        and #3
         trap_eq         ;unexpexted IRQ/BRK - check stack for conditions
         pla             ;test I-flag was set
         pha
@@ -966,26 +966,26 @@ irq_trap                ;BRK & IRQ test
         trap_eq         ;I-flag not set
         pla             ;return with other flags reversed
         eor #m8-fai-decmode
-        pha        
+        pha
         tsx
         lda $102,x      ;test break on stack
         and #break
         bne brk_trap
-        
+
         lda I_src       ;IRQ expected?
-        and #2   
+        and #2
         trap_eq         ;unexpexted IRQ - check stack for conditions
         lda I_src       ;mark expected IRQ has occured
         and #$ff-2
         sta I_src
-        I_clr   IRQ_bit   
+        I_clr   IRQ_bit
         ldx irq_x
         inx
         stx irq_count
         lda #'Q'        ;mark (IR)Q
         plp             ;should be reversed by rti
         rti
-        
+
 brk_trap
         lda I_src       ;break expected?
         and #1
@@ -995,18 +995,18 @@ brk_trap
         sta I_src
         ldx irq_x
         inx
-        stx brk_count   
+        stx brk_count
         lda irq_a
         lda #'K'        ;mark (BR)K
         plp             ;should be reversed by rti
         rti
-        
+
     if report = 1
 rep_int = 1
         include "report.i65"
     endif
 
-        
+
 ;system vectors
     if (load_data_direct = 1)
         org $fffa
@@ -1020,7 +1020,6 @@ vec_bss equ $fffa
         dw  res_trap
         dw  irq_trap
     endif
-    
+
         end start
-        
-    
+
