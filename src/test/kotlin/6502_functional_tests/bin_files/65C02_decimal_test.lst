@@ -1,0 +1,9 @@
+AS65 Assembler for R6502 [1.42].                                     Page    1
+--------------------------- 65C02_decimal_test.a65 ---------------------------
+
+356 lines read, no errors in pass 1.
+No errors in pass 2.
+Wrote binary from address $0200 through $02f1.
+Total size 242 bytes.
+Program start address is at $0200 (512).
+

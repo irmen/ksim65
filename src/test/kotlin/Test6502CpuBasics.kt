@@ -111,13 +111,14 @@ class Test6502CpuBasics {
 
     @Test
     fun testBCD6502() {
+        // this test only works on 6502, not on the 65c02
         val cpu = Cpu6502()
         val bus = Bus()
         bus.add(cpu)
         val ram = Ram(0, 0xffff)
         ram[Cpu6502.RESET_vector] = 0x00
         ram[Cpu6502.RESET_vector +1] = 0x10
-        val bytes = javaClass.getResource("bcdtest6502.bin").readBytes()      // only works on 6502, not on the 65c02
+        val bytes = javaClass.getResource("bcdtest6502.bin").readBytes()
         ram.load(bytes, 0x1000)
         bus.add(ram)
         bus.reset()

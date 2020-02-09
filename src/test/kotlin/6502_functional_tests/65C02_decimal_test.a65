@@ -25,7 +25,7 @@
 ;
 
 ; Configuration:
-cputype = 0         ; 0 = 6502, 1 = 65C02, 2 = 65C816
+cputype = 1         ; 0 = 6502, 1 = 65C02, 2 = 65C816
 vld_bcd = 0         ; 0 = allow invalid bcd, 1 = valid bcd only
 chk_a   = 1         ; check accumulator
 chk_n   = 0         ; check sign (negative) flag
