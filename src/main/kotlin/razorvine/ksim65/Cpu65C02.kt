@@ -23,14 +23,14 @@ class Cpu65C02 : Cpu6502() {
         when (waiting) {
             Wait.Normal -> super.clock()
             Wait.Waiting -> {
-                if (pendingInterrupt != null) {
+                if (pendingNMI || pendingIRQ) {
                     // continue execution after hardware interrupt
                     waiting = Wait.Normal
                     instrCycles = 1
                 }
             }
             Wait.Stopped -> {
-                if (pendingInterrupt != null) {
+                if (pendingNMI || pendingIRQ) {
                     // jump to reset vector after hardware interrupt
                     regPC = readWord(RESET_vector)
                 }
@@ -625,20 +625,29 @@ class Cpu65C02 : Cpu6502() {
             /* ff */  Instruction("bbs7", AddrMode.Zpr, 5)).toTypedArray()
 
     override fun iBrk() {
-        // handle BRK ('software interrupt') or a real hardware IRQ
-        val nmi = pendingInterrupt == Interrupt.NMI
-        if (pendingInterrupt != null) {
-            pushStackAddr(regPC-1)
-        } else {
-            regPC++
-            pushStackAddr(regPC)
-        }
-        regP.B = pendingInterrupt == null
+        // handle BRK ('software interrupt')
+        regPC++
+        pushStackAddr(regPC)
+        regP.B = true
         pushStack(regP)
         regP.I = true     // interrupts are now disabled
         regP.D = false    // this is different from NMOS 6502
-        regPC = readWord(if (nmi) NMI_vector else IRQ_vector)
-        pendingInterrupt = null
+        regPC = readWord(IRQ_vector)
+    }
+
+    override fun handleInterrupt() {
+        // handle NMI or IRQ -- very similar to the BRK opcode above
+        pushStackAddr(regPC-1)
+        regP.B = false
+        pushStack(regP)
+        regP.I = true     // interrupts are now disabled
+        regP.D = false    // this is different from NMOS 6502
+        regPC = readWord(if (pendingNMI) NMI_vector else IRQ_vector)
+
+        if(pendingNMI)
+            pendingNMI = false
+        else
+            pendingIRQ = false
     }
 
     override fun iBit() {

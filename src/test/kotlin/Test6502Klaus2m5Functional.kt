@@ -2,6 +2,10 @@ import razorvine.ksim65.Bus
 import razorvine.ksim65.components.Ram
 import razorvine.ksim65.Cpu6502
 import razorvine.ksim65.Cpu65C02
+import razorvine.ksim65.components.Address
+import razorvine.ksim65.components.BusComponent
+import razorvine.ksim65.components.MemMappedComponent
+import razorvine.ksim65.components.UByte
 import razorvine.ksim65.hexW
 import java.lang.Exception
 import kotlin.math.max
@@ -37,7 +41,8 @@ class Test6502Klaus2m5Functional {
         }
 
         // the test is successful if address 0x3469 is reached ("success" label in source code)
-        if(cpu.regPC!=0x3469) {
+        val testnum = bus[0x200].toInt()
+        if(cpu.regPC!=0x3469 || testnum!=0xf0) {
             println(cpu.snapshot())
             val d = cpu.disassemble(ram, max(0, cpu.regPC-20), min(65535, cpu.regPC+20))
             println(d.first.joinToString("\n"))
@@ -65,7 +70,9 @@ class Test6502Klaus2m5Functional {
         }
 
         // the test is successful if address 0x24f1 is reached ("success" label in source code)
-        if(cpu.regPC!=0x24f1) {
+        val testnum = bus[0x202].toInt()
+        println(testnum)
+        if(cpu.regPC!=0x24f1 || testnum!=0xf0) {
             println(cpu.snapshot())
             val d = cpu.disassemble(ram, max(0, cpu.regPC-20), min(65535, cpu.regPC+20))
             println(d.first.joinToString("\n"))
@@ -77,10 +84,45 @@ class Test6502Klaus2m5Functional {
     fun testInterrupts6502() {
         // TODO fix this test code
         val cpu = Cpu6502()
+        class Trigger(startAddress: Address, endAddress: Address) : MemMappedComponent(startAddress, endAddress) {
+            var value: UByte = 0
+            var lastIRQpc: Address = 0
+            var lastNMIpc: Address = 0
+
+            override fun get(offset: Int): UByte  = value
+
+            override fun set(offset: Int, data: UByte) {
+                value = data
+                when(value.toInt()) {
+                    1 -> {
+                        println("IRQ at pc ${hexW(cpu.regPC)}")
+                        lastIRQpc = cpu.regPC
+                        cpu.irq()
+                    }
+                    2 -> {
+                        println("NMI at pc ${hexW(cpu.regPC)}")
+                        lastNMIpc = cpu.regPC
+                        cpu.nmi()
+                    }
+                    3 -> {
+                        println("IRQ+NMI at pc ${hexW(cpu.regPC)}")
+                        lastIRQpc = cpu.regPC
+                        lastNMIpc = cpu.regPC
+                        cpu.nmi()
+                        cpu.irq()
+                    }
+                }
+            }
+
+            override fun clock() {}
+            override fun reset() {}
+        }
         val bus = Bus()
         val ram = Ram(0, 0xffff)
+        val irqtrigger = Trigger(0xbffc, 0xbffc)
         ram.load("src/test/kotlin/6502_functional_tests/bin_files/6502_interrupt_test.bin", 0)
         bus.add(cpu)
+        bus.add(irqtrigger)
         bus.add(ram)
         cpu.reset()
         cpu.regPC = 0x0400
@@ -95,6 +137,7 @@ class Test6502Klaus2m5Functional {
 
         // the test is successful if address 0x06f5 is reached ("success" label in source code)
         if(cpu.regPC!=0x06f5) {
+            println("Last IRQ triggered at ${hexW(irqtrigger.lastIRQpc)} last NMI at ${hexW(irqtrigger.lastNMIpc)}")
             println(cpu.snapshot())
             val d = cpu.disassemble(ram, max(0, cpu.regPC-20), min(65535, cpu.regPC+20))
             println(d.first.joinToString("\n"))
@@ -113,7 +156,7 @@ class Test6502Klaus2m5Functional {
         cpu.reset()
         cpu.regPC = 0x0200
         cpu.breakpointForBRK = { cpu, address ->
-            if(address in 513..2047) {
+            if(address==0x024b) {    // test end address
                 val error=bus.read(0x000b)      // the 'ERROR' variable is stored here
                 if(error==0.toShort())
                     throw SuccessfulTestResult()
@@ -148,7 +191,7 @@ class Test6502Klaus2m5Functional {
         cpu.reset()
         cpu.regPC = 0x0200
         cpu.breakpointForBRK = { cpu, address ->
-            if(address in 513..2047) {
+            if(address==0x024b) {   // test end address
                 val error=bus.read(0x000b)      // the 'ERROR' variable is stored here
                 if(error==0.toShort())
                     throw SuccessfulTestResult()

@@ -110,12 +110,8 @@ open class Cpu6502 : BusComponent() {
         return State(regA.toShort(), regX.toShort(), regY.toShort(), regSP, status, regPC, totalCycles)
     }
 
-    // has an interrupt been requested?
-    protected enum class Interrupt {
-        IRQ, NMI
-    }
-
-    protected var pendingInterrupt: Interrupt? = null
+    protected var pendingIRQ = false
+    protected var pendingNMI = false
 
     // data byte from the instruction (only set when addr.mode is Accumulator, Immediate or Implied)
     protected var fetchedData: Int = 0
@@ -261,26 +257,26 @@ open class Cpu6502 : BusComponent() {
      */
     override fun clock() {
         if (instrCycles == 0) {
-            if (pendingInterrupt != null) {
+            if (pendingIRQ || pendingNMI) {
                 // NMI or IRQ interrupt.
-                // handled by the BRK instruction logic.
-                currentOpcode = 0
-                currentInstruction = instructions[0]
-            } else {
-                // no interrupt, fetch next instruction from memory
-                currentOpcodeAddress = regPC
-                currentOpcode = read(regPC)
-                currentInstruction = instructions[currentOpcode]
+                regPC++
+                handleInterrupt()
+                return
+            }
 
-                // tracing and breakpoint handling
-                tracing?.invoke(snapshot().toString())
-                breakpoints[regPC]?.let {
-                    if (breakpoint(it)) return
-                }
+            // no interrupt, fetch next instruction from memory
+            currentOpcodeAddress = regPC
+            currentOpcode = read(regPC)
+            currentInstruction = instructions[currentOpcode]
 
-                if (currentOpcode == 0x00) breakpointForBRK?.let {
-                    if (breakpoint(it)) return
-                }
+            // tracing and breakpoint handling
+            tracing?.invoke(snapshot().toString())
+            breakpoints[regPC]?.let {
+                if (breakpoint(it)) return
+            }
+
+            if (currentOpcode == 0x00) breakpointForBRK?.let {
+                if (breakpoint(it)) return
             }
 
             regPC++
@@ -330,11 +326,11 @@ open class Cpu6502 : BusComponent() {
     }
 
     fun nmi() {
-        pendingInterrupt = Interrupt.NMI
+        pendingNMI = true
     }
 
     fun irq() {
-        if (!regP.I) pendingInterrupt = Interrupt.IRQ
+        if (!regP.I && !pendingNMI) pendingIRQ = true
     }
 
     protected fun getFetched() =
@@ -1077,19 +1073,31 @@ open class Cpu6502 : BusComponent() {
     }
 
     protected open fun iBrk() {
-        // handle BRK ('software interrupt') or a real hardware IRQ
-        if (pendingInterrupt != null) {
-            pushStackAddr(regPC-1)
-        } else {
-            regPC++
-            pushStackAddr(regPC)
-        }
-        regP.B = pendingInterrupt == null
+        // handle BRK ('software interrupt')
+        regPC++
+        if(pendingNMI)
+            return      // if an NMI occurs during BRK, the BRK won't get executed on 6502 (65C02 fixes this)
+        pushStackAddr(regPC)
+        regP.B = true
         pushStack(regP)
         regP.I = true     // interrupts are now disabled
         // NMOS 6502 doesn't clear the D flag (CMOS 65C02 version does...)
-        regPC = readWord(if (pendingInterrupt == Interrupt.NMI) NMI_vector else IRQ_vector)
-        pendingInterrupt = null
+        regPC = readWord(IRQ_vector)
+    }
+
+    protected open fun handleInterrupt() {
+        // handle NMI or IRQ -- very similar to the BRK opcode above
+        pushStackAddr(regPC-1)
+        regP.B = false
+        pushStack(regP)
+        regP.I = true     // interrupts are now disabled
+        // NMOS 6502 doesn't clear the D flag (CMOS 65C02 version does...)
+        regPC = readWord(if (pendingNMI) NMI_vector else IRQ_vector)
+
+        if(pendingNMI)
+            pendingNMI = false
+        else
+            pendingIRQ = false
     }
 
     protected fun iBvc() {
