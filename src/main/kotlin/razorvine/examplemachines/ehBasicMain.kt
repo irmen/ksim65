@@ -53,7 +53,7 @@ class EhBasicMachine(title: String) {
                 Thread.sleep(200)
             } else {
                 try {
-                    repeat(400) { step() }
+                    repeat(500) { step() }
                 } catch (rx: RuntimeException) {
                     JOptionPane.showMessageDialog(hostDisplay, "Run time error: $rx", "Error during execution", JOptionPane.ERROR_MESSAGE)
                     break
@@ -61,7 +61,7 @@ class EhBasicMachine(title: String) {
                     JOptionPane.showMessageDialog(hostDisplay, "Run time error: $ex", "Error during execution", JOptionPane.ERROR_MESSAGE)
                     break
                 }
-                Thread.sleep(1)
+                Thread.sleep(2)
             }
         }
     }

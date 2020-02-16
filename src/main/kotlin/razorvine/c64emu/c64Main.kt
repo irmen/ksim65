@@ -241,11 +241,11 @@ class C64Machine(title: String) : IVirtualMachine {
             debugWindow.updateCpu(cpu, bus)
         }.start()
 
+        // we synchronise cpu cycles to the vertical blank of the Vic chip
+        // this should result in ~1 Mhz cpu speed
         val timer = java.util.Timer("cpu-cycle", true)
         timer.scheduleAtFixedRate(0, 1000L/VicII.framerate) {
             if (!paused) {
-                // we synchronise cpu cycles to the vertical blank of the Vic chip
-                // this should result in ~1 Mhz cpu speed
                 try {
                     while (vic.vsync) step()
                     while (!vic.vsync) step()

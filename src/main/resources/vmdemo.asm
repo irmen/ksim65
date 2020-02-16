@@ -10,6 +10,7 @@
 	SCREEN_WIDTH=640
 
 	* = $1000
+	irq_timer_cycles = 10000	; every time this number of cycles passed, an IRQ occurs
 
 start
 	sei
@@ -20,11 +21,11 @@ start
 	sta  IRQVEC
 	lda  #>irq
 	sta  IRQVEC+1
-	lda  #<2000
-	sta  TIMER+1	; every 2000 clock cycles an irq
-	lda  #>2000
+	lda  #<irq_timer_cycles
+	sta  TIMER+1
+	lda  #>irq_timer_cycles
 	sta  TIMER+2
-	lda  #0
+	lda  #irq_timer_cycles >> 16
 	sta  TIMER+3
 	lda  #1
 	sta  TIMER+0
@@ -40,7 +41,7 @@ start
 	jsr  print
 	jmp  +
 
-_title1 .text "**** COMMODORE 64 BASIC V2 ****", 10, 10, " 64K RAM SYSTEM  38911 BASIC BYTES FREE", 10, 10, "READY.",10,0
+_title1 .text "**** COMMODORE 64 BASIC V9 ****", 10, 10, " 64K RAM SYSTEM  98765 BASIC BYTES FREE", 10, 10, "READY.",10,0
 _text2  .text 10,"Nah, only joking, this is not a weird C-64.",10,"This is a working fantasy 8-bit 6502 machine though!",10
 	.text "Type some stuff on the keyboard, use the mouse (with Left button/Right button)", 10, "to draw/erase pixels.",10,10,0
 _text3	.text "Mouse drawing and keyboard scanning: done in main program loop.",10
@@ -92,6 +93,7 @@ irq
 	pha
 	tya
 	pha
+
 	; we don't check for BRK flag because we're lazy
 	lda  DISPLAY+0
 	pha
@@ -104,6 +106,7 @@ irq
 	lda  #<_time_msg
 	ldy  #>_time_msg
 	jsr  textout
+
 	; read the clock now
 	; YEAR
 	lda  RTC+0
@@ -112,6 +115,7 @@ irq
 	lda  #<DecTenThousands
 	ldy  #>DecTenThousands
 	jsr  textout
+
 	lda  #'-'
 	sta  DISPLAY+2
 	inc  DISPLAY+0
@@ -130,6 +134,7 @@ irq
 	lda  #<DecTens
 	ldy  #>DecTens
 	jsr  textout
+
 	lda  #'/'
 	sta  DISPLAY+2
 	inc  DISPLAY+0
@@ -157,6 +162,7 @@ irq
 	lda  #<DecTens
 	ldy  #>DecTens
 	jsr  textout
+
 	lda  #'.'
 	sta  DISPLAY+2
 	inc  DISPLAY+0
@@ -184,7 +190,7 @@ _time_msg	.text  "The current date and time is: ",0
 
 
 ; ----- routines
-delay	ldx  #50
+delay	ldx  #100
 -	ldy  #0
 -	nop
 	dey
