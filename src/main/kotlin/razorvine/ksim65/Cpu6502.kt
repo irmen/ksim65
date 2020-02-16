@@ -98,6 +98,11 @@ open class Cpu6502 : BusComponent() {
         protected set
     var instrCycles: Int = 0
         protected set
+    val isLooping: Boolean get() {
+        // jump loop detection
+        return (previousOpcodeAddress == currentOpcodeAddress) && !(pendingNMI || pendingIRQ)
+    }
+    private var previousOpcodeAddress: Address = 0xffff
 
     lateinit var currentInstruction: Instruction
 
@@ -263,6 +268,7 @@ open class Cpu6502 : BusComponent() {
             }
 
             // no interrupt, fetch next instruction from memory
+            previousOpcodeAddress = currentOpcodeAddress
             currentOpcodeAddress = regPC
             currentOpcode = read(regPC)
             currentInstruction = instructions[currentOpcode]
