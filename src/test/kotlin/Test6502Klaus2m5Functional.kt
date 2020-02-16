@@ -3,13 +3,10 @@ import razorvine.ksim65.components.Ram
 import razorvine.ksim65.Cpu6502
 import razorvine.ksim65.Cpu65C02
 import razorvine.ksim65.components.Address
-import razorvine.ksim65.components.BusComponent
 import razorvine.ksim65.components.MemMappedComponent
 import razorvine.ksim65.components.UByte
 import razorvine.ksim65.hexW
 import java.lang.Exception
-import kotlin.math.max
-import kotlin.math.min
 import kotlin.test.*
 
 
@@ -44,8 +41,6 @@ class Test6502Klaus2m5Functional {
         val testnum = bus[0x200].toInt()
         if(cpu.regPC!=0x3469 || testnum!=0xf0) {
             println(cpu.snapshot())
-            val d = cpu.disassemble(ram, max(0, cpu.regPC-20), min(65535, cpu.regPC+20))
-            println(d.first.joinToString("\n"))
             fail("test failed")
         }
     }
@@ -74,8 +69,6 @@ class Test6502Klaus2m5Functional {
         println(testnum)
         if(cpu.regPC!=0x24f1 || testnum!=0xf0) {
             println(cpu.snapshot())
-            val d = cpu.disassemble(ram, max(0, cpu.regPC-20), min(65535, cpu.regPC+20))
-            println(d.first.joinToString("\n"))
             fail("test failed")
         }
     }
@@ -138,8 +131,6 @@ class Test6502Klaus2m5Functional {
         if(cpu.regPC!=0x06f5) {
             println("Last IRQ triggered at ${hexW(irqtrigger.lastIRQpc)} last NMI at ${hexW(irqtrigger.lastNMIpc)}")
             println(cpu.snapshot())
-            val d = cpu.disassemble(ram, max(0, cpu.regPC-20), min(65535, cpu.regPC+20))
-            println(d.first.joinToString("\n"))
             fail("test failed")
         }
     }
@@ -174,8 +165,6 @@ class Test6502Klaus2m5Functional {
         }
 
         println(cpu.snapshot())
-        val d = cpu.disassemble(ram, max(0, cpu.regPC-20), min(65535, cpu.regPC+20))
-        println(d.first.joinToString ("\n"))
         fail("test failed")
     }
 
@@ -209,8 +198,6 @@ class Test6502Klaus2m5Functional {
         }
 
         println(cpu.snapshot())
-        val d = cpu.disassemble(ram, max(0, cpu.regPC-20), min(65535, cpu.regPC+20))
-        println(d.first.joinToString ("\n"))
         fail("test failed")
     }
 }

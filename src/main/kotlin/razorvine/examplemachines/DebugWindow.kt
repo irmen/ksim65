@@ -215,9 +215,9 @@ class DebugWindow(private val vm: IVirtualMachine) : JFrame("Debugger - ksim65 v
         regPtf.text = "NV-BDIZC\n"+state.P.asInt().toString(2).padStart(8, '0')
         regPCtf.text = hexW(state.PC)
         regSPtf.text = hexB(state.SP)
-        val memory = bus.memoryComponentFor(state.PC)
-        val disassem = cpu.disassembleOneInstruction(memory.data, state.PC, memory.startAddress).first.substringAfter(' ').trim()
-        println("${hexW(state.PC)}  $disassem") // XXX
+
+        val memory = listOf(bus[state.PC], bus[state.PC+1], bus[state.PC+2]).toTypedArray()
+        val disassem = cpu.disassembleOneInstruction(memory, 0, state.PC).first.substringAfter(' ').trim()
         disassemTf.text = disassem
 
         if (zeropageTf.isVisible || stackpageTf.isVisible) {

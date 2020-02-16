@@ -1,5 +1,7 @@
 package razorvine.ksim65
 
+import kotlin.math.max
+
 class Monitor(val bus: Bus, val cpu: Cpu6502) {
 
     private val instructions by lazy {
@@ -94,7 +96,8 @@ class Monitor(val bus: Bus, val cpu: Cpu6502) {
                 val addresses = command.substring(1).trim().split(' ')
                 val start = parseNumber(addresses[0])
                 val end = if (addresses.size > 1) parseNumber(addresses[1]) else start
-                val disassem = cpu.disassemble(bus.memoryComponentFor(start), start, end)
+                val memory = (start .. max(0xffff, end+3)).map {bus[it]}.toTypedArray()
+                val disassem = cpu.disassemble(memory, 0 .. end-start, start)
                 IVirtualMachine.MonitorCmdResult(disassem.first.joinToString("\n") { "d$it" }, "d$${hexW(disassem.second)}", false)
             }
             else -> {
@@ -213,18 +216,16 @@ class Monitor(val bus: Bus, val cpu: Cpu6502) {
                         } else {
                             // absolute or absZp
                             val absAddress = try {
-                                parseRelativeToPC(arg, address)
+                                if(arg.startsWith('*')) parseRelativeToPC(arg, address) else parseNumber(arg)
                             } catch (x: NumberFormatException) {
                                 return IVirtualMachine.MonitorCmdResult("?invalid instruction", command, false)
                             }
-                            if (absAddress <= 255) {
-                                val absInstr = instructions[Pair(mnemonic, Cpu6502.AddrMode.Zp)] ?: return IVirtualMachine.MonitorCmdResult(
-                                        "?invalid instruction", command, false)
-                                bus.write(address, absInstr.toShort())
+                            val zpInstruction = instructions[Pair(mnemonic, Cpu6502.AddrMode.Zp)]
+                            if (absAddress <= 255 && zpInstruction!=null) {
+                                bus.write(address, zpInstruction.toShort())
                                 bus.write(address+1, absAddress.toShort())
                             } else {
-                                val absInstr =
-                                        instructions[Pair(mnemonic, Cpu6502.AddrMode.Abs)] ?: return IVirtualMachine.MonitorCmdResult("?invalid instruction", command, false)
+                                val absInstr = instructions[Pair(mnemonic, Cpu6502.AddrMode.Abs)] ?: return IVirtualMachine.MonitorCmdResult("?invalid instruction", command, false)
                                 bus.write(address, absInstr.toShort())
                                 bus.write(address+1, (absAddress and 255).toShort())
                                 bus.write(address+2, (absAddress ushr 8).toShort())
@@ -236,13 +237,14 @@ class Monitor(val bus: Bus, val cpu: Cpu6502) {
             else -> return IVirtualMachine.MonitorCmdResult("?syntax error", command, false)
         }
 
-        val disassem = cpu.disassemble(bus.memoryComponentFor(address), address, address)
-        return IVirtualMachine.MonitorCmdResult(disassem.first.single(), "a$${hexW(disassem.second)} ", false)
+        val memory = listOf(bus[address], bus[address+1], bus[address+2]).toTypedArray()
+        val disassem = cpu.disassembleOneInstruction(memory, 0, address)
+        return IVirtualMachine.MonitorCmdResult(disassem.first, "a$${hexW(disassem.second + address)} ", false)
     }
 
     private fun parseRelativeToPC(relative: String, currentAddress: Int): Int {
-        val rest = relative.substring(1).trimStart()
-        if(rest.any()) {
+        val rest = relative.substring(1).trim()
+        if(rest.isNotEmpty()) {
             return when(rest[0]) {
                 '-' -> currentAddress-parseNumber(rest.substring(1))
                 '+' -> currentAddress+parseNumber(rest.substring(1))
