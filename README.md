@@ -30,6 +30,24 @@ Properties of this simulator:
 
 Still to be written. For now, use the source ;-)
 
+## Using it as a library in your own project
+
+Ksim65 is available on the [JCenter maven repository](https://bintray.com/irmen/maven/ksim65/1.7).
+
+You can simply add it as a dependency to your project.
+For Maven:
+
+    <dependency>
+        <groupId>net.razorvine</groupId>
+        <artifactId>ksim65</artifactId>
+        <version>1.7</version>
+        <type>pom</type>
+    </dependency>
+
+For Gradle:
+
+    implementation 'net.razorvine:ksim65:1.7'
+
 
 ## Virtual machine examples
 
