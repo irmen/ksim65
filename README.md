@@ -11,18 +11,19 @@
 ![6502](https://upload.wikimedia.org/wikipedia/commons/thumb/4/43/KL_MOS_6502.jpg/320px-KL_MOS_6502.jpg)
 
 This is a Kotlin/JVM library that simulates the 8-bit 6502 and 65C02 microprocessors,
- which became very popular in the the early 1980's. 
+ which became very popular in the the early 1980's.
 
 Properties of this simulator:
 
 - Written in Kotlin. It is low-level code, but hopefully still readable :-)
-- Designed to simulate various hardware components (bus, cpu, memory, i/o controllers) 
+- Designed to simulate various hardware components (bus, cpu, memory, i/o controllers)
 - IRQ and NMI simulation
-- Aims to simulate correct instruction cycle timing, but is not 100% cycle exact for simplicity 
+- Aims to simulate correct instruction cycle timing, but is not 100% cycle exact for simplicity
 - Aims to implements all 6502 and 65c02 instructions, including the 'illegal' 6502 instructions (not yet done)
-- correct BCD mode for adc/sbc instructions on both cpu types   
+- correct BCD mode for adc/sbc instructions on both cpu types
 - passes several extensive unit test suites that verify instruction and cpu flags behavior
-- provide a few virtual example machines, one of which is a Commodore-64  
+- simple debugging machine monitor, which basic disassembler and assembler functions
+- provide a few virtual example machines, one of which is a Commodore-64
 
 
 ## Documentation
