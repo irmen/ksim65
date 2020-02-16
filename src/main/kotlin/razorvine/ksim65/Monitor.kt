@@ -123,7 +123,7 @@ class Monitor(val bus: Bus, val cpu: Cpu6502) {
                         // immediate
                         val instruction = instructions[Pair(mnemonic, Cpu6502.AddrMode.Imm)] ?: return IVirtualMachine.MonitorCmdResult("?invalid instruction", command, false)
                         bus.write(address, instruction.toShort())
-                        bus.write(address+1, parseNumber(arg.substring(1), true).toShort())
+                        bus.write(address+1, parseNumber(arg.substring(1), decimalFirst = true).toShort())
                     }
                     arg.startsWith("(") && arg.endsWith(",x)") -> {
                         // indirect X
@@ -204,7 +204,7 @@ class Monitor(val bus: Bus, val cpu: Cpu6502) {
                         if (instr != null) {
                             // relative address
                             val rel = try {
-                                parseNumber(arg)
+                                parseRelativeToPC(arg, address)
                             } catch (x: NumberFormatException) {
                                 return IVirtualMachine.MonitorCmdResult("?invalid instruction", command, false)
                             }
@@ -213,7 +213,7 @@ class Monitor(val bus: Bus, val cpu: Cpu6502) {
                         } else {
                             // absolute or absZp
                             val absAddress = try {
-                                parseNumber(arg)
+                                parseRelativeToPC(arg, address)
                             } catch (x: NumberFormatException) {
                                 return IVirtualMachine.MonitorCmdResult("?invalid instruction", command, false)
                             }
@@ -238,6 +238,18 @@ class Monitor(val bus: Bus, val cpu: Cpu6502) {
 
         val disassem = cpu.disassemble(bus.memoryComponentFor(address), address, address)
         return IVirtualMachine.MonitorCmdResult(disassem.first.single(), "a$${hexW(disassem.second)} ", false)
+    }
+
+    private fun parseRelativeToPC(relative: String, currentAddress: Int): Int {
+        val rest = relative.substring(1).trimStart()
+        if(rest.any()) {
+            return when(rest[0]) {
+                '-' -> currentAddress-parseNumber(rest.substring(1))
+                '+' -> currentAddress+parseNumber(rest.substring(1))
+                else -> throw Cpu6502.InstructionError("invalid address syntax")
+            }
+        }
+        return currentAddress
     }
 
     private fun parseNumber(number: String, decimalFirst: Boolean = false): Int {
