@@ -109,7 +109,7 @@ internal class Screen(private val chargen: Rom, val ram: MemoryComponent) : JPan
     }
 
     private fun renderSprites(vicBank: Address) {
-        // TODO sprite-background priorities
+        // TODO sprite-background priorities, collisions
         // TODO multicolor sprites
         val spriteImage = fullscreenG2d.deviceConfiguration.createCompatibleImage(24, 21, Transparency.TRANSLUCENT)
         val spriteGfx = spriteImage.graphics
