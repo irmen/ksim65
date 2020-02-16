@@ -257,9 +257,7 @@ open class Cpu6502 : BusComponent() {
      */
     override fun clock() {
         if (instrCycles == 0) {
-            if (pendingIRQ || pendingNMI) {
-                // NMI or IRQ interrupt.
-                regPC++
+            if(pendingNMI || (pendingIRQ && !regP.I)) {
                 handleInterrupt()
                 return
             }
@@ -330,7 +328,7 @@ open class Cpu6502 : BusComponent() {
     }
 
     fun irq() {
-        if (!regP.I && !pendingNMI) pendingIRQ = true
+        pendingIRQ = true
     }
 
     protected fun getFetched() =
@@ -1087,17 +1085,20 @@ open class Cpu6502 : BusComponent() {
 
     protected open fun handleInterrupt() {
         // handle NMI or IRQ -- very similar to the BRK opcode above
-        pushStackAddr(regPC-1)
+        pushStackAddr(regPC)
+        regPC++
         regP.B = false
         pushStack(regP)
         regP.I = true     // interrupts are now disabled
         // NMOS 6502 doesn't clear the D flag (CMOS 65C02 version does...)
-        regPC = readWord(if (pendingNMI) NMI_vector else IRQ_vector)
 
-        if(pendingNMI)
+        if(pendingNMI) {
+            regPC = readWord(NMI_vector)
             pendingNMI = false
-        else
+        } else {
+            regPC = readWord(IRQ_vector)
             pendingIRQ = false
+        }
     }
 
     protected fun iBvc() {

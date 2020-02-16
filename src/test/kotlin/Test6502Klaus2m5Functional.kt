@@ -82,7 +82,6 @@ class Test6502Klaus2m5Functional {
 
     @Test
     fun testInterrupts6502() {
-        // TODO fix this test code
         val cpu = Cpu6502()
         class Trigger(startAddress: Address, endAddress: Address) : MemMappedComponent(startAddress, endAddress) {
             var value: UByte = 0
@@ -95,17 +94,17 @@ class Test6502Klaus2m5Functional {
                 value = data
                 when(value.toInt()) {
                     1 -> {
-                        println("IRQ at pc ${hexW(cpu.regPC)}")
+                        // println("IRQ at pc ${hexW(cpu.regPC)}")
                         lastIRQpc = cpu.regPC
                         cpu.irq()
                     }
                     2 -> {
-                        println("NMI at pc ${hexW(cpu.regPC)}")
+                        // println("NMI at pc ${hexW(cpu.regPC)}")
                         lastNMIpc = cpu.regPC
                         cpu.nmi()
                     }
                     3 -> {
-                        println("IRQ+NMI at pc ${hexW(cpu.regPC)}")
+                        // println("IRQ+NMI at pc ${hexW(cpu.regPC)}")
                         lastIRQpc = cpu.regPC
                         lastNMIpc = cpu.regPC
                         cpu.nmi()

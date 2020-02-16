@@ -636,18 +636,8 @@ class Cpu65C02 : Cpu6502() {
     }
 
     override fun handleInterrupt() {
-        // handle NMI or IRQ -- very similar to the BRK opcode above
-        pushStackAddr(regPC-1)
-        regP.B = false
-        pushStack(regP)
-        regP.I = true     // interrupts are now disabled
+        super.handleInterrupt()
         regP.D = false    // this is different from NMOS 6502
-        regPC = readWord(if (pendingNMI) NMI_vector else IRQ_vector)
-
-        if(pendingNMI)
-            pendingNMI = false
-        else
-            pendingIRQ = false
     }
 
     override fun iBit() {
