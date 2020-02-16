@@ -53,8 +53,6 @@ class DebugWindow(private val vm: IVirtualMachine) : JFrame("Debugger - ksim65 v
         val gc = GridBagConstraints()
         gc.insets = Insets(2, 2, 2, 2)
         gc.anchor = GridBagConstraints.EAST
-        gc.gridx = 0
-        gc.gridy = 0
         val cyclesLb = JLabel("cycles")
         val speedKhzLb = JLabel("speed (kHz)")
         val regAlb = JLabel("A")
@@ -64,13 +62,25 @@ class DebugWindow(private val vm: IVirtualMachine) : JFrame("Debugger - ksim65 v
         val regPClb = JLabel("PC")
         val regPlb = JLabel("Status")
         val disassemLb = JLabel("Instruction")
-        listOf(cyclesLb, speedKhzLb, regAlb, regXlb, regYlb, regSPlb, regPClb, disassemLb, regPlb).forEach {
-            cpuPanel.add(it, gc)
-            gc.gridy++
-        }
+        cpuPanel.add(cyclesLb, gc.update(gridx=0, gridy=0))
+        cpuPanel.add(speedKhzLb, gc.update(gridx=5, gridy=0))
+        cpuPanel.add(regAlb, gc.update(gridx=0, gridy=1))
+        cpuPanel.add(regXlb, gc.update(gridx=2, gridy=1))
+        cpuPanel.add(regYlb, gc.update(gridx=4, gridy=1))
+        cpuPanel.add(regPClb, gc.update(gridx=0, gridy=2))
+        cpuPanel.add(regSPlb, gc.update(gridx=2, gridy=2))
+        cpuPanel.add(regPlb, gc.update(gridx=0, gridy=3))
+        cpuPanel.add(disassemLb, gc.update(gridx=0, gridy=4))
         gc.anchor = GridBagConstraints.WEST
-        gc.gridx = 1
-        gc.gridy = 0
+        cpuPanel.add(cyclesTf, gc.update(gridx=1, gridy=0, gridwidth = 3))
+        cpuPanel.add(speedKhzTf, gc.update(gridx=6, gridy=0))
+        cpuPanel.add(regAtf, gc.update(gridx=1, gridy=1))
+        cpuPanel.add(regXtf, gc.update(gridx=3, gridy=1))
+        cpuPanel.add(regYtf, gc.update(gridx=5, gridy=1))
+        cpuPanel.add(regPCtf, gc.update(gridx=1, gridy=2))
+        cpuPanel.add(regSPtf, gc.update(gridx=3, gridy=2))
+        cpuPanel.add(regPtf, gc.update(gridx=1, gridy=3, gridwidth=2))
+        cpuPanel.add(disassemTf, gc.update(gridx=1, gridy=4, gridwidth=5))
         listOf(cyclesTf, speedKhzTf, regAtf, regXtf, regYtf, regSPtf, regPCtf, disassemTf, regPtf).forEach {
             it.font = Font(Font.MONOSPACED, Font.PLAIN, 14)
             it.disabledTextColor = Color.DARK_GRAY
@@ -81,8 +91,6 @@ class DebugWindow(private val vm: IVirtualMachine) : JFrame("Debugger - ksim65 v
                 it.border = BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY),
                                                                BorderFactory.createEmptyBorder(2, 2, 2, 2))
             }
-            cpuPanel.add(it, gc)
-            gc.gridy++
         }
 
         val buttonPanel = JPanel(FlowLayout())
@@ -115,7 +123,7 @@ class DebugWindow(private val vm: IVirtualMachine) : JFrame("Debugger - ksim65 v
         val monitorPanel = JPanel()
         monitorPanel.layout = BoxLayout(monitorPanel, BoxLayout.Y_AXIS)
         monitorPanel.border = BorderFactory.createTitledBorder("Built-in Monitor")
-        val output = JTextArea(6, 80)
+        val output = JTextArea(10, 80)
         output.font = Font(Font.MONOSPACED, Font.PLAIN, 14)
         output.isEditable = false
         val outputScroll = JScrollPane(output)
@@ -208,7 +216,9 @@ class DebugWindow(private val vm: IVirtualMachine) : JFrame("Debugger - ksim65 v
         regPCtf.text = hexW(state.PC)
         regSPtf.text = hexB(state.SP)
         val memory = bus.memoryComponentFor(state.PC)
-        disassemTf.text = cpu.disassembleOneInstruction(memory.data, state.PC, memory.startAddress).first.substringAfter(' ').trim()
+        val disassem = cpu.disassembleOneInstruction(memory.data, state.PC, memory.startAddress).first.substringAfter(' ').trim()
+        println("${hexW(state.PC)}  $disassem") // XXX
+        disassemTf.text = disassem
 
         if (zeropageTf.isVisible || stackpageTf.isVisible) {
             val pages = vm.getZeroAndStackPages()
@@ -230,4 +240,14 @@ class DebugWindow(private val vm: IVirtualMachine) : JFrame("Debugger - ksim65 v
 
         speedKhzTf.text = "%.1f".format(cpu.averageSpeedKhzSinceReset)
     }
+}
+
+
+private fun GridBagConstraints.update(gridx: Int, gridy: Int, gridwidth: Int?=null): GridBagConstraints {
+    val gc = this.clone() as GridBagConstraints
+    gc.gridx = gridx
+    gc.gridy = gridy
+    if(gridwidth!=null)
+        gc.gridwidth=gridwidth
+    return gc
 }
