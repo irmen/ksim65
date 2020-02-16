@@ -92,6 +92,8 @@ open class Cpu6502 : BusComponent() {
     var regSP: Int = 0
     var regPC: Address = 0
     val regP = StatusRegister()
+    var irqAsserted = false
+    var nmiAsserted = false
     var currentOpcode: Int = 0
         protected set
     var currentOpcodeAddress: Address = 0    // the PC can be changed already depending on the addressing mode
@@ -100,7 +102,7 @@ open class Cpu6502 : BusComponent() {
         protected set
     val isLooping: Boolean get() {
         // jump loop detection
-        return (previousOpcodeAddress == currentOpcodeAddress) && !(pendingNMI || pendingIRQ)
+        return (previousOpcodeAddress == currentOpcodeAddress) && !(nmiAsserted || irqAsserted)
     }
     private var previousOpcodeAddress: Address = 0xffff
 
@@ -114,9 +116,6 @@ open class Cpu6502 : BusComponent() {
         val status = StatusRegister().also { it.fromInt(regP.asInt()) }
         return State(regA.toShort(), regX.toShort(), regY.toShort(), regSP, status, regPC, totalCycles)
     }
-
-    protected var pendingIRQ = false
-    protected var pendingNMI = false
 
     // data byte from the instruction (only set when addr.mode is Accumulator, Immediate or Implied)
     protected var fetchedData: Int = 0
@@ -262,7 +261,7 @@ open class Cpu6502 : BusComponent() {
      */
     override fun clock() {
         if (instrCycles == 0) {
-            if(pendingNMI || (pendingIRQ && !regP.I)) {
+            if(nmiAsserted || (irqAsserted && !regP.I)) {
                 handleInterrupt()
                 return
             }
@@ -327,14 +326,6 @@ open class Cpu6502 : BusComponent() {
         clock()
         totalCycles += instrCycles
         instrCycles = 0
-    }
-
-    fun nmi() {
-        pendingNMI = true
-    }
-
-    fun irq() {
-        pendingIRQ = true
     }
 
     protected fun getFetched() =
@@ -1079,7 +1070,7 @@ open class Cpu6502 : BusComponent() {
     protected open fun iBrk() {
         // handle BRK ('software interrupt')
         regPC++
-        if(pendingNMI)
+        if(nmiAsserted)
             return      // if an NMI occurs during BRK, the BRK won't get executed on 6502 (65C02 fixes this)
         pushStackAddr(regPC)
         regP.B = true
@@ -1098,12 +1089,14 @@ open class Cpu6502 : BusComponent() {
         regP.I = true     // interrupts are now disabled
         // NMOS 6502 doesn't clear the D flag (CMOS 65C02 version does...)
 
-        if(pendingNMI) {
+        // jump to the appropriate irq vector and clear the assertion status of the irq
+        // (hmm... should the cpu do that? or is this the peripheral's job?)
+        if(nmiAsserted) {
             regPC = readWord(NMI_vector)
-            pendingNMI = false
+            nmiAsserted = false
         } else {
             regPC = readWord(IRQ_vector)
-            pendingIRQ = false
+            irqAsserted = false
         }
     }
 

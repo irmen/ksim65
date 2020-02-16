@@ -85,7 +85,7 @@ class MainC64Window(title: String, chargen: Rom, val ram: MemoryComponent, val c
     override fun keyPressed(event: KeyEvent) {
         // '\' is mapped as RESTORE, this causes a NMI on the cpu
         if (event.keyChar == '\\') {
-            cpu.nmi()
+            cpu.nmiAsserted = true
         } else {
             keypressCia.hostKeyPressed(event)
         }

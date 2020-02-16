@@ -23,14 +23,14 @@ class Cpu65C02 : Cpu6502() {
         when (waiting) {
             Wait.Normal -> super.clock()
             Wait.Waiting -> {
-                if (pendingNMI || pendingIRQ) {
+                if (nmiAsserted || irqAsserted) {
                     // continue execution after hardware interrupt
                     waiting = Wait.Normal
                     instrCycles = 1
                 }
             }
             Wait.Stopped -> {
-                if (pendingNMI || pendingIRQ) {
+                if (nmiAsserted || irqAsserted) {
                     // jump to reset vector after hardware interrupt
                     regPC = readWord(RESET_vector)
                 }

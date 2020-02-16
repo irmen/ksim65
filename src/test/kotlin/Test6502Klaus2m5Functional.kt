@@ -96,19 +96,19 @@ class Test6502Klaus2m5Functional {
                     1 -> {
                         // println("IRQ at pc ${hexW(cpu.regPC)}")
                         lastIRQpc = cpu.regPC
-                        cpu.irq()
+                        cpu.irqAsserted = true
                     }
                     2 -> {
                         // println("NMI at pc ${hexW(cpu.regPC)}")
                         lastNMIpc = cpu.regPC
-                        cpu.nmi()
+                        cpu.nmiAsserted = true
                     }
                     3 -> {
                         // println("IRQ+NMI at pc ${hexW(cpu.regPC)}")
                         lastIRQpc = cpu.regPC
                         lastNMIpc = cpu.regPC
-                        cpu.nmi()
-                        cpu.irq()
+                        cpu.nmiAsserted = true
+                        cpu.irqAsserted = true
                     }
                 }
             }
@@ -154,7 +154,7 @@ class Test6502Klaus2m5Functional {
         bus.add(ram)
         cpu.reset()
         cpu.regPC = 0x0200
-        cpu.breakpointForBRK = { cpu, address ->
+        cpu.breakpointForBRK = { _, address ->
             if(address==0x024b) {    // test end address
                 val error=bus.read(0x000b)      // the 'ERROR' variable is stored here
                 if(error==0.toShort())
@@ -189,7 +189,7 @@ class Test6502Klaus2m5Functional {
         bus.add(ram)
         cpu.reset()
         cpu.regPC = 0x0200
-        cpu.breakpointForBRK = { cpu, address ->
+        cpu.breakpointForBRK = { _, address ->
             if(address==0x024b) {   // test end address
                 val error=bus.read(0x000b)      // the 'ERROR' variable is stored here
                 if(error==0.toShort())

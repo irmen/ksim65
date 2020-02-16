@@ -190,8 +190,8 @@ class DebugWindow(private val vm: IVirtualMachine) : JFrame("Debugger - ksim65 v
                 pauseBt.actionCommand = "pause"
                 pauseBt.text = "Pause"
             }
-            "irq" -> vm.cpu.irq()
-            "nmi" -> vm.cpu.nmi()
+            "irq" -> vm.cpu.irqAsserted = true
+            "nmi" -> vm.cpu.nmiAsserted = true
             "quit" -> {
                 dispatchEvent(WindowEvent(this, WindowEvent.WINDOW_CLOSING))
             }

@@ -33,8 +33,8 @@ class Timer(startAddress: Address, endAddress: Address, val cpu: Cpu6502) : MemM
         if (enabled && interval > 0) {
             counter++
             if (counter == interval) {
-                if (nmi) cpu.nmi()
-                else cpu.irq()
+                if (nmi) cpu.nmiAsserted = true
+                else cpu.irqAsserted = true
                 counter = 0
             }
         }

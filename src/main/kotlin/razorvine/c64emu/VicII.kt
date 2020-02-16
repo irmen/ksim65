@@ -38,7 +38,7 @@ class VicII(startAddress: Address, endAddress: Address, val cpu: Cpu6502) : MemM
             interruptStatusRegisterD019 = if (currentRasterLine == rasterIrqLine) {
                 // signal that current raster line is equal to the desired IRQ raster line
                 // schedule an IRQ as well if the raster interrupt is enabled
-                if ((ramBuffer[0x1a].toInt() and 1) != 0) cpu.irq()
+                if ((ramBuffer[0x1a].toInt() and 1) != 0) cpu.irqAsserted = true
                 interruptStatusRegisterD019 or 0b10000001
             } else interruptStatusRegisterD019 and 0b11111110
         }

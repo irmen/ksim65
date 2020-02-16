@@ -92,8 +92,8 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address, val cpu: 
             // timer A is enabled, assume system cycles counting for now
             timerAactual--
             if (timerAactual == 0 && timerAinterruptEnabled) {
-                if (number == 1) cpu.irq()
-                else if (number == 2) cpu.nmi()
+                if (number == 1) cpu.irqAsserted = true
+                else if (number == 2) cpu.nmiAsserted = true
             }
             if (timerAactual < 0) timerAactual = if (ramBuffer[0x0e].toInt() and 0b00001000 != 0) 0 else timerAset
         }
@@ -108,8 +108,8 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address, val cpu: 
                 timerBactual--
             }
             if (timerBactual == 0 && timerBinterruptEnabled) {
-                if (number == 1) cpu.irq()
-                else if (number == 2) cpu.nmi()
+                if (number == 1) cpu.irqAsserted = true
+                else if (number == 2) cpu.nmiAsserted = true
             }
             if (timerBactual < 0) timerBactual = if (regCRB and 0b00001000 != 0) 0 else timerBset
         }
