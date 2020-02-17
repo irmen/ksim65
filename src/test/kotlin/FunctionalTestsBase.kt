@@ -3,7 +3,10 @@ import razorvine.ksim65.Cpu6502
 import razorvine.ksim65.components.Ram
 import kotlin.test.*
 
-
+/*
+Wolfgang Lorenz's 6502 test suite
+See http://www.softwolves.com/arkiv/cbm-hackers/7/7114.html
+ */
 abstract class FunctionalTestsBase {
 
     val cpu: Cpu6502 = Cpu6502()
@@ -44,7 +47,7 @@ abstract class FunctionalTestsBase {
         cpu.regSP = 0xfd
         cpu.regP.fromInt(0b00100100)
         try {
-            while (cpu.totalCycles < 50000000L) {
+            while (cpu.totalCycles < 40000000L) {
                 bus.clock()
             }
             fail("test hangs: " + cpu.snapshot())
@@ -56,5 +59,14 @@ abstract class FunctionalTestsBase {
             fail("test failed")
         }
         fail("test failed")
+    }
+
+    protected fun runTestExpectNotImplemented(testprogram: String) {
+        try {
+            runTest(testprogram)
+            fail("expected to crash with NotImplementedError")
+        } catch(nx: NotImplementedError) {
+            // okay!
+        }
     }
 }

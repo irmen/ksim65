@@ -9,48 +9,6 @@ import kotlin.test.*
 class Test6502TestSuitePart2: FunctionalTestsBase() {
 
     @Test
-    @Disabled("not yet implemented- illegal instruction")
-    fun testLasay() {
-        runTest("lasay")
-    }
-
-    @Test
-    @Disabled("not yet implemented- illegal instruction")
-    fun testLaxa() {
-        runTest("laxa")
-    }
-
-    @Test
-    @Disabled("not yet implemented- illegal instruction")
-    fun testLaxay() {
-        runTest("laxay")
-    }
-
-    @Test
-    @Disabled("not yet implemented- illegal instruction")
-    fun testLaxix() {
-        runTest("laxix")
-    }
-
-    @Test
-    @Disabled("not yet implemented- illegal instruction")
-    fun testLaxiy() {
-        runTest("laxiy")
-    }
-
-    @Test
-    @Disabled("not yet implemented- illegal instruction")
-    fun testLaxz() {
-        runTest("laxz")
-    }
-
-    @Test
-    @Disabled("not yet implemented- illegal instruction")
-    fun testLaxzy() {
-        runTest("laxzy")
-    }
-
-    @Test
     fun testLdaa() {
         runTest("ldaa")
     }
@@ -141,54 +99,6 @@ class Test6502TestSuitePart2: FunctionalTestsBase() {
     }
 
     @Test
-    @Disabled("c64 specific component")
-    fun testLoadth() {
-        runTest("loadth")
-    }
-
-    @Test
-    @Disabled("not yet implemented- illegal instruction")
-    fun testLsea() {
-        runTest("lsea")
-    }
-
-    @Test
-    @Disabled("not yet implemented- illegal instruction")
-    fun testLseax() {
-        runTest("lseax")
-    }
-
-    @Test
-    @Disabled("not yet implemented- illegal instruction")
-    fun testLseay() {
-        runTest("lseay")
-    }
-
-    @Test
-    @Disabled("not yet implemented- illegal instruction")
-    fun testLseix() {
-        runTest("lseix")
-    }
-
-    @Test
-    @Disabled("not yet implemented- illegal instruction")
-    fun testLseiy() {
-        runTest("lseiy")
-    }
-
-    @Test
-    @Disabled("not yet implemented- illegal instruction")
-    fun testLsez() {
-        runTest("lsez")
-    }
-
-    @Test
-    @Disabled("not yet implemented- illegal instruction")
-    fun testLsezx() {
-        runTest("lsezx")
-    }
-
-    @Test
     fun testLsra() {
         runTest("lsra")
     }
@@ -211,30 +121,6 @@ class Test6502TestSuitePart2: FunctionalTestsBase() {
     @Test
     fun testLsrzx() {
         runTest("lsrzx")
-    }
-
-    @Test
-    @Disabled("not yet implemented- illegal instruction")
-    fun testLxab() {
-        runTest("lxab")
-    }
-
-    @Test
-    @Disabled("c64 6510 specific component")
-    fun testMmu() {
-        runTest("mmu")
-    }
-
-    @Test
-    @Disabled("c64 6510 specific component")
-    fun testMmufetch() {
-        runTest("mmufetch")
-    }
-
-    @Test
-    @Disabled("c64 specific component")
-    fun testNmi() {
-        runTest("nmi")
     }
 
     @Test
@@ -265,12 +151,6 @@ class Test6502TestSuitePart2: FunctionalTestsBase() {
     @Test
     fun testNopzx() {
         runTest("nopzx")
-    }
-
-    @Test
-    @Disabled("c64 specific component")
-    fun testOneshot() {
-        runTest("oneshot")
     }
 
     @Test
@@ -334,48 +214,6 @@ class Test6502TestSuitePart2: FunctionalTestsBase() {
     }
 
     @Test
-    @Disabled("not yet implemented- illegal instruction")
-    fun testRlaa() {
-        runTest("rlaa")
-    }
-
-    @Test
-    @Disabled("not yet implemented- illegal instruction")
-    fun testRlaax() {
-        runTest("rlaax")
-    }
-
-    @Test
-    @Disabled("not yet implemented- illegal instruction")
-    fun testRlaay() {
-        runTest("rlaay")
-    }
-
-    @Test
-    @Disabled("not yet implemented- illegal instruction")
-    fun testRlaix() {
-        runTest("rlaix")
-    }
-
-    @Test
-    @Disabled("not yet implemented- illegal instruction")
-    fun testRlaiy() {
-        runTest("rlaiy")
-    }
-
-    @Test
-    @Disabled("not yet implemented- illegal instruction")
-    fun testRlaz() {
-        runTest("rlaz")
-    }
-
-    @Test
-    @Disabled("not yet implemented- illegal instruction")
-    fun testRlazx() {
-        runTest("rlazx")
-    }
-
-    @Test
     fun testRola() {
         runTest("rola")
     }
@@ -423,48 +261,6 @@ class Test6502TestSuitePart2: FunctionalTestsBase() {
     @Test
     fun testRorzx() {
         runTest("rorzx")
-    }
-
-    @Test
-    @Disabled("not yet implemented- illegal instruction")
-    fun testRraa() {
-        runTest("rraa")
-    }
-
-    @Test
-    @Disabled("not yet implemented- illegal instruction")
-    fun testRraax() {
-        runTest("rraax")
-    }
-
-    @Test
-    @Disabled("not yet implemented- illegal instruction")
-    fun testRraay() {
-        runTest("rraay")
-    }
-
-    @Test
-    @Disabled("not yet implemented- illegal instruction")
-    fun testRraix() {
-        runTest("rraix")
-    }
-
-    @Test
-    @Disabled("not yet implemented- illegal instruction")
-    fun testRraiy() {
-        runTest("rraiy")
-    }
-
-    @Test
-    @Disabled("not yet implemented- illegal instruction")
-    fun testRraz() {
-        runTest("rraz")
-    }
-
-    @Test
-    @Disabled("not yet implemented- illegal instruction")
-    fun testRrazx() {
-        runTest("rrazx")
     }
 
     @Test
@@ -523,12 +319,6 @@ class Test6502TestSuitePart2: FunctionalTestsBase() {
     }
 
     @Test
-    @Disabled("not yet implemented- illegal instruction")
-    fun testSbxb() {
-        runTest("sbxb")
-    }
-
-    @Test
     fun testSecn() {
         runTest("secn")
     }
@@ -541,36 +331,6 @@ class Test6502TestSuitePart2: FunctionalTestsBase() {
     @Test
     fun testSein() {
         runTest("sein")
-    }
-
-    @Test
-    @Disabled("not yet implemented- illegal instruction sha/ahx")
-    fun testShaay() {
-        runTest("shaay")
-    }
-
-    @Test
-    @Disabled("not yet implemented- illegal instruction sha/ahx")
-    fun testShaiy() {
-        runTest("shaiy")
-    }
-
-    @Test
-    @Disabled("not yet implemented- illegal instruction shs/tas")
-    fun testShsay() {
-        runTest("shsay")
-    }
-
-    @Test
-    @Disabled("not yet implemented- illegal instruction")
-    fun testShxay() {
-        runTest("shxay")
-    }
-
-    @Test
-    @Disabled("not yet implemented- illegal instruction")
-    fun testShyax() {
-        runTest("shyax")
     }
 
     @Test
