@@ -1,8 +1,5 @@
-import razorvine.ksim65.Bus
-import razorvine.ksim65.Cpu6502
-import razorvine.ksim65.Cpu65C02
+import razorvine.ksim65.*
 import razorvine.ksim65.components.Ram
-import razorvine.ksim65.hexB
 import kotlin.test.*
 import kotlin.system.measureNanoTime
 import kotlin.test.assertEquals
@@ -151,6 +148,52 @@ class Test6502CpuBasics {
         }
     }
 
+    fun runBCDbeebTest(cpu: Cpu6502, testChoice: Char) {
+        // bcd test code from https://github.com/hoglet67/AtomSoftwareArchive/tree/master/tests/clark
+        val bus = Bus()
+        bus.add(cpu)
+        cpu.breakpointForBRK = { _, pc -> fail("brk instruction at \$${hexW(pc)}") }
+        cpu.addBreakpoint(0xffee) { cpu, pc ->
+            // OSWRCH write character
+            print("${cpu.regA.toChar()}")
+            Cpu6502.BreakpointResultAction()
+        }
+        cpu.addBreakpoint(0xffe0) { cpu, pc ->
+            // OSRDCH read character
+            cpu.regA = testChoice.toInt()
+            Cpu6502.BreakpointResultAction()
+        }
+        val ram = Ram(0, 0xffff)
+        val bytes = javaClass.getResource("BCDTEST_beeb.bin").readBytes()
+        ram.load(bytes, 0x2900)
+        ram[0x0200] = 0x20  // jsr $2900
+        ram[0x0201] = 0x00
+        ram[0x0202] = 0x29
+        ram[0x0203] = 0x00  // brk
+        ram[0xffe0] = 0x60  // rts
+        ram[0xffee] = 0x60  // rts
+        bus.add(ram)
+        bus.reset()
+        cpu.regPC = 0x0200
+
+        while (cpu.regPC!=0x203 && cpu.totalCycles < 200000000L) {
+            bus.clock()
+        }
+
+        assertEquals(0x0203, cpu.regPC, "test hangs: "+cpu.snapshot())
+        assertEquals(0, ram[0x84], "test failed- check the console output for diag message")
+    }
+
+    @Test
+    fun testBCDbeeb6502() {
+        runBCDbeebTest(Cpu6502(), 'D')
+    }
+
+    @Test
+    fun testBCDbeeb65c02() {
+        runBCDbeebTest(Cpu65C02(), 'H')
+    }
+
     @Test
     fun testBRKbreakpoint() {
         val cpu = Cpu6502()
@@ -178,4 +221,37 @@ class Test6502CpuBasics {
         assertEquals(0x3334, cpu.regPC)
     }
 
+    @Test
+    @Ignore("not finished yet")  // TODO finish NES TEST
+    fun testNesTest() {
+        class NesCpu: Cpu6502() {
+            fun resetTotalCycles(cycles: Long) {
+                totalCycles = cycles
+                instrCycles = 0
+            }
+        }
+
+        val cpu = NesCpu()
+        val ram = Ram(0, 0xffff)
+
+        val bytes = javaClass.getResource("nestest.nes").readBytes().drop(0x10).take(0x4000).toByteArray()
+        ram.load(bytes, 0x8000)
+        ram.load(bytes, 0xc000)
+        val bus = Bus()
+        bus.add(cpu)
+        bus.add(ram)
+        bus.reset()
+        cpu.resetTotalCycles(7)     // that is what the nes rom starts with
+        cpu.regPC = 0xc000
+
+        val neslog = javaClass.getResource("nestest.log").readText().lineSequence()
+        for(logline in neslog) {
+            println(logline)
+            val s = cpu.snapshot()
+            println("${hexW(s.PC)}  ?? ?? ??  NOP                             A:00 X:00 Y:00 P:00 SP:00 PPU:  0,  0 CYC:${s.cycles}")
+            cpu.step()
+        }
+
+        fail("todo: test success condition")
+    }
 }
