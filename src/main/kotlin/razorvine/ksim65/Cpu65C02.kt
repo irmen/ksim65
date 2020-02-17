@@ -633,6 +633,8 @@ class Cpu65C02 : Cpu6502() {
         regP.I = true     // interrupts are now disabled
         regP.D = false    // this is different from NMOS 6502
         regPC = readWord(IRQ_vector)
+
+        // TODO prevent NMI from triggering immediately after IRQ/BRK... how does that work exactly?
     }
 
     override fun handleInterrupt() {

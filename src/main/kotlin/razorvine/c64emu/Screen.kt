@@ -14,6 +14,7 @@ import javax.swing.JPanel
  * It supports: Character mode,
  * High res bitmap mode (320*200), Multicolor bitmap mode (160*200).
  * TODO: Multicolor character mode.   Extended background color mode.
+ * TODO: Horizontal smooth scrolling (+38 col mode).   Vertical smooth scrolling (+24 row mode).
  */
 internal class Screen(private val chargen: Rom, val ram: MemoryComponent) : JPanel() {
 

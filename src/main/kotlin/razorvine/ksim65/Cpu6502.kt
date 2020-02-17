@@ -232,6 +232,7 @@ open class Cpu6502 : BusComponent() {
      * Reset the cpu
      */
     override fun reset() {
+        // TODO don't perform all of the reset logic immediately, handle the reset 'pin' in the regular clock() instead (much like a NMI)
         regP.I = true
         regP.C = false
         regP.Z = false
@@ -1074,6 +1075,8 @@ open class Cpu6502 : BusComponent() {
         regP.I = true     // interrupts are now disabled
         // NMOS 6502 doesn't clear the D flag (CMOS 65C02 version does...)
         regPC = readWord(IRQ_vector)
+
+        // TODO prevent NMI from triggering immediately after IRQ/BRK... how does that work exactly?
     }
 
     protected open fun handleInterrupt() {
@@ -1094,6 +1097,8 @@ open class Cpu6502 : BusComponent() {
             regPC = readWord(IRQ_vector)
             irqAsserted = false
         }
+
+        // TODO prevent NMI from triggering immediately after IRQ/BRK... how does that work exactly?
     }
 
     protected fun iBvc() {
