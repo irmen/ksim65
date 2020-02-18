@@ -148,17 +148,17 @@ internal class Screen(private val chargen: Rom, val ram: MemoryComponent) : JPan
 
     private fun renderCharacterMode(vicBank: Address, vicVMCSB: Int, multiColorMode: Boolean) {
         if (multiColorMode) {
-            TODO("multicolor character mode")
-        } else {
-            // normal character mode
-            val screenAddress = vicBank+(vicVMCSB ushr 4) shl 10
-            val charsetAddress = (vicVMCSB and 0b00001110) shl 10
-            for (y in 0 until ScreenDefs.SCREEN_HEIGHT_CHARS) {
-                for (x in 0 until ScreenDefs.SCREEN_WIDTH_CHARS) {
-                    val char = ram[screenAddress+x+y*ScreenDefs.SCREEN_WIDTH_CHARS].toInt()
-                    val color = ram[0xd800+x+y*ScreenDefs.SCREEN_WIDTH_CHARS].toInt()   // colors always at $d800
-                    drawColoredChar(x, y, char, color, vicBank+charsetAddress)
-                }
+            // TODO multicolor character mode, for now, falls back to normal char mode
+        }
+
+        // normal character mode
+        val screenAddress = vicBank+(vicVMCSB ushr 4) shl 10
+        val charsetAddress = (vicVMCSB and 0b00001110) shl 10
+        for (y in 0 until ScreenDefs.SCREEN_HEIGHT_CHARS) {
+            for (x in 0 until ScreenDefs.SCREEN_WIDTH_CHARS) {
+                val char = ram[screenAddress+x+y*ScreenDefs.SCREEN_WIDTH_CHARS].toInt()
+                val color = ram[0xd800+x+y*ScreenDefs.SCREEN_WIDTH_CHARS].toInt()   // colors always at $d800
+                drawColoredChar(x, y, char, color, vicBank+charsetAddress)
             }
         }
     }
