@@ -152,7 +152,7 @@ internal class Screen(private val chargen: Rom, val ram: MemoryComponent) : JPan
         }
 
         // normal character mode
-        val screenAddress = vicBank+(vicVMCSB ushr 4) shl 10
+        val screenAddress = vicBank+((vicVMCSB ushr 4) shl 10)
         val charsetAddress = (vicVMCSB and 0b00001110) shl 10
         for (y in 0 until ScreenDefs.SCREEN_HEIGHT_CHARS) {
             for (x in 0 until ScreenDefs.SCREEN_WIDTH_CHARS) {
