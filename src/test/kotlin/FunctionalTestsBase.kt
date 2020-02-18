@@ -1,3 +1,4 @@
+import razorvine.ksim65.Assembler
 import razorvine.ksim65.Bus
 import razorvine.ksim65.Cpu6502
 import razorvine.ksim65.components.Ram
@@ -29,11 +30,22 @@ abstract class FunctionalTestsBase {
     protected fun runTest(testprogram: String) {
         // setup the irq/brk routine and other stubbing
         // http://www.softwolves.com/arkiv/cbm-hackers/7/7114.html
-        for(b in listOf(0x48, 0x8A, 0x48, 0x98, 0x48, 0xBA, 0xBD, 0x04,
-                        0x01, 0x29, 0x10, 0xF0, 0x03, 0x6C, 0x16, 0x03,
-                        0x6C, 0x14, 0x03).withIndex()) {
-            ram[0xff48+b.index] = b.value.toShort()
-        }
+        val assembler = Assembler(cpu, ram, 0xff48)
+        val result = assembler.assemble("""
+   pha
+   txa
+   pha
+   tya
+   pha
+   tsx
+   lda ${'$'}0104,x
+   and #${'$'}10
+   beq *+5
+   jmp (${'$'}0316)
+   jmp (${'$'}0314)            
+""".lines())
+        assertTrue(result.success)
+
         ram.loadPrg("src/test/kotlin/6502testsuite/$testprogram", null)
         ram[0x02] = 0
         ram[0xa002] = 0

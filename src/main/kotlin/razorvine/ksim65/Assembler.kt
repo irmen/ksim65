@@ -33,7 +33,7 @@ class Assembler(cpu: Cpu6502, val memory: MemMappedComponent, initialStartAddres
     }
 
 
-    private var address = initialStartAddress ?: 0
+    private var startAddress = initialStartAddress ?: 0
     private var assembledSize = 0
 
     private val instructions by lazy {
@@ -49,11 +49,12 @@ class Assembler(cpu: Cpu6502, val memory: MemMappedComponent, initialStartAddres
     fun assemble(lines: Iterable<String>): Result {
         for(line in lines) {
             val result = assemble(line)
+            println("line: $line -> ${result.success}  ${result.error}")        // TODO
             if(!result.success)
                 return result
             assembledSize += result.numBytes
         }
-        return Result(true, "", address, assembledSize)
+        return Result(true, "", startAddress, assembledSize)
     }
 
     fun assemble(line: String): Result {
@@ -68,20 +69,20 @@ class Assembler(cpu: Cpu6502, val memory: MemMappedComponent, initialStartAddres
 
         var args = line.trim().split(' ')
         if(args.isEmpty() || args.size == 1 && args[0] == "")
-            return Result(true, "", address, 0)
+            return Result(true, "", startAddress, 0)
         if(args[0].startsWith("*=") && args.size==1) {
-            address = parseNumber(args[0].substring(2))
-            return Result(true, "", address, 0)
+            startAddress = parseNumber(args[0].substring(2))
+            return Result(true, "", startAddress, 0)
         }
         else if(args[0] == "*" && args[1] == "=") {
-            address = parseNumber(args[2])
-            return Result(true, "", address, 0)
+            startAddress = parseNumber(args[2])
+            return Result(true, "", startAddress, 0)
         } else {
             // line with an instruction, may be preceded by a 4 or 5 char address
             if(args[0].length == 4 || args[0].length==5) {
                 if(args.size!=2 && args.size !=3)
-                    return Result(false, "syntax error", address, 0)
-                address = parseNumber(args[0])
+                    return Result(false, "syntax error", startAddress, 0)
+                startAddress = parseNumber(args[0])
                 args = args.drop(1)
             }
         }
@@ -94,8 +95,8 @@ class Assembler(cpu: Cpu6502, val memory: MemMappedComponent, initialStartAddres
                 instructionSize = 1
                 var instruction = instructions[Pair(mnemonic, Cpu6502.AddrMode.Imp)]
                 if (instruction == null) instruction = instructions[Pair(mnemonic, Cpu6502.AddrMode.Acc)]
-                if (instruction == null) return Result(false, "invalid instruction", this.address, 0)
-                memory[address] = instruction.toShort()
+                if (instruction == null) return Result(false, "invalid instruction", this.startAddress, 0)
+                memory[startAddress+assembledSize] = instruction.toShort()
             }
             2 -> {
                 val arg = args[1]
@@ -103,9 +104,9 @@ class Assembler(cpu: Cpu6502, val memory: MemMappedComponent, initialStartAddres
                     arg.startsWith('#') -> {
                         // immediate
                         val instruction = instructions[Pair(mnemonic, Cpu6502.AddrMode.Imm)] ?: return Result(false, "invalid instruction",
-                                                                                                              this.address, 0)
-                        memory[address] = instruction.toShort()
-                        memory[address+1] = parseNumber(arg.substring(1), decimalFirst = true).toShort()
+                                                                                                              this.startAddress, 0)
+                        memory[startAddress+assembledSize] = instruction.toShort()
+                        memory[startAddress+assembledSize+1] = parseNumber(arg.substring(1), decimalFirst = true).toShort()
                         instructionSize = 2
                     }
                     arg.startsWith("(") && arg.endsWith(",x)") -> {
@@ -113,12 +114,12 @@ class Assembler(cpu: Cpu6502, val memory: MemMappedComponent, initialStartAddres
                         val indAddress = try {
                             parseNumber(arg.substring(1, arg.length-3))
                         } catch (x: NumberFormatException) {
-                            return Result(false, "invalid instruction", this.address, 0)
+                            return Result(false, "invalid instruction", this.startAddress, 0)
                         }
                         val instruction = instructions[Pair(mnemonic, Cpu6502.AddrMode.IzX)] ?: return Result(false, "invalid instruction",
-                                                                                                              this.address, 0)
-                        memory[address] = instruction.toShort()
-                        memory[address+1] = indAddress.toShort()
+                                                                                                              this.startAddress, 0)
+                        memory[startAddress+assembledSize] = instruction.toShort()
+                        memory[startAddress+assembledSize+1] = indAddress.toShort()
                         instructionSize = 2
                     }
                     arg.startsWith("(") && arg.endsWith("),y") -> {
@@ -126,12 +127,12 @@ class Assembler(cpu: Cpu6502, val memory: MemMappedComponent, initialStartAddres
                         val indAddress = try {
                             parseNumber(arg.substring(1, arg.length-3))
                         } catch (x: NumberFormatException) {
-                            return Result(false, "invalid instruction", this.address, 0)
+                            return Result(false, "invalid instruction", this.startAddress, 0)
                         }
                         val instruction = instructions[Pair(mnemonic, Cpu6502.AddrMode.IzY)] ?: return Result(false, "invalid instruction",
-                                                                                                              this.address, 0)
-                        memory[address] = instruction.toShort()
-                        memory[address+1] = indAddress.toShort()
+                                                                                                              this.startAddress, 0)
+                        memory[startAddress+assembledSize] = instruction.toShort()
+                        memory[startAddress+assembledSize+1] = indAddress.toShort()
                         instructionSize = 2
                     }
                     arg.endsWith(",x") -> {
@@ -139,20 +140,20 @@ class Assembler(cpu: Cpu6502, val memory: MemMappedComponent, initialStartAddres
                         val indAddress = try {
                             parseNumber(arg.substring(1, arg.length-2))
                         } catch (x: NumberFormatException) {
-                            return Result(false, "invalid instruction", this.address, 0)
+                            return Result(false, "invalid instruction", this.startAddress, 0)
                         }
                         instructionSize = if (indAddress <= 255) {
                             val instruction = instructions[Pair(mnemonic, Cpu6502.AddrMode.ZpX)] ?: return Result(false, "invalid instruction",
-                                                                                                                  this.address, 0)
-                            memory[address] = instruction.toShort()
-                            memory[address+1] = indAddress.toShort()
+                                                                                                                  this.startAddress, 0)
+                            memory[startAddress+assembledSize] = instruction.toShort()
+                            memory[startAddress+assembledSize+1] = indAddress.toShort()
                             2
                         } else {
                             val instruction = instructions[Pair(mnemonic, Cpu6502.AddrMode.AbsX)] ?: return Result(false, "invalid instruction",
-                                                                                                                   this.address, 0)
-                            memory[address] = instruction.toShort()
-                            memory[address+1] = (indAddress and 255).toShort()
-                            memory[address+2] = (indAddress ushr 8).toShort()
+                                                                                                                   this.startAddress, 0)
+                            memory[startAddress+assembledSize] = instruction.toShort()
+                            memory[startAddress+assembledSize+1] = (indAddress and 255).toShort()
+                            memory[startAddress+assembledSize+2] = (indAddress ushr 8).toShort()
                             3
                         }
                     }
@@ -161,20 +162,20 @@ class Assembler(cpu: Cpu6502, val memory: MemMappedComponent, initialStartAddres
                         val indAddress = try {
                             parseNumber(arg.substring(1, arg.length-2))
                         } catch (x: NumberFormatException) {
-                            return Result(false, "invalid instruction", this.address, 0)
+                            return Result(false, "invalid instruction", this.startAddress, 0)
                         }
                         instructionSize = if (indAddress <= 255) {
                             val instruction = instructions[Pair(mnemonic, Cpu6502.AddrMode.ZpY)] ?: return Result(false, "invalid instruction",
-                                                                                                                  this.address, 0)
-                            memory[address] = instruction.toShort()
-                            memory[address+1] = indAddress.toShort()
+                                                                                                                  this.startAddress, 0)
+                            memory[startAddress+assembledSize] = instruction.toShort()
+                            memory[startAddress+assembledSize+1] = indAddress.toShort()
                             2
                         } else {
                             val instruction = instructions[Pair(mnemonic, Cpu6502.AddrMode.AbsY)] ?: return Result(false, "invalid instruction",
-                                                                                                                   this.address, 0)
-                            memory[address] = instruction.toShort()
-                            memory[address+1] = (indAddress and 255).toShort()
-                            memory[address+2] = (indAddress ushr 8).toShort()
+                                                                                                                   this.startAddress, 0)
+                            memory[startAddress+assembledSize] = instruction.toShort()
+                            memory[startAddress+assembledSize+1] = (indAddress and 255).toShort()
+                            memory[startAddress+assembledSize+2] = (indAddress ushr 8).toShort()
                             3
                         }
                     }
@@ -183,13 +184,13 @@ class Assembler(cpu: Cpu6502, val memory: MemMappedComponent, initialStartAddres
                         val indAddress = try {
                             parseNumber(arg.substring(1, arg.length-1))
                         } catch (x: NumberFormatException) {
-                            return Result(false, "invalid instruction", this.address, 0)
+                            return Result(false, "invalid instruction", this.startAddress, 0)
                         }
                         val instruction = instructions[Pair(mnemonic, Cpu6502.AddrMode.Ind)]
-                                          ?: return Result(false, "invalid instruction", this.address, 0)
-                        memory[address] = instruction.toShort()
-                        memory[address+1] = (indAddress and 255).toShort()
-                        memory[address+2] = (indAddress ushr 8).toShort()
+                                          ?: return Result(false, "invalid instruction", this.startAddress, 0)
+                        memory[startAddress+assembledSize] = instruction.toShort()
+                        memory[startAddress+assembledSize+1] = (indAddress and 255).toShort()
+                        memory[startAddress+assembledSize+2] = (indAddress ushr 8).toShort()
                         instructionSize = 3
                     }
                     else -> {
@@ -197,31 +198,31 @@ class Assembler(cpu: Cpu6502, val memory: MemMappedComponent, initialStartAddres
                         if (instr != null) {
                             // relative address
                             val rel = try {
-                                parseRelativeToPC(arg, address)
+                                parseRelativeToPC(arg, startAddress)
                             } catch (x: NumberFormatException) {
-                                return Result(false, "invalid numeral", this.address, 0)
+                                return Result(false, "invalid numeral", this.startAddress, 0)
                             }
-                            memory[address] = instr.toShort()
-                            memory[address+1] = (rel-address-2 and 255).toShort()
+                            memory[startAddress+assembledSize] = instr.toShort()
+                            memory[startAddress+assembledSize+1] = (rel-startAddress-2 and 255).toShort()
                             instructionSize = 2
                         } else {
                             // absolute or absZp
                             val absAddress = try {
-                                if(arg.startsWith('*')) parseRelativeToPC(arg, address) else parseNumber(arg)
+                                if(arg.startsWith('*')) parseRelativeToPC(arg, startAddress) else parseNumber(arg)
                             } catch (x: NumberFormatException) {
-                                return Result(false, "invalid numeral", this.address, 0)
+                                return Result(false, "invalid numeral", this.startAddress, 0)
                             }
                             val zpInstruction = instructions[Pair(mnemonic, Cpu6502.AddrMode.Zp)]
                             instructionSize = if (absAddress <= 255 && zpInstruction != null) {
-                                memory[address] = zpInstruction.toShort()
-                                memory[address+1] = absAddress.toShort()
+                                memory[startAddress+assembledSize] = zpInstruction.toShort()
+                                memory[startAddress+assembledSize+1] = absAddress.toShort()
                                 2
                             } else {
                                 val absInstr = instructions[Pair(mnemonic, Cpu6502.AddrMode.Abs)] ?: return Result(false, "invalid instruction",
-                                                                                                                   this.address, 0)
-                                memory[address] = absInstr.toShort()
-                                memory[address+1] = (absAddress and 255).toShort()
-                                memory[address+2] = (absAddress ushr 8).toShort()
+                                                                                                                   this.startAddress, 0)
+                                memory[startAddress+assembledSize] = absInstr.toShort()
+                                memory[startAddress+assembledSize+1] = (absAddress and 255).toShort()
+                                memory[startAddress+assembledSize+2] = (absAddress ushr 8).toShort()
                                 3
                             }
                         }
@@ -229,9 +230,9 @@ class Assembler(cpu: Cpu6502, val memory: MemMappedComponent, initialStartAddres
                 }
             }
             else ->
-                return Result(false, "syntax error", this.address, 0)
+                return Result(false, "syntax error", this.startAddress, 0)
         }
 
-        return Result(true, "", this.address, instructionSize)
+        return Result(true, "", this.startAddress, instructionSize)
     }
 }
