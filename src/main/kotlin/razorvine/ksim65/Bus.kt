@@ -64,4 +64,8 @@ open class Bus {
                 it[address-it.startAddress] = data
         }
     }
+
+
+    fun memoryComponentFor(address: Address) =
+            memComponents.first { it is MemoryComponent && address >= it.startAddress && address <= it.endAddress } as MemoryComponent
 }
