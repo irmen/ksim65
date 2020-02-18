@@ -44,6 +44,7 @@ class DebugWindow(private val vm: IVirtualMachine) : JFrame("Debugger - ksim65 v
         it.disabledTextColor = Color.DARK_GRAY
         it.font = Font(Font.MONOSPACED, Font.PLAIN, 12)
     }
+    private val disassembler = Disassembler(vm.cpu)
 
     init {
         contentPane.layout = GridBagLayout()
@@ -217,7 +218,8 @@ class DebugWindow(private val vm: IVirtualMachine) : JFrame("Debugger - ksim65 v
         regSPtf.text = hexB(state.SP)
 
         val memory = listOf(bus[state.PC], bus[state.PC+1], bus[state.PC+2]).toTypedArray()
-        val disassem = cpu.disassembleOneInstruction(memory, 0, state.PC).first.substringAfter(' ').trim()
+
+        val disassem = disassembler.disassembleOneInstruction(memory, 0, state.PC).first.substringAfter(' ').trim()
         disassemTf.text = disassem
 
         if (zeropageTf.isVisible || stackpageTf.isVisible) {

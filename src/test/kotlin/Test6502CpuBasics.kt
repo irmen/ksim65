@@ -234,6 +234,7 @@ class Test6502CpuBasics {
 
         val cpu = NesCpu()
         val ram = Ram(0, 0xffff)
+        val disassembler = Disassembler(cpu)
 
         val bytes = javaClass.getResource("nestest.nes").readBytes().drop(0x10).take(0x4000).toByteArray()
         ram.load(bytes, 0x8000)
@@ -247,16 +248,16 @@ class Test6502CpuBasics {
 
         val neslog = javaClass.getResource("nestest.log").readText().lineSequence()
         for(logline in neslog) {
-            val s = cpu.snapshot()
+            val s = cpu.snapshot()  // TODO use cpu.tracing instead
             val nesAddressHex = logline.substring(0, 4).toInt(16)
             assertEquals(nesAddressHex, s.PC)
 
             println("NES: $logline")
-            val disassem = cpu.disassembleOneInstruction(ram.data, s.PC, 0).first.substring(1)
+            val disassem = disassembler.disassembleOneInstruction(ram.data, s.PC, 0).first.substring(1)
             val spaces = "                                             ".substring(disassem.length-1)
             println("EMU: $disassem $spaces A:${hexB(s.A)} X:${hexB(s.X)} Y:${hexB(s.Y)} P:${hexB(s.P.asInt())} SP:${hexB(s.SP)} PPU:  0,  0 CYC:${s.cycles}")
 
-            // TODO snapshotting as per https://forums.nesdev.com/viewtopic.php?t=19117  (i.e. BEFORE instruction gets executed):
+            // TODO use cpu.tracing, as per https://forums.nesdev.com/viewtopic.php?t=19117  (i.e. BEFORE instruction gets executed):
             // "before fetching the first operation code byte, make an internal record of the program counter and other registers;
             // after reading the final operand byte, log all the values you stored back in step (1) plus the full instruction and its disassembly."
 

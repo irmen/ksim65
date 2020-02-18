@@ -1,5 +1,6 @@
 import razorvine.ksim65.Cpu6502
 import razorvine.ksim65.Cpu65C02
+import razorvine.ksim65.Disassembler
 import razorvine.ksim65.components.Ram
 import kotlin.test.*
 
@@ -9,10 +10,11 @@ class TestDisassembler {
     @Test
     fun testDisassembleAll6502Opcodes() {
         val cpu = Cpu6502()
+        val disassembler = Disassembler(cpu)
         val memory = Ram(0, 0xffff)
         val binfile = javaClass.classLoader.getResourceAsStream("disassem_instr_test.prg")?.readBytes()!!
         memory.load(binfile, 0x1000-2)
-        val result = cpu.disassemble(memory.data, 0x1000..0x1221, 0)
+        val result = disassembler.disassemble(memory.data, 0x1000..0x1221, 0)
         assertEquals(256, result.first.size)
         assertEquals(0x1222, result.second)
         assertEquals("\$1000  69 01       adc  #\$01", result.first[0])
@@ -29,10 +31,11 @@ class TestDisassembler {
     @Test
     fun testDisassembleRockwell65C02() {
         val cpu = Cpu65C02()
+        val disassembler = Disassembler(cpu)
         val memory = Ram(0, 0x0fff)
         val source = javaClass.classLoader.getResource("disassem_r65c02.bin").readBytes()
         memory.load(source, 0x0200)
-        val disassem = cpu.disassemble(memory.data, 0x0200..0x0250, 0)
+        val disassem = disassembler.disassemble(memory.data, 0x0200..0x0250, 0)
         assertEquals(0x251, disassem.second)
         val result = disassem.first.joinToString("\n")
         assertEquals("""${'$'}0200  07 12       rmb0  ${'$'}12
@@ -75,10 +78,11 @@ ${'$'}0250  00          brk""", result)
     @Test
     fun testDisassembleWDC65C02() {
         val cpu = Cpu65C02()
+        val disassembler = Disassembler(cpu)
         val memory = Ram(0, 0x0fff)
         val source = javaClass.classLoader.getResource("disassem_wdc65c02.bin").readBytes()
         memory.load(source, 0x200)
-        val disassem = cpu.disassemble(memory.data, 0x0200..0x0215, 0)
+        val disassem = disassembler.disassemble(memory.data, 0x0200..0x0215, 0)
         assertEquals(0x216, disassem.second)
         val result = disassem.first.joinToString("\n")
         assertEquals("""${'$'}0200  cb          wai

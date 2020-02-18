@@ -19,13 +19,16 @@ abstract class FunctionalTestsBase {
         cpu.addBreakpoint(0xffd2) { cpu, pc -> kernalStubs.handleBreakpoint(cpu, pc) }
         cpu.addBreakpoint(0xffe4) { cpu, pc -> kernalStubs.handleBreakpoint(cpu, pc) }
         cpu.addBreakpoint(0xe16f) { cpu, pc -> kernalStubs.handleBreakpoint(cpu, pc) }
+        cpu.addBreakpoint(0x8000) { cpu, pc -> kernalStubs.handleBreakpoint(cpu, pc) }
+        cpu.addBreakpoint(0xa474) { cpu, pc -> kernalStubs.handleBreakpoint(cpu, pc) }
         bus.add(cpu)
         bus.add(ram)
+        bus.reset()
     }
 
     protected fun runTest(testprogram: String) {
-        ram.fill(0)
-        // setup the irq/brk routine TODO is this the right code?
+        // setup the irq/brk routine and other stubbing
+        // http://www.softwolves.com/arkiv/cbm-hackers/7/7114.html
         for(b in listOf(0x48, 0x8A, 0x48, 0x98, 0x48, 0xBA, 0xBD, 0x04,
                         0x01, 0x29, 0x10, 0xF0, 0x03, 0x6C, 0x16, 0x03,
                         0x6C, 0x14, 0x03).withIndex()) {
@@ -41,9 +44,8 @@ abstract class FunctionalTestsBase {
         ram[Cpu6502.RESET_vector + 1] = 0x08
         ram[0x01fe] = 0xff
         ram[0x01ff] = 0x7f
-        ram[0x8000] = 2
-        ram[0xa474] = 2
-        bus.reset()
+        cpu.regP.fromInt(4)
+        cpu.regPC = 0x0801
         try {
             while (cpu.totalCycles < 40000000L) {
                 bus.clock()

@@ -198,24 +198,6 @@ class C64Machine(title: String) : IVirtualMachine {
         return listing.toTypedArray()
     }
 
-    private fun determineRomPath(): Path {
-        val candidates = listOf("./roms", "~/roms/c64", "~/roms", "~/.vice/C64")
-        candidates.forEach {
-            val path = Paths.get(expandUser(it))
-            if (path.toFile().isDirectory) return path
-        }
-        throw FileNotFoundException("no roms directory found, tried: $candidates")
-    }
-
-    private fun expandUser(path: String): String {
-        return when {
-            path.startsWith("~/") -> System.getProperty("user.home")+path.substring(1)
-            path.startsWith("~"+File.separatorChar) -> System.getProperty("user.home")+path.substring(1)
-            path.startsWith("~") -> throw UnsupportedOperationException("home dir expansion not implemented for other users")
-            else -> path
-        }
-    }
-
     override fun loadFileInRam(file: File, loadAddress: Address?) {
         if (file.extension == "prg" && (loadAddress == null || loadAddress == 0x0801)) ram.loadPrg(file.inputStream(), null)
         else ram.load(file.readBytes(), loadAddress!!)
@@ -267,6 +249,26 @@ class C64Machine(title: String) : IVirtualMachine {
         }
     }
 }
+
+
+fun determineRomPath(): Path {
+    val candidates = listOf("./roms", "~/roms/c64", "~/roms", "~/.vice/C64")
+    candidates.forEach {
+        val path = Paths.get(expandUser(it))
+        if (path.toFile().isDirectory) return path
+    }
+    throw FileNotFoundException("no roms directory found, tried: $candidates")
+}
+
+fun expandUser(path: String): String {
+    return when {
+        path.startsWith("~/") -> System.getProperty("user.home")+path.substring(1)
+        path.startsWith("~"+File.separatorChar) -> System.getProperty("user.home")+path.substring(1)
+        path.startsWith("~") -> throw UnsupportedOperationException("home dir expansion not implemented for other users")
+        else -> path
+    }
+}
+
 
 fun main() {
     val machine = C64Machine("virtual Commodore-64 - using KSim65 v${Version.version}")

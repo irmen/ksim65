@@ -12,6 +12,8 @@ class Monitor(val bus: Bus, val cpu: Cpu6502) {
         instr.toMap()
     }
 
+    private val disassembler = Disassembler(cpu)
+
     fun command(command: String): IVirtualMachine.MonitorCmdResult {
         if (command.isEmpty()) return IVirtualMachine.MonitorCmdResult("", "", false)
 
@@ -97,7 +99,7 @@ class Monitor(val bus: Bus, val cpu: Cpu6502) {
                 val start = parseNumber(addresses[0])
                 val end = if (addresses.size > 1) parseNumber(addresses[1]) else start
                 val memory = (start .. max(0xffff, end+3)).map {bus[it]}.toTypedArray()
-                val disassem = cpu.disassemble(memory, 0 .. end-start, start)
+                val disassem = disassembler.disassemble(memory, 0 .. end-start, start)
                 IVirtualMachine.MonitorCmdResult(disassem.first.joinToString("\n") { "d$it" }, "d$${hexW(disassem.second)}", false)
             }
             else -> {
@@ -238,7 +240,7 @@ class Monitor(val bus: Bus, val cpu: Cpu6502) {
         }
 
         val memory = listOf(bus[address], bus[address+1], bus[address+2]).toTypedArray()
-        val disassem = cpu.disassembleOneInstruction(memory, 0, address)
+        val disassem = disassembler.disassembleOneInstruction(memory, 0, address)
         return IVirtualMachine.MonitorCmdResult(disassem.first, "a$${hexW(disassem.second + address)} ", false)
     }
 
