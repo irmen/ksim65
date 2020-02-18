@@ -22,8 +22,8 @@ class CpuIoPort(val cpu: Cpu6502) : MemMappedComponent(0x0000, 0x0001) {
 
     override fun clock() { }
     override fun reset() {
-        dataDirections = 0xff
-        ioPort = 0xff
+        dataDirections = 0xef
+        ioPort = 0x37
         determineRoms()
     }
 
