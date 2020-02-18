@@ -19,18 +19,18 @@ abstract class FunctionalTestsBase {
         cpu.addBreakpoint(0xffd2) { cpu, pc -> kernalStubs.handleBreakpoint(cpu, pc) }
         cpu.addBreakpoint(0xffe4) { cpu, pc -> kernalStubs.handleBreakpoint(cpu, pc) }
         cpu.addBreakpoint(0xe16f) { cpu, pc -> kernalStubs.handleBreakpoint(cpu, pc) }
-
-        // setup the irq/brk routine
-        for(b in listOf(0x48, 0x8A, 0x48, 0x98, 0x48, 0xBA, 0xBD, 0x04,
-                0x01, 0x29, 0x10, 0xF0, 0x03, 0x6C, 0x16, 0x03,
-                0x6C, 0x14, 0x03).withIndex()) {
-            ram[0xff48+b.index] = b.value.toShort()
-        }
         bus.add(cpu)
         bus.add(ram)
     }
 
     protected fun runTest(testprogram: String) {
+        ram.fill(0)
+        // setup the irq/brk routine TODO is this the right code?
+        for(b in listOf(0x48, 0x8A, 0x48, 0x98, 0x48, 0xBA, 0xBD, 0x04,
+                        0x01, 0x29, 0x10, 0xF0, 0x03, 0x6C, 0x16, 0x03,
+                        0x6C, 0x14, 0x03).withIndex()) {
+            ram[0xff48+b.index] = b.value.toShort()
+        }
         ram.loadPrg("src/test/kotlin/6502testsuite/$testprogram", null)
         ram[0x02] = 0
         ram[0xa002] = 0
@@ -44,8 +44,6 @@ abstract class FunctionalTestsBase {
         ram[0x8000] = 2
         ram[0xa474] = 2
         bus.reset()
-        cpu.regSP = 0xfd
-        cpu.regP.fromInt(0b00100100)
         try {
             while (cpu.totalCycles < 40000000L) {
                 bus.clock()

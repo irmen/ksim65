@@ -1,6 +1,7 @@
 import razorvine.ksim65.components.Address
 import razorvine.ksim65.Cpu6502
 import razorvine.ksim65.components.Ram
+import razorvine.ksim65.hexW
 
 
 class C64KernalStubs(private val ram: Ram) {
@@ -37,6 +38,9 @@ class C64KernalStubs(private val ram: Ram) {
 //                ram.loadPrg("test/6502testsuite/$filename")
 //                cpu.popStackAddr()
 //                cpu.PC = 0x0816     // continue in next module
+            }
+            else -> {
+                TODO("unhandled kernel stub called \$${hexW(pc)}")
             }
         }
 
