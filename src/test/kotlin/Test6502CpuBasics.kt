@@ -222,8 +222,9 @@ class Test6502CpuBasics {
     }
 
     @Test
-    @Ignore("not finished yet")  // TODO finish NES TEST
     fun testNesTest() {
+        // http://www.qmtpro.com/~nes/misc/nestest.txt
+
         class NesCpu: Cpu6502() {
             fun resetTotalCycles(cycles: Long) {
                 totalCycles = cycles
@@ -246,11 +247,36 @@ class Test6502CpuBasics {
 
         val neslog = javaClass.getResource("nestest.log").readText().lineSequence()
         for(logline in neslog) {
-            println(logline)
             val s = cpu.snapshot()
-            println("${hexW(s.PC)}  ?? ?? ??  NOP                             A:00 X:00 Y:00 P:00 SP:00 PPU:  0,  0 CYC:${s.cycles}")
+            val nesAddressHex = logline.substring(0, 4).toInt(16)
+            assertEquals(nesAddressHex, s.PC)
+
+            println("NES: $logline")
+            val disassem = cpu.disassembleOneInstruction(ram.data, s.PC, 0).first.substring(1)
+            val spaces = "                                             ".substring(disassem.length-1)
+            println("EMU: $disassem $spaces A:${hexB(s.A)} X:${hexB(s.X)} Y:${hexB(s.Y)} P:${hexB(s.P.asInt())} SP:${hexB(s.SP)} PPU:  0,  0 CYC:${s.cycles}")
+
+            // TODO snapshotting as per https://forums.nesdev.com/viewtopic.php?t=19117  (i.e. BEFORE instruction gets executed):
+            // "before fetching the first operation code byte, make an internal record of the program counter and other registers;
+            // after reading the final operand byte, log all the values you stored back in step (1) plus the full instruction and its disassembly."
+
+            val nesRegsLog = logline.substring(48).split(':')
+            val nesA = nesRegsLog[1].substring(0, 2).toShort(16)
+            val nesX = nesRegsLog[2].substring(0, 2).toShort(16)
+            val nesY = nesRegsLog[3].substring(0, 2).toShort(16)
+            val nesP = nesRegsLog[4].substring(0, 2).toInt(16)
+            val nesSP = nesRegsLog[5].substring(0, 2).toInt(16)
+            val nesCycles = nesRegsLog[7].toLong()
+            assertEquals(nesA, s.A)
+            assertEquals(nesX, s.X)
+            assertEquals(nesY, s.Y)
+            assertEquals(nesP, s.P.asInt())
+            assertEquals(nesSP, s.SP)
+            assertEquals(nesCycles, s.cycles)
             cpu.step()
         }
+
+        // TODO test $02 and $03 for test results see http://www.qmtpro.com/~nes/misc/nestest.txt
 
         fail("todo: test success condition")
     }
