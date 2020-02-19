@@ -52,6 +52,8 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address, val cpu: 
             if (updatedAt != latchedTime) {
                 updatedAt = latchedTime
                 var elapsedSeconds = (latchedTime.toDouble()-startedAt)/1000.0+userStartTime
+                if(elapsedSeconds>60*3600)
+                    elapsedSeconds=0.0      // TOD counds max 60 hours
                 hours = (elapsedSeconds/3600).toInt()
                 elapsedSeconds -= hours*3600
                 minutes = (elapsedSeconds/60).toInt()

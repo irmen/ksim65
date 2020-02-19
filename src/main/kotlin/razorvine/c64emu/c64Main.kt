@@ -39,12 +39,12 @@ class C64Machine(title: String) : IVirtualMachine {
         it.load(kernalData)
     }
 
-    override val cpu = Cpu6502()
-    val cpuIoPort = CpuIoPort(cpu)
+    val cpuIoPort = CpuIoPort()
 
     // This bus contains "mmu" logic to control the memory bank switching controlled by the 6510's io port in $00/$01.
     // Therefore we provide it the various roms directly and not "connect" these to the bus in the default way.
     override val bus = Bus6510(cpuIoPort, chargenRom, basicRom, kernalRom)
+    override val cpu = Cpu6502()
 
     // the C64 has 64KB of RAM.  Some of it may be banked out and replaced by ROM.
     val ram = Ram(0x0000, 0xffff)

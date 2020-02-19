@@ -1,6 +1,5 @@
 package razorvine.c64emu
 
-import razorvine.ksim65.Cpu6502
 import razorvine.ksim65.components.MemMappedComponent
 import razorvine.ksim65.components.UByte
 
@@ -9,10 +8,11 @@ import razorvine.ksim65.components.UByte
  * Controlling the memory layout, and cassette port (not processed at all).
  *
  */
-class CpuIoPort(val cpu: Cpu6502) : MemMappedComponent(0x0000, 0x0001) {
+class CpuIoPort : MemMappedComponent(0x0000, 0x0001) {
 
     private var dataDirections: Int = 0
-    private var ioPort: Int = 0xff
+    private var ioPort: Int = 0
+
     var loram: Boolean = false  // Bit 0: LORAM signal.  Selects ROM or RAM at 40960 ($A000).  1=BASIC, 0=RAM
         private set
     var hiram: Boolean = false  // Bit 1: HIRAM signal.  Selects ROM or RAM at 57344 ($E000).  1=Kernal, 0=RAM
@@ -28,8 +28,13 @@ class CpuIoPort(val cpu: Cpu6502) : MemMappedComponent(0x0000, 0x0001) {
     }
 
     override operator fun get(offset: Int): UByte {
-        return if(offset==0) dataDirections.toShort() else {
-            (ioPort or dataDirections.inv() and 0b00111111).toShort()
+        return if(offset==0) {
+            dataDirections.toShort()
+        } else {
+            if(dataDirections and 0b00100000 == 0)
+                (ioPort and 0b11011111).toShort()        // bit 5 is low when input
+            else
+                ioPort.toShort()
         }
     }
 
@@ -38,14 +43,14 @@ class CpuIoPort(val cpu: Cpu6502) : MemMappedComponent(0x0000, 0x0001) {
             dataDirections = data.toInt()
             determineRoms()
         } else {
-            ioPort = data.toInt()
+            ioPort = (ioPort and dataDirections.inv()) or (data.toInt() and dataDirections)
             determineRoms()
         }
     }
 
     private fun determineRoms() {
-        if (dataDirections and 0b00000001 != 0) loram = ioPort and 0b00000001 != 0
-        if (dataDirections and 0b00000010 != 0) hiram = ioPort and 0b00000010 != 0
-        if (dataDirections and 0b00000100 != 0) charen = ioPort and 0b00000100 != 0
+        loram = ioPort and 0b00000001 != 0
+        hiram = ioPort and 0b00000010 != 0
+        charen = ioPort and 0b00000100 != 0
     }
 }

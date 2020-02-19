@@ -9,14 +9,11 @@ import razorvine.ksim65.components.Ram
 import razorvine.ksim65.components.Rom
 import kotlin.test.*
 
-// TODO: run these tests by using the C64 machine emulation components
-
 @Execution(ExecutionMode.CONCURRENT)
-@Disabled("need to fix more c64 specific stuff here")
 class Test6502TestSuiteC64Specific {
 
     val cpu: Cpu6502 = Cpu6502()
-    val ioPort = CpuIoPort(cpu)
+    val ioPort = CpuIoPort()
     val ram = Ram(0, 0xffff)
     val bus: Bus
     val kernalStubs = C64KernalStubs(ram)
@@ -108,104 +105,134 @@ class Test6502TestSuiteC64Specific {
     }
 
     @Test
+    @Disabled("tests c64 specific hardware")
     fun testCia1pb6() {
         runTest("cia1pb6")
     }
 
     @Test
+    @Disabled("tests c64 specific hardware")
     fun testCia1pb7() {
         runTest("cia1pb7")
     }
 
     @Test
+    @Disabled("tests c64 specific hardware")
     fun testCia1ta() {
         runTest("cia1ta")
     }
 
     @Test
+    @Disabled("tests c64 specific hardware")
     fun testCia1tab() {
         runTest("cia1tab")
     }
 
     @Test
+    @Disabled("tests c64 specific hardware")
     fun testCia1tb() {
         runTest("cia1tb")
     }
 
     @Test
+    @Disabled("tests c64 specific hardware")
     fun testCia1tb123() {
         runTest("cia1tb123")
     }
 
     @Test
+    @Disabled("tests c64 specific hardware")
     fun testCia2pb6() {
         runTest("cia2pb6")
     }
 
     @Test
+    @Disabled("tests c64 specific hardware")
     fun testCia2pb7() {
         runTest("cia2pb7")
     }
 
     @Test
+    @Disabled("tests c64 specific hardware")
     fun testCia2ta() {
         runTest("cia2ta")
     }
 
     @Test
+    @Disabled("tests c64 specific hardware")
     fun testCia2tb() {
         runTest("cia2tb")
     }
 
     @Test
+    @Disabled("tests c64 specific hardware")
     fun testCia2tb123() {
         runTest("cia2tb123")
     }
 
     @Test
+    @Disabled("tests c64 specific hardware")
     fun testCntdef() {
         runTest("cntdef")
     }
 
     @Test
+    @Disabled("tests c64 specific hardware")
     fun testCnto2() {
-        // todo fix: When the timer input is switched from o2 to CNT or from CNT back to o2, there must be a two clock delay until the switch is recognized.
         runTest("cnto2")
     }
 
     @Test
-    fun testCpuport() {
-        runTest("cpuport")
-    }
-
-    @Test
+    @Disabled("tests c64 specific hardware")
     fun testCputiming() {
-        runTest("cputiming")
+        runTest("cputiming")        // TODO fix this test once the cycle times are correct?
     }
 
     @Test
+    @Disabled("tests c64 specific hardware")
     fun testFlipos() {
         runTest("flipos")
     }
 
     @Test
+    @Disabled("tests c64 specific hardware")
     fun testIcr01() {
         runTest("icr01")
     }
 
     @Test
+    @Disabled("tests c64 specific hardware")
     fun testImr() {
         runTest("imr")
     }
 
     @Test
+    @Disabled("tests c64 specific hardware")
     fun testIrq() {
         runTest("irq")
     }
 
     @Test
+    @Disabled("tests c64 specific hardware")
     fun testLoadth() {
         runTest("loadth")
+    }
+
+    @Test
+    @Disabled("tests c64 specific hardware")
+    fun testNmi() {
+        runTest("nmi")
+    }
+
+    @Test
+    @Disabled("tests c64 specific hardware")
+    fun testOneshot() {
+        runTest("oneshot")
+    }
+
+    @Test
+    fun testCpuport() {
+        runTest("cpuport")
     }
 
     @Test
@@ -216,15 +243,5 @@ class Test6502TestSuiteC64Specific {
     @Test
     fun testMmufetch() {
         runTest("mmufetch")
-    }
-
-    @Test
-    fun testNmi() {
-        runTest("nmi")
-    }
-
-    @Test
-    fun testOneshot() {
-        runTest("oneshot")
     }
 }
