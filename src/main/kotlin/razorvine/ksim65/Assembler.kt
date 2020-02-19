@@ -49,7 +49,6 @@ class Assembler(cpu: Cpu6502, val memory: MemMappedComponent, initialStartAddres
     fun assemble(lines: Iterable<String>): Result {
         for(line in lines) {
             val result = assemble(line)
-            println("line: $line -> ${result.success}  ${result.error}")        // TODO
             if(!result.success)
                 return result
             assembledSize += result.numBytes

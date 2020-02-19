@@ -83,7 +83,8 @@ class Monitor(val bus: Bus, val cpu: Cpu6502) {
                 IVirtualMachine.MonitorCmdResult("", "", true)
             }
             'a' -> {
-                val address = 0 // TODO parse from line
+                val parts = command.substring(1).trim().split(' ')
+                val address = if(parts.size>=2) Assembler.parseNumber(parts[0]) else 0
                 val assembler = Assembler(cpu, bus.memoryComponentFor(address), address)
                 val result = assembler.assemble(command.substring(1).trimStart())
                 if(result.success) {
