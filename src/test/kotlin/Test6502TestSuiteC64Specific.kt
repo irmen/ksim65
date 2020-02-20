@@ -182,10 +182,11 @@ class Test6502TestSuiteC64Specific {
         runTest("cnto2")
     }
 
+
     @Test
     @Disabled("tests c64 specific hardware")
     fun testCputiming() {
-        runTest("cputiming")        // TODO fix this test once the cycle times are correct?
+        runTest("cputiming")
     }
 
     @Test

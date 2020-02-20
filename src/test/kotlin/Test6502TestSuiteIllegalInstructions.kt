@@ -2,328 +2,328 @@ import org.junit.jupiter.api.parallel.Execution
 import org.junit.jupiter.api.parallel.ExecutionMode
 import kotlin.test.*
 
-// TODO: implement the illegal instructions and replace these tests with the 'real' runTest
+// TODO: implement the still missing illegal instructions and replace these tests with the 'real' runTest
 
 @Execution(ExecutionMode.CONCURRENT)
 class Test6502TestSuiteIllegalInstructions: FunctionalTestsBase() {
 
     @Test
     fun testAlrb() {
-        runTestExpectNotImplemented("alrb")
+        runTest("alrb") // TODO fix?
     }
 
     @Test
     fun testAncb() {
-        runTestExpectNotImplemented("ancb")
+        runTest("ancb")
     }
 
     @Test
     fun testAneb() {
-        runTestExpectNotImplemented("aneb")
+        runTest("aneb") // TODO fix?
     }
 
     @Test
     fun testArrb() {
-        runTestExpectNotImplemented("arrb")
+        runTest("arrb") // TODO fix?
     }
 
     @Test
     fun testAsoa() {
-        runTestExpectNotImplemented("asoa")
+        runTest("asoa")
     }
 
     @Test
     fun testAsoax() {
-        runTestExpectNotImplemented("asoax")
+        runTest("asoax")
     }
 
     @Test
     fun testAsoay() {
-        runTestExpectNotImplemented("asoay")
+        runTest("asoay")
     }
 
     @Test
     fun testAsoix() {
-        runTestExpectNotImplemented("asoix")
+        runTest("asoix")
     }
 
     @Test
     fun testAsoiy() {
-        runTestExpectNotImplemented("asoiy")
+        runTest("asoiy")
     }
 
     @Test
     fun testAsoz() {
-        runTestExpectNotImplemented("asoz")
+        runTest("asoz")
     }
 
     @Test
     fun testAsozx() {
-        runTestExpectNotImplemented("asozx")
+        runTest("asozx")
     }
 
     @Test
     fun testAxsa() {
-        runTestExpectNotImplemented("axsa")
+        runTest("axsa")
     }
 
     @Test
     fun testAxsix() {
-        runTestExpectNotImplemented("axsix")
+        runTest("axsix")
     }
 
     @Test
     fun testAxsz() {
-        runTestExpectNotImplemented("axsz")
+        runTest("axsz")
     }
 
     @Test
     fun testAxszy() {
-        runTestExpectNotImplemented("axszy")
+        runTest("axszy")
     }
 
     @Test
     fun testDcma() {
-        runTestExpectNotImplemented("dcma")
+        runTest("dcma")
     }
 
     @Test
     fun testDcmax() {
-        runTestExpectNotImplemented("dcmax")
+        runTest("dcmax")
     }
 
     @Test
     fun testDcmay() {
-        runTestExpectNotImplemented("dcmay")
+        runTest("dcmay")
     }
 
     @Test
     fun testDcmix() {
-        runTestExpectNotImplemented("dcmix")
+        runTest("dcmix")
     }
 
     @Test
     fun testDcmiy() {
-        runTestExpectNotImplemented("dcmiy")
+        runTest("dcmiy")
     }
 
     @Test
     fun testDcmz() {
-        runTestExpectNotImplemented("dcmz")
+        runTest("dcmz")
     }
 
     @Test
     fun testDcmzx() {
-        runTestExpectNotImplemented("dcmzx")
+        runTest("dcmzx")
     }
 
     @Test
     fun testInsa() {
-        runTestExpectNotImplemented("insa")
+        runTest("insa")
     }
 
     @Test
     fun testInsax() {
-        runTestExpectNotImplemented("insax")
+        runTest("insax")
     }
 
     @Test
     fun testInsay() {
-        runTestExpectNotImplemented("insay")
+        runTest("insay")
     }
 
     @Test
     fun testInsix() {
-        runTestExpectNotImplemented("insix")
+        runTest("insix")
     }
 
     @Test
     fun testInsiy() {
-        runTestExpectNotImplemented("insiy")
+        runTest("insiy")
     }
 
     @Test
     fun testInsz() {
-        runTestExpectNotImplemented("insz")
+        runTest("insz")
     }
 
     @Test
     fun testInszx() {
-        runTestExpectNotImplemented("inszx")
+        runTest("inszx")
     }
 
     @Test
     fun testLasay() {
-        runTestExpectNotImplemented("lasay")
+        runTest("lasay")
     }
 
     @Test
     fun testLaxa() {
-        runTestExpectNotImplemented("laxa")
+        runTest("laxa")
     }
 
     @Test
     fun testLaxay() {
-        runTestExpectNotImplemented("laxay")
+        runTest("laxay")
     }
 
     @Test
     fun testLaxix() {
-        runTestExpectNotImplemented("laxix")
+        runTest("laxix")
     }
 
     @Test
     fun testLaxiy() {
-        runTestExpectNotImplemented("laxiy")
+        runTest("laxiy")
     }
 
     @Test
     fun testLaxz() {
-        runTestExpectNotImplemented("laxz")
+        runTest("laxz")
     }
 
     @Test
     fun testLaxzy() {
-        runTestExpectNotImplemented("laxzy")
+        runTest("laxzy")
     }
 
     @Test
     fun testLsea() {
-        runTestExpectNotImplemented("lsea")
+        runTest("lsea")
     }
 
     @Test
     fun testLseax() {
-        runTestExpectNotImplemented("lseax")
+        runTest("lseax")
     }
 
     @Test
     fun testLseay() {
-        runTestExpectNotImplemented("lseay")
+        runTest("lseay")
     }
 
     @Test
     fun testLseix() {
-        runTestExpectNotImplemented("lseix")
+        runTest("lseix")
     }
 
     @Test
     fun testLseiy() {
-        runTestExpectNotImplemented("lseiy")
+        runTest("lseiy")
     }
 
     @Test
     fun testLsez() {
-        runTestExpectNotImplemented("lsez")
+        runTest("lsez")
     }
 
     @Test
     fun testLsezx() {
-        runTestExpectNotImplemented("lsezx")
+        runTest("lsezx")
     }
 
     @Test
     fun testLxab() {
-        runTestExpectNotImplemented("lxab")
+        runTest("lxab")         // TODO fix something?
     }
 
     @Test
     fun testRlaa() {
-        runTestExpectNotImplemented("rlaa")
+        runTest("rlaa")
     }
 
     @Test
     fun testRlaax() {
-        runTestExpectNotImplemented("rlaax")
+        runTest("rlaax")
     }
 
     @Test
     fun testRlaay() {
-        runTestExpectNotImplemented("rlaay")
+        runTest("rlaay")
     }
 
     @Test
     fun testRlaix() {
-        runTestExpectNotImplemented("rlaix")
+        runTest("rlaix")
     }
 
     @Test
     fun testRlaiy() {
-        runTestExpectNotImplemented("rlaiy")
+        runTest("rlaiy")
     }
 
     @Test
     fun testRlaz() {
-        runTestExpectNotImplemented("rlaz")
+        runTest("rlaz")
     }
 
     @Test
     fun testRlazx() {
-        runTestExpectNotImplemented("rlazx")
+        runTest("rlazx")
     }
 
     @Test
     fun testRraa() {
-        runTestExpectNotImplemented("rraa")
+        runTest("rraa")
     }
 
     @Test
     fun testRraax() {
-        runTestExpectNotImplemented("rraax")
+        runTest("rraax")
     }
 
     @Test
     fun testRraay() {
-        runTestExpectNotImplemented("rraay")
+        runTest("rraay")
     }
 
     @Test
     fun testRraix() {
-        runTestExpectNotImplemented("rraix")
+        runTest("rraix")
     }
 
     @Test
     fun testRraiy() {
-        runTestExpectNotImplemented("rraiy")
+        runTest("rraiy")
     }
 
     @Test
     fun testRraz() {
-        runTestExpectNotImplemented("rraz")
+        runTest("rraz")
     }
 
     @Test
     fun testRrazx() {
-        runTestExpectNotImplemented("rrazx")
+        runTest("rrazx")
     }
 
     @Test
     fun testSbxb() {
-        runTestExpectNotImplemented("sbxb")
+        runTest("sbxb") // TODO fix?
     }
 
     @Test
     fun testShaay() {
-        runTestExpectNotImplemented("shaay")
+        runTest("shaay")    // TODO fix?
     }
 
     @Test
     fun testShaiy() {
-        runTestExpectNotImplemented("shaiy")
+        runTest("shaiy")    // TODO fix?
     }
 
     @Test
     fun testShsay() {
-        runTestExpectNotImplemented("shsay")
+        runTest("shsay")    // TODO fix?
     }
 
     @Test
     fun testShxay() {
-        runTestExpectNotImplemented("shxay")
+        runTest("shxay")    // TODO fix?
     }
 
     @Test
     fun testShyax() {
-        runTestExpectNotImplemented("shyax")
+        runTest("shyax")    // TODO fix?
     }
 }

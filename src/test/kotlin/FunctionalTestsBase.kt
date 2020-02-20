@@ -72,13 +72,4 @@ abstract class FunctionalTestsBase {
         }
         fail("test failed")
     }
-
-    protected fun runTestExpectNotImplemented(testprogram: String) {
-        try {
-            runTest(testprogram)
-            fail("expected to crash with NotImplementedError")
-        } catch(nx: NotImplementedError) {
-            // okay!
-        }
-    }
 }

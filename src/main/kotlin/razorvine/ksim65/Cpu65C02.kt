@@ -103,7 +103,7 @@ class Cpu65C02 : Cpu6502() {
     }
 
     override fun dispatchOpcode(opcode: Int): Boolean {
-        when (opcode) {
+        return when (opcode) {
             0x00 -> iBrk()
             0x01 -> iOra()
             0x02 -> iNop()
@@ -360,9 +360,8 @@ class Cpu65C02 : Cpu6502() {
             0xfd -> iSbc()
             0xfe -> iInc()
             0xff -> iBbs7()
-            else -> { /* can't occur */ }
+            else -> false /* can't occur */
         }
-        return false        //  TODO determine if instructions can cause extra clock cycle
     }
 
     // opcode list:  http://www.oxyron.de/html/opcodesc02.html
@@ -624,7 +623,7 @@ class Cpu65C02 : Cpu6502() {
             /* fe */  Instruction("inc", AddrMode.AbsX, 7),
             /* ff */  Instruction("bbs7", AddrMode.Zpr, 5)).toTypedArray()
 
-    override fun iBrk() {
+    override fun iBrk(): Boolean {
         // handle BRK ('software interrupt')
         regPC++
         pushStackAddr(regPC)
@@ -635,6 +634,7 @@ class Cpu65C02 : Cpu6502() {
         regPC = readWord(IRQ_vector)
 
         // TODO prevent NMI from triggering immediately after IRQ/BRK... how does that work exactly?
+        return false
     }
 
     override fun handleInterrupt() {
@@ -642,16 +642,17 @@ class Cpu65C02 : Cpu6502() {
         regP.D = false    // this is different from NMOS 6502
     }
 
-    override fun iBit() {
+    override fun iBit(): Boolean {
         val data = getFetched()
         regP.Z = (regA and data) == 0
         if (currentInstruction.mode != AddrMode.Imm) {
             regP.V = (data and 0b01000000) != 0
             regP.N = (data and 0b10000000) != 0
         }
+        return false
     }
 
-    override fun iAdc() {
+    override fun iAdc(): Boolean {
         val value = getFetched()
         if (regP.D) {
             // BCD add
@@ -680,13 +681,14 @@ class Cpu65C02 : Cpu6502() {
             regP.C = tmp > 0xff
             regA = tmp and 0xff
         }
+        return false
     }
 
-    override fun iSbc() {
+    override fun iSbc(operandOverride: Int?): Boolean {
         // see http://www.6502.org/tutorials/decimal_mode.html
         // and https://sourceforge.net/p/vice-emu/code/HEAD/tree/trunk/vice/src/65c02core.c#l1205
         // (the implementation below is based on the code used by Vice)
-        val value = getFetched()
+        val value = operandOverride ?: getFetched()
         var tmp = (regA-value-if (regP.C) 0 else 1) and 0xffff
         regP.V = (regA xor tmp) and (regA xor value) and 0b10000000 != 0
         if (regP.D) {
@@ -698,230 +700,323 @@ class Cpu65C02 : Cpu6502() {
         regP.Z = (tmp and 0xff) == 0
         regP.N = (tmp and 0b10000000) != 0
         regA = tmp and 0xff
+        return false
     }
 
-    override fun iDec() {
-        if (currentInstruction.mode == AddrMode.Acc) {
+    override fun iDec(): Boolean {
+        return if (currentInstruction.mode == AddrMode.Acc) {
             regA = (regA-1) and 0xff
             regP.Z = regA == 0
             regP.N = (regA and 0b10000000) != 0
+            false
         } else super.iDec()
     }
 
-    override fun iInc() {
-        if (currentInstruction.mode == AddrMode.Acc) {
+    override fun iInc(): Boolean {
+        return if (currentInstruction.mode == AddrMode.Acc) {
             regA = (regA+1) and 0xff
             regP.Z = regA == 0
             regP.N = (regA and 0b10000000) != 0
+            false
         } else super.iInc()
     }
 
-    private fun iBra() {
+    private fun iBra(): Boolean {
         // unconditional branch
         regPC = fetchedAddress
+        return false
     }
 
-    private fun iTrb() {
+    private fun iTrb(): Boolean {
         val data = getFetched()
         regP.Z = data and regA == 0
         write(fetchedAddress, data and regA.inv())
+        return false
     }
 
-    private fun iTsb() {
+    private fun iTsb(): Boolean {
         val data = getFetched()
         regP.Z = data and regA == 0
         write(fetchedAddress, data or regA)
+        return false
     }
 
-    private fun iStz() {
+    private fun iStz(): Boolean {
         write(fetchedAddress, 0)
+        return false
     }
 
-    private fun iWai() {
+    private fun iWai(): Boolean {
         waiting = Wait.Waiting
+        return false
     }
 
-    private fun iStp() {
+    private fun iStp(): Boolean {
         waiting = Wait.Stopped
+        return false
     }
 
-    private fun iPhx() {
+    private fun iPhx(): Boolean {
         pushStack(regX)
+        return false
     }
 
-    private fun iPlx() {
+    private fun iPlx(): Boolean {
         regX = popStack()
         regP.Z = regX == 0
         regP.N = (regX and 0b10000000) != 0
+        return false
     }
 
-    private fun iPhy() {
+    private fun iPhy(): Boolean {
         pushStack(regY)
+        return false
     }
 
-    private fun iPly() {
+    private fun iPly(): Boolean {
         regY = popStack()
         regP.Z = regY == 0
         regP.N = (regY and 0b10000000) != 0
+        return false
     }
 
-    private fun iBbr0() {
+    private fun iBbr0(): Boolean {
         val data = getFetched()
-        if (data and 1 == 0) regPC = fetchedAddressZpr
+        if (data and 1 == 0) {
+            regPC = fetchedAddressZpr
+            instrCycles++
+        }
+        return false
     }
 
-    private fun iBbr1() {
+    private fun iBbr1(): Boolean {
         val data = getFetched()
-        if (data and 2 == 0) regPC = fetchedAddressZpr
+        if (data and 2 == 0) {
+            regPC = fetchedAddressZpr
+            instrCycles++
+        }
+        return false
     }
 
-    private fun iBbr2() {
+    private fun iBbr2(): Boolean {
         val data = getFetched()
-        if (data and 4 == 0) regPC = fetchedAddressZpr
+        if (data and 4 == 0) {
+            regPC = fetchedAddressZpr
+            instrCycles++
+        }
+        return false
     }
 
-    private fun iBbr3() {
+    private fun iBbr3(): Boolean {
         val data = getFetched()
-        if (data and 8 == 0) regPC = fetchedAddressZpr
+        if (data and 8 == 0) {
+            regPC = fetchedAddressZpr
+            instrCycles++
+        }
+        return false
     }
 
-    private fun iBbr4() {
+    private fun iBbr4(): Boolean {
         val data = getFetched()
-        if (data and 16 == 0) regPC = fetchedAddressZpr
+        if (data and 16 == 0) {
+            regPC = fetchedAddressZpr
+            instrCycles++
+        }
+        return false
     }
 
-    private fun iBbr5() {
+    private fun iBbr5(): Boolean {
         val data = getFetched()
-        if (data and 32 == 0) regPC = fetchedAddressZpr
+        if (data and 32 == 0) {
+            regPC = fetchedAddressZpr
+            instrCycles++
+        }
+        return false
     }
 
-    private fun iBbr6() {
+    private fun iBbr6(): Boolean {
         val data = getFetched()
-        if (data and 64 == 0) regPC = fetchedAddressZpr
+        if (data and 64 == 0) {
+            regPC = fetchedAddressZpr
+            instrCycles++
+        }
+        return false
     }
 
-    private fun iBbr7() {
+    private fun iBbr7(): Boolean {
         val data = getFetched()
-        if (data and 128 == 0) regPC = fetchedAddressZpr
+        if (data and 128 == 0) {
+            regPC = fetchedAddressZpr
+            instrCycles++
+        }
+        return false
     }
 
-    private fun iBbs0() {
+    private fun iBbs0(): Boolean {
         val data = getFetched()
-        if (data and 1 != 0) regPC = fetchedAddressZpr
+        if (data and 1 != 0) {
+            regPC = fetchedAddressZpr
+            instrCycles++
+        }
+        return false
     }
 
-    private fun iBbs1() {
+    private fun iBbs1(): Boolean {
         val data = getFetched()
-        if (data and 2 != 0) regPC = fetchedAddressZpr
+        if (data and 2 != 0) {
+            regPC = fetchedAddressZpr
+            instrCycles++
+        }
+        return false
     }
 
-    private fun iBbs2() {
+    private fun iBbs2(): Boolean {
         val data = getFetched()
-        if (data and 4 != 0) regPC = fetchedAddressZpr
+        if (data and 4 != 0) {
+            regPC = fetchedAddressZpr
+            instrCycles++
+        }
+        return false
     }
 
-    private fun iBbs3() {
+    private fun iBbs3(): Boolean {
         val data = getFetched()
-        if (data and 8 != 0) regPC = fetchedAddressZpr
+        if (data and 8 != 0) {
+            regPC = fetchedAddressZpr
+            instrCycles++
+        }
+        return false
     }
 
-    private fun iBbs4() {
+    private fun iBbs4(): Boolean {
         val data = getFetched()
-        if (data and 16 != 0) regPC = fetchedAddressZpr
+        if (data and 16 != 0) {
+            regPC = fetchedAddressZpr
+            instrCycles++
+        }
+        return false
     }
 
-    private fun iBbs5() {
+    private fun iBbs5(): Boolean {
         val data = getFetched()
-        if (data and 32 != 0) regPC = fetchedAddressZpr
+        if (data and 32 != 0) {
+            regPC = fetchedAddressZpr
+            instrCycles++
+        }
+        return false
     }
 
-    private fun iBbs6() {
+    private fun iBbs6(): Boolean {
         val data = getFetched()
-        if (data and 64 != 0) regPC = fetchedAddressZpr
+        if (data and 64 != 0) {
+            regPC = fetchedAddressZpr
+            instrCycles++
+        }
+        return false
     }
 
-    private fun iBbs7() {
+    private fun iBbs7(): Boolean {
         val data = getFetched()
-        if (data and 128 != 0) regPC = fetchedAddressZpr
+        if (data and 128 != 0) {
+            regPC = fetchedAddressZpr
+            instrCycles++
+        }
+        return false
     }
 
-    private fun iSmb0() {
+    private fun iSmb0(): Boolean {
         val data = getFetched()
         write(fetchedAddress, data or 1)
+        return false
     }
 
-    private fun iSmb1() {
+    private fun iSmb1(): Boolean {
         val data = getFetched()
         write(fetchedAddress, data or 2)
+        return false
     }
 
-    private fun iSmb2() {
+    private fun iSmb2(): Boolean {
         val data = getFetched()
         write(fetchedAddress, data or 4)
+        return false
     }
 
-    private fun iSmb3() {
+    private fun iSmb3(): Boolean {
         val data = getFetched()
         write(fetchedAddress, data or 8)
+        return false
     }
 
-    private fun iSmb4() {
+    private fun iSmb4(): Boolean {
         val data = getFetched()
         write(fetchedAddress, data or 16)
+        return false
     }
 
-    private fun iSmb5() {
+    private fun iSmb5(): Boolean {
         val data = getFetched()
         write(fetchedAddress, data or 32)
+        return false
     }
 
-    private fun iSmb6() {
+    private fun iSmb6(): Boolean {
         val data = getFetched()
         write(fetchedAddress, data or 64)
+        return false
     }
 
-    private fun iSmb7() {
+    private fun iSmb7(): Boolean {
         val data = getFetched()
         write(fetchedAddress, data or 128)
+        return false
     }
 
-    private fun iRmb0() {
+    private fun iRmb0(): Boolean {
         val data = getFetched()
         write(fetchedAddress, data and 0b11111110)
+        return false
     }
 
-    private fun iRmb1() {
+    private fun iRmb1(): Boolean {
         val data = getFetched()
         write(fetchedAddress, data and 0b11111101)
+        return false
     }
 
-    private fun iRmb2() {
+    private fun iRmb2(): Boolean {
         val data = getFetched()
         write(fetchedAddress, data and 0b11111011)
+        return false
     }
 
-    private fun iRmb3() {
+    private fun iRmb3(): Boolean {
         val data = getFetched()
         write(fetchedAddress, data and 0b11110111)
+        return false
     }
 
-    private fun iRmb4() {
+    private fun iRmb4(): Boolean {
         val data = getFetched()
         write(fetchedAddress, data and 0b11101111)
+        return false
     }
 
-    private fun iRmb5() {
+    private fun iRmb5(): Boolean {
         val data = getFetched()
         write(fetchedAddress, data and 0b11011111)
+        return false
     }
 
-    private fun iRmb6() {
+    private fun iRmb6(): Boolean {
         val data = getFetched()
         write(fetchedAddress, data and 0b10111111)
+        return false
     }
 
-    private fun iRmb7() {
+    private fun iRmb7(): Boolean {
         val data = getFetched()
         write(fetchedAddress, data and 0b01111111)
+        return false
     }
 }

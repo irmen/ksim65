@@ -7,11 +7,10 @@ import razorvine.ksim65.components.UByte
 
 /**
  * 6502 cpu simulation (the NMOS version) including the 'illegal' opcodes.
- * TODO: actually implement the illegal opcodes, see http://www.ffd2.com/fridge/docs/6502-NMOS.extra.opcodes or https://sourceforge.net/p/moarnes/code/ci/master/tree/src/6502.c
  */
 open class Cpu6502 : BusComponent() {
     open val name = "6502"
-    var tracing: ((state: String) -> Unit)? = null
+    var tracing: ((state: State) -> Unit)? = null
     var totalCycles = 0L
         protected set
     private var resetTime = System.nanoTime()
@@ -165,6 +164,9 @@ open class Cpu6502 : BusComponent() {
      */
     override fun clock() {
         if (instrCycles == 0) {
+
+            tracing?.invoke(snapshot())
+
             if(nmiAsserted || (irqAsserted && !regP.I)) {
                 handleInterrupt()
                 return
@@ -176,8 +178,6 @@ open class Cpu6502 : BusComponent() {
             currentOpcode = read(regPC)
             currentInstruction = instructions[currentOpcode]
 
-            // tracing and breakpoint handling
-            tracing?.invoke(snapshot().toString())
             breakpoints[regPC]?.let {
                 if (breakpoint(it)) return
             }
@@ -557,7 +557,9 @@ open class Cpu6502 : BusComponent() {
                 val relative = readPc()
                 fetchedAddress = if (relative >= 0x80) {
                     regPC-(256-relative) and 0xffff
-                } else regPC+relative and 0xffff
+                } else {
+                    regPC+relative and 0xffff
+                }
                 false
             }
             AddrMode.Abs -> {
@@ -581,6 +583,7 @@ open class Cpu6502 : BusComponent() {
                 (fetchedAddress and 0xff00) != hi shl 8
             }
             AddrMode.Ind -> {
+                val extraCycle: Boolean
                 var lo = readPc()
                 var hi = readPc()
                 fetchedAddress = lo or (hi shl 8)
@@ -589,13 +592,15 @@ open class Cpu6502 : BusComponent() {
                     // not able to fetch an address which crosses the page boundary.
                     lo = read(fetchedAddress)
                     hi = read(fetchedAddress and 0xff00)
+                    extraCycle = true
                 } else {
                     // normal behavior
                     lo = read(fetchedAddress)
                     hi = read(fetchedAddress+1)
+                    extraCycle = false
                 }
                 fetchedAddress = lo or (hi shl 8)
-                false
+                extraCycle
             }
             AddrMode.IzX -> {
                 // note: not able to fetch an address which crosses the (zero)page boundary
@@ -603,15 +608,17 @@ open class Cpu6502 : BusComponent() {
                 val lo = read((fetchedAddress+regX) and 0xff)
                 val hi = read((fetchedAddress+regX+1) and 0xff)
                 fetchedAddress = lo or (hi shl 8)
-                false
+                // if this address is a different page, extra clock cycle:
+                (fetchedAddress and 0xff00) != hi shl 8
             }
             AddrMode.IzY -> {
                 // note: not able to fetch an address which crosses the (zero)page boundary
-                fetchedAddress = readPc()
-                val lo = read(fetchedAddress)
-                val hi = read((fetchedAddress+1) and 0xff)
+                val fetchedAddress1 = readPc()
+                val lo = read(fetchedAddress1)
+                val hi = read((fetchedAddress1+1) and 0xff)
                 fetchedAddress = regY+(lo or (hi shl 8)) and 0xffff
-                false
+                // if this address is a different page, extra clock cycle:
+                (fetchedAddress and 0xff00) != hi shl 8
             }
             AddrMode.Zpr, AddrMode.Izp, AddrMode.IaX -> {
                 // addressing mode used by the 65C02 only
@@ -621,7 +628,7 @@ open class Cpu6502 : BusComponent() {
     }
 
     protected open fun dispatchOpcode(opcode: Int): Boolean {
-        when (opcode) {
+        return when (opcode) {
             0x00 -> iBrk()
             0x01 -> iOra()
             0x02 -> iInvalid()
@@ -878,15 +885,14 @@ open class Cpu6502 : BusComponent() {
             0xfd -> iSbc()
             0xfe -> iInc()
             0xff -> iIsc()
-            else -> { /* can't occur */ }
+            else -> false /* can't occur */
         }
-        return false        //  TODO determine if instructions can cause extra clock cycle
     }
 
 
     // official instructions
 
-    protected open fun iAdc() {
+    protected open fun iAdc(): Boolean {
         val operand = getFetched()
         if (regP.D) {
             // BCD add
@@ -916,15 +922,18 @@ open class Cpu6502 : BusComponent() {
             regP.C = tmp > 0xff
             regA = tmp and 0xff
         }
+
+        return true
     }
 
-    protected fun iAnd() {
+    protected fun iAnd(): Boolean {
         regA = regA and getFetched()
         regP.Z = regA == 0
         regP.N = (regA and 0b10000000) != 0
+        return true
     }
 
-    protected fun iAsl() {
+    protected fun iAsl(): Boolean {
         if (currentInstruction.mode == AddrMode.Acc) {
             regP.C = (regA and 0b10000000) != 0
             regA = (regA shl 1) and 0xff
@@ -938,44 +947,82 @@ open class Cpu6502 : BusComponent() {
             regP.Z = shifted == 0
             regP.N = (shifted and 0b10000000) != 0
         }
+        return false
     }
 
-    protected fun iBcc() {
-        if (!regP.C) regPC = fetchedAddress
+    protected fun iBcc(): Boolean {
+        if (!regP.C) {
+            if(fetchedAddress and 0xff00 != regPC and 0xff00)
+                instrCycles++
+            regPC = fetchedAddress
+            instrCycles++
+        }
+        return false
     }
 
-    protected fun iBcs() {
-        if (regP.C) regPC = fetchedAddress
+    protected fun iBcs(): Boolean {
+        if (regP.C) {
+            if(fetchedAddress and 0xff00 != regPC and 0xff00)
+                instrCycles++
+            regPC = fetchedAddress
+            instrCycles++
+        }
+        return false
     }
 
-    protected fun iBeq() {
-        if (regP.Z) regPC = fetchedAddress
+    protected fun iBeq(): Boolean {
+        if (regP.Z) {
+            if(fetchedAddress and 0xff00 != regPC and 0xff00)
+                instrCycles++
+            regPC = fetchedAddress
+            instrCycles++
+        }
+        return false
     }
 
-    protected open fun iBit() {
+    protected open fun iBit(): Boolean {
         val operand = getFetched()
         regP.Z = (regA and operand) == 0
         regP.V = (operand and 0b01000000) != 0
         regP.N = (operand and 0b10000000) != 0
+        return false
     }
 
-    protected fun iBmi() {
-        if (regP.N) regPC = fetchedAddress
+    protected fun iBmi(): Boolean {
+        if (regP.N) {
+            if(fetchedAddress and 0xff00 != regPC and 0xff00)
+                instrCycles++
+            regPC = fetchedAddress
+            instrCycles++
+        }
+        return false
     }
 
-    protected fun iBne() {
-        if (!regP.Z) regPC = fetchedAddress
+    protected fun iBne(): Boolean {
+        if (!regP.Z) {
+            if(fetchedAddress and 0xff00 != regPC and 0xff00)
+                instrCycles++
+            regPC = fetchedAddress
+            instrCycles++
+        }
+        return false
     }
 
-    protected fun iBpl() {
-        if (!regP.N) regPC = fetchedAddress
+    protected fun iBpl(): Boolean {
+        if (!regP.N) {
+            if(fetchedAddress and 0xff00 != regPC and 0xff00)
+                instrCycles++
+            regPC = fetchedAddress
+            instrCycles++
+        }
+        return false
     }
 
-    protected open fun iBrk() {
+    protected open fun iBrk(): Boolean {
         // handle BRK ('software interrupt')
         regPC++
         if(nmiAsserted)
-            return      // if an NMI occurs during BRK, the BRK won't get executed on 6502 (65C02 fixes this)
+            return false     // if an NMI occurs during BRK, the BRK won't get executed on 6502 (65C02 fixes this)
         pushStackAddr(regPC)
         regP.B = true
         pushStack(regP)
@@ -984,6 +1031,7 @@ open class Cpu6502 : BusComponent() {
         regPC = readWord(IRQ_vector)
 
         // TODO prevent NMI from triggering immediately after IRQ/BRK... how does that work exactly?
+        return false
     }
 
     protected open fun handleInterrupt() {
@@ -1008,123 +1056,154 @@ open class Cpu6502 : BusComponent() {
         // TODO prevent NMI from triggering immediately after IRQ/BRK... how does that work exactly?
     }
 
-    protected fun iBvc() {
-        if (!regP.V) regPC = fetchedAddress
+    protected fun iBvc(): Boolean {
+        if (!regP.V) {
+            if(fetchedAddress and 0xff00 != regPC and 0xff00)
+                instrCycles++
+            regPC = fetchedAddress
+            instrCycles++
+        }
+        return false
     }
 
-    protected fun iBvs() {
-        if (regP.V) regPC = fetchedAddress
+    protected fun iBvs(): Boolean {
+        if (regP.V) {
+            if(fetchedAddress and 0xff00 != regPC and 0xff00)
+                instrCycles++
+            regPC = fetchedAddress
+            instrCycles++
+        }
+        return false
     }
 
-    protected fun iClc() {
+    protected fun iClc(): Boolean {
         regP.C = false
+        return false
     }
 
-    protected fun iCld() {
+    protected fun iCld(): Boolean {
         regP.D = false
+        return false
     }
 
-    protected fun iCli() {
+    protected fun iCli(): Boolean {
         regP.I = false
+        return false
     }
 
-    protected fun iClv() {
+    protected fun iClv(): Boolean {
         regP.V = false
+        return false
     }
 
-    protected fun iCmp() {
-        val fetched = getFetched()
+    protected fun iCmp(operandOverride: Int? = null): Boolean {
+        val fetched = operandOverride ?: getFetched()
         regP.C = regA >= fetched
         regP.Z = regA == fetched
         regP.N = ((regA-fetched) and 0b10000000) != 0
+        return true
     }
 
-    protected fun iCpx() {
+    protected fun iCpx(): Boolean {
         val fetched = getFetched()
         regP.C = regX >= fetched
         regP.Z = regX == fetched
         regP.N = ((regX-fetched) and 0b10000000) != 0
+        return false
     }
 
-    protected fun iCpy() {
+    protected fun iCpy(): Boolean {
         val fetched = getFetched()
         regP.C = regY >= fetched
         regP.Z = regY == fetched
         regP.N = ((regY-fetched) and 0b10000000) != 0
+        return false
     }
 
-    protected open fun iDec() {
+    protected open fun iDec(): Boolean {
         val data = (read(fetchedAddress)-1) and 0xff
         write(fetchedAddress, data)
         regP.Z = data == 0
         regP.N = (data and 0b10000000) != 0
+        return false
     }
 
-    protected fun iDex() {
+    protected fun iDex(): Boolean {
         regX = (regX-1) and 0xff
         regP.Z = regX == 0
         regP.N = (regX and 0b10000000) != 0
+        return false
     }
 
-    protected fun iDey() {
+    protected fun iDey(): Boolean {
         regY = (regY-1) and 0xff
         regP.Z = regY == 0
         regP.N = (regY and 0b10000000) != 0
+        return false
     }
 
-    protected fun iEor() {
+    protected fun iEor(): Boolean {
         regA = regA xor getFetched()
         regP.Z = regA == 0
         regP.N = (regA and 0b10000000) != 0
+        return true
     }
 
-    protected open fun iInc() {
+    protected open fun iInc(): Boolean {
         val data = (read(fetchedAddress)+1) and 0xff
         write(fetchedAddress, data)
         regP.Z = data == 0
         regP.N = (data and 0b10000000) != 0
+        return false
     }
 
-    protected fun iInx() {
+    protected fun iInx(): Boolean {
         regX = (regX+1) and 0xff
         regP.Z = regX == 0
         regP.N = (regX and 0b10000000) != 0
+        return false
     }
 
-    protected fun iIny() {
+    protected fun iIny(): Boolean {
         regY = (regY+1) and 0xff
         regP.Z = regY == 0
         regP.N = (regY and 0b10000000) != 0
+        return false
     }
 
-    protected fun iJmp() {
+    protected fun iJmp(): Boolean {
         regPC = fetchedAddress
+        return false
     }
 
-    protected fun iJsr() {
+    protected fun iJsr(): Boolean {
         pushStackAddr(regPC-1)
         regPC = fetchedAddress
+        return false
     }
 
-    protected fun iLda() {
+    protected fun iLda(): Boolean {
         regA = getFetched()
         regP.Z = regA == 0
         regP.N = (regA and 0b10000000) != 0
+        return true
     }
 
-    protected fun iLdx() {
+    protected fun iLdx(): Boolean {
         regX = getFetched()
         regP.Z = regX == 0
         regP.N = (regX and 0b10000000) != 0
+        return true
     }
 
-    protected fun iLdy() {
+    protected fun iLdy(): Boolean {
         regY = getFetched()
         regP.Z = regY == 0
         regP.N = (regY and 0b10000000) != 0
+        return true
     }
 
-    protected fun iLsr() {
+    protected fun iLsr(): Boolean {
         if (currentInstruction.mode == AddrMode.Acc) {
             regP.C = (regA and 1) == 1
             regA = regA ushr 1
@@ -1138,39 +1217,47 @@ open class Cpu6502 : BusComponent() {
             regP.Z = shifted == 0
             regP.N = (shifted and 0b10000000) != 0
         }
+        return false
     }
 
-    protected fun iNop() {}
+    protected fun iNop(): Boolean {
+        return currentOpcode in listOf(0x1c, 0x3c, 0x5c, 0x7c, 0xdc, 0xfc)
+    }
 
-    protected fun iOra() {
+    protected fun iOra(): Boolean {
         regA = regA or getFetched()
         regP.Z = regA == 0
         regP.N = (regA and 0b10000000) != 0
+        return true
     }
 
-    protected fun iPha() {
+    protected fun iPha(): Boolean {
         pushStack(regA)
+        return false
     }
 
-    protected fun iPhp() {
+    protected fun iPhp(): Boolean {
         val origBreakflag = regP.B
         regP.B = true
         pushStack(regP)
         regP.B = origBreakflag
+        return false
     }
 
-    protected fun iPla() {
+    protected fun iPla(): Boolean {
         regA = popStack()
         regP.Z = regA == 0
         regP.N = (regA and 0b10000000) != 0
+        return false
     }
 
-    protected fun iPlp() {
+    protected fun iPlp(): Boolean {
         regP.fromInt(popStack())
-        regP.B = true  // break is always 1 except when pushing on stack
+        regP.B = false
+        return false
     }
 
-    protected fun iRol() {
+    protected fun iRol(): Boolean {
         val oldCarry = regP.C
         if (currentInstruction.mode == AddrMode.Acc) {
             regP.C = (regA and 0b10000000) != 0
@@ -1185,9 +1272,10 @@ open class Cpu6502 : BusComponent() {
             regP.Z = shifted == 0
             regP.N = (shifted and 0b10000000) != 0
         }
+        return false
     }
 
-    protected fun iRor() {
+    protected fun iRor(): Boolean {
         val oldCarry = regP.C
         if (currentInstruction.mode == AddrMode.Acc) {
             regP.C = (regA and 1) == 1
@@ -1202,21 +1290,24 @@ open class Cpu6502 : BusComponent() {
             regP.Z = shifted == 0
             regP.N = (shifted and 0b10000000) != 0
         }
+        return false
     }
 
-    protected fun iRti() {
+    protected fun iRti(): Boolean {
         regP.fromInt(popStack())
-        regP.B = true  // break is always 1 except when pushing on stack
+        regP.B = false
         regPC = popStackAddr()
+        return false
     }
 
-    protected fun iRts() {
+    protected fun iRts(): Boolean {
         regPC = popStackAddr()
         regPC = (regPC+1) and 0xffff
+        return false
     }
 
-    protected open fun iSbc() {
-        val operand = getFetched()
+    protected open fun iSbc(operandOverride: Int? = null): Boolean {
+        val operand = operandOverride ?: getFetched()
         val tmp = (regA-operand-if (regP.C) 0 else 1) and 0xffff
         regP.V = (regA xor operand) and (regA xor tmp) and 0b10000000 != 0
         if (regP.D) {
@@ -1240,142 +1331,205 @@ open class Cpu6502 : BusComponent() {
         regP.C = tmp < 0x100
         regP.Z = (tmp and 0xff) == 0
         regP.N = (tmp and 0b10000000) != 0
+
+        return true
     }
 
-    protected fun iSec() {
+    protected fun iSec(): Boolean {
         regP.C = true
+        return false
     }
 
-    protected fun iSed() {
+    protected fun iSed(): Boolean {
         regP.D = true
+        return false
     }
 
-    protected fun iSei() {
+    protected fun iSei(): Boolean {
         regP.I = true
+        return false
     }
 
-    protected fun iSta() {
+    protected fun iSta(): Boolean {
         write(fetchedAddress, regA)
+        return false
     }
 
-    protected fun iStx() {
+    protected fun iStx(): Boolean {
         write(fetchedAddress, regX)
+        return false
     }
 
-    protected fun iSty() {
+    protected fun iSty(): Boolean {
         write(fetchedAddress, regY)
+        return false
     }
 
-    protected fun iTax() {
+    protected fun iTax(): Boolean {
         regX = regA
         regP.Z = regX == 0
         regP.N = (regX and 0b10000000) != 0
+        return false
     }
 
-    protected fun iTay() {
+    protected fun iTay(): Boolean {
         regY = regA
         regP.Z = regY == 0
         regP.N = (regY and 0b10000000) != 0
+        return false
     }
 
-    protected fun iTsx() {
+    protected fun iTsx(): Boolean {
         regX = regSP
         regP.Z = regX == 0
         regP.N = (regX and 0b10000000) != 0
+        return false
     }
 
-    protected fun iTxa() {
+    protected fun iTxa(): Boolean {
         regA = regX
         regP.Z = regA == 0
         regP.N = (regA and 0b10000000) != 0
+        return false
     }
 
-    protected fun iTxs() {
+    protected fun iTxs(): Boolean {
         regSP = regX
+        return false
     }
 
-    protected fun iTya() {
+    protected fun iTya(): Boolean {
         regA = regY
         regP.Z = regA == 0
         regP.N = (regA and 0b10000000) != 0
+        return false
     }
 
     // unofficial/illegal 6502 instructions
+    // see http://www.ffd2.com/fridge/docs/6502-NMOS.extra.opcodes
+    // or https://github.com/quietust/nintendulator/blob/master/src/CPU.cpp (search for LogBadOps)
+    // TODO: actually implement the illegal opcodes
 
-    private fun iAhx() {
-        TODO("\$${hexB(currentOpcode)} - ahx - ('illegal' instruction) @ \$${hexW(currentOpcodeAddress)}")
+
+    private fun iAhx(): Boolean {
+        val addrHi = 0xff   // TODO get the correct byte from the instruction (=last byte read)
+        val value = regA and regX and (addrHi+1)
+        write(fetchedAddress, value)
+        return false
     }
 
-    private fun iAlr() {
-        TODO("\$${hexB(currentOpcode)} - alr=asr - ('illegal' instruction) @ \$${hexW(currentOpcodeAddress)}")
+    private fun iAlr(): Boolean {
+        iAnd()
+        iLsr()
+        return false
     }
 
-    private fun iAnc() {
-        TODO("\$${hexB(currentOpcode)} - anc - ('illegal' instruction) @ \$${hexW(currentOpcodeAddress)}")
+    private fun iAnc(): Boolean {
+        iAnd()
+        regP.C = regP.N
+        return false
     }
 
-    private fun iArr() {
-        TODO("\$${hexB(currentOpcode)} - arr - ('illegal' instruction) @ \$${hexW(currentOpcodeAddress)}")
+    private fun iArr(): Boolean {
+        iAnd()
+        iRor()
+        return false
     }
 
-    private fun iAxs() {
-        TODO("\$${hexB(currentOpcode)} - axs - ('illegal' instruction) @ \$${hexW(currentOpcodeAddress)}")
+    private fun iAxs(): Boolean {
+        val oldA = regA
+        regA = regA and regX
+        regP.C = false
+        iSbc()
+        regX = regA
+        regA = oldA
+        return false
     }
 
-    private fun iDcp() {
-        TODO("\$${hexB(currentOpcode)} - dcp - ('illegal' instruction) @ \$${hexW(currentOpcodeAddress)}")
+    private fun iDcp(): Boolean {
+        val data = (read(fetchedAddress)-1) and 0xff
+        write(fetchedAddress, data)
+        iCmp(data)
+        return false
     }
 
-    private fun iIsc() {
-        TODO("\$${hexB(currentOpcode)} - isc=isb - ('illegal' instruction) @ \$${hexW(currentOpcodeAddress)}")
+    private fun iIsc(): Boolean {
+        val data = (read(fetchedAddress)+1) and 0xff
+        write(fetchedAddress, data)
+        iSbc(data)
+        return false
     }
 
-    private fun iLas() {
-        TODO("\$${hexB(currentOpcode)} - las=lar - ('illegal' instruction) @ \$${hexW(currentOpcodeAddress)}")
+    private fun iLas(): Boolean {
+        regA = regSP and getFetched()
+        regX = regA
+        regSP = regA
+        regP.Z = regA == 0
+        regP.N = (regA and 0b10000000) != 0
+        return false
     }
 
-    private fun iLax() {
-        TODO("\$${hexB(currentOpcode)} - lax - ('illegal' instruction) @ \$${hexW(currentOpcodeAddress)}")
+    private fun iLax(): Boolean {
+        iLda()
+        regX = regA
+        return true
     }
 
-    private fun iRla() {
-        TODO("\$${hexB(currentOpcode)} - rla - ('illegal' instruction) @ \$${hexW(currentOpcodeAddress)}")
+    private fun iRla(): Boolean {
+        iRol()
+        iAnd()
+        return false
     }
 
-    private fun iRra() {
-        TODO("\$${hexB(currentOpcode)} - rra - ('illegal' instruction) @ \$${hexW(currentOpcodeAddress)}")
+    private fun iRra(): Boolean {
+        iRor()
+        iAdc()
+        return false
     }
 
-    private fun iSax() {
-        TODO("\$${hexB(currentOpcode)} - sax - ('illegal' instruction) @ \$${hexW(currentOpcodeAddress)}")
+    private fun iSax(): Boolean {
+        write(fetchedAddress, regA and regX)
+        return false
     }
 
-    private fun iShx() {
-        TODO("\$${hexB(currentOpcode)} - shx - ('illegal' instruction) @ \$${hexW(currentOpcodeAddress)}")
+    private fun iShx(): Boolean {
+        val addrHi = 0xff   // TODO get the correct byte from the instruction (=last byte read)
+        write(fetchedAddress, regX and (addrHi+1))
+        return false
     }
 
-    private fun iShy() {
-        TODO("\$${hexB(currentOpcode)} - shy - ('illegal' instruction) @ \$${hexW(currentOpcodeAddress)}")
+    private fun iShy(): Boolean {
+        val addrHi = 0xff   // TODO get the correct byte from the instruction (=last byte read)
+        write(fetchedAddress, regY and (addrHi+1))
+        return false
     }
 
-    private fun iSlo() {
-        TODO("\$${hexB(currentOpcode)} - slo=aso - ('illegal' instruction) @ \$${hexW(currentOpcodeAddress)}")
+    private fun iSlo(): Boolean {
+        iAsl()
+        iOra()
+        return false
     }
 
-    private fun iSre() {
-        TODO("\$${hexB(currentOpcode)} - sre=lse - ('illegal' instruction) @ \$${hexW(currentOpcodeAddress)}")
+    private fun iSre(): Boolean {
+        iLsr()
+        iEor()
+        return false
     }
 
-    private fun iTas() {
-        TODO("\$${hexB(currentOpcode)} - tas - ('illegal' instruction) @ \$${hexW(currentOpcodeAddress)}")
+    private fun iTas(): Boolean {
+        regSP = regA and regX
+        val addrHi = 0xff   // TODO get the correct byte from the instruction (=last byte read)
+        write(fetchedAddress, regSP and addrHi)
+        return false
     }
 
-    private fun iXaa() {
-        TODO("\$${hexB(currentOpcode)} - xaa - ('illegal' instruction) @ \$${hexW(currentOpcodeAddress)}")
+    private fun iXaa(): Boolean {
+        regA = (regX and fetchedData)
+        return false
     }
 
     // invalid instruction (JAM / KIL / HLT)
-    private fun iInvalid() {
+    private fun iInvalid(): Boolean {
         throw InstructionError("invalid instruction encountered: opcode=${hexB(currentOpcode)} instr=${currentInstruction.mnemonic} @ ${hexW(currentOpcodeAddress)}")
     }
 }

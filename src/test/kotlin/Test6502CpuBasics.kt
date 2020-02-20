@@ -230,6 +230,24 @@ class Test6502CpuBasics {
                 totalCycles = cycles
                 instrCycles = 0
             }
+
+            override fun iAdc(): Boolean {
+                // NES cpu doesn't have BCD mode
+                val decimal = regP.D
+                regP.D = false
+                val result = super.iAdc()
+                regP.D = decimal
+                return result
+            }
+
+            override fun iSbc(operandOverride: Int?): Boolean {
+                // NES cpu doesn't have BCD mode
+                val decimal = regP.D
+                regP.D = false
+                val result = super.iSbc(operandOverride)
+                regP.D = decimal
+                return result
+            }
         }
 
         val cpu = NesCpu()
@@ -245,21 +263,23 @@ class Test6502CpuBasics {
         bus.reset()
         cpu.resetTotalCycles(7)     // that is what the nes rom starts with
         cpu.regPC = 0xc000
+        var tracingSnapshot = cpu.snapshot()
+        cpu.tracing = { tracingSnapshot=it }
 
         val neslog = javaClass.getResource("nestest.log").readText().lineSequence()
         for(logline in neslog) {
-            val s = cpu.snapshot()  // TODO use cpu.tracing instead
+            if(logline.isEmpty())
+                break
+
+            cpu.step()
+
             val nesAddressHex = logline.substring(0, 4).toInt(16)
-            assertEquals(nesAddressHex, s.PC)
+            assertEquals(nesAddressHex, tracingSnapshot.PC)
 
-            println("NES: $logline")
-            val disassem = disassembler.disassembleOneInstruction(ram.data, s.PC, 0).first.substring(1)
-            val spaces = "                                             ".substring(disassem.length-1)
-            println("EMU: $disassem $spaces A:${hexB(s.A)} X:${hexB(s.X)} Y:${hexB(s.Y)} P:${hexB(s.P.asInt())} SP:${hexB(s.SP)} PPU:  0,  0 CYC:${s.cycles}")
-
-            // TODO use cpu.tracing, as per https://forums.nesdev.com/viewtopic.php?t=19117  (i.e. BEFORE instruction gets executed):
-            // "before fetching the first operation code byte, make an internal record of the program counter and other registers;
-            // after reading the final operand byte, log all the values you stored back in step (1) plus the full instruction and its disassembly."
+//            println("NES: $logline")
+//            val disassem = disassembler.disassembleOneInstruction(ram.data, tracingSnapshot.PC, 0).first.substring(1)
+//            val spaces = "                                             ".substring(disassem.length-1)
+//            println("EMU: $disassem $spaces A:${hexB(tracingSnapshot.A)} X:${hexB(tracingSnapshot.X)} Y:${hexB(tracingSnapshot.Y)} P:${hexB(tracingSnapshot.P.asInt())} SP:${hexB(tracingSnapshot.SP)} PPU:  0,  0 CYC:${tracingSnapshot.cycles}")
 
             val nesRegsLog = logline.substring(48).split(':')
             val nesA = nesRegsLog[1].substring(0, 2).toShort(16)
@@ -268,17 +288,16 @@ class Test6502CpuBasics {
             val nesP = nesRegsLog[4].substring(0, 2).toInt(16)
             val nesSP = nesRegsLog[5].substring(0, 2).toInt(16)
             val nesCycles = nesRegsLog[7].toLong()
-            assertEquals(nesA, s.A)
-            assertEquals(nesX, s.X)
-            assertEquals(nesY, s.Y)
-            assertEquals(nesP, s.P.asInt())
-            assertEquals(nesSP, s.SP)
-            assertEquals(nesCycles, s.cycles)
-            cpu.step()
+            assertEquals(nesA, tracingSnapshot.A)
+            assertEquals(nesX, tracingSnapshot.X)
+            assertEquals(nesY, tracingSnapshot.Y)
+            assertEquals(nesP, tracingSnapshot.P.asInt())
+            assertEquals(nesSP, tracingSnapshot.SP)
+            assertEquals(nesCycles, tracingSnapshot.cycles)
         }
 
-        // TODO test $02 and $03 for test results see http://www.qmtpro.com/~nes/misc/nestest.txt
-
-        fail("todo: test success condition")
+        val two = ram[0x02]
+        val three = ram[0x03]
+        assertEquals(0, two, "test failed, code ${hexB(two)} ${hexB(three)}")
     }
 }
