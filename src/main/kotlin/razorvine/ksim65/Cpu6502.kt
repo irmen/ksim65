@@ -1409,6 +1409,7 @@ open class Cpu6502 : BusComponent() {
     // unofficial/illegal 6502 instructions
     // see http://www.ffd2.com/fridge/docs/6502-NMOS.extra.opcodes
     // or https://github.com/quietust/nintendulator/blob/master/src/CPU.cpp (search for LogBadOps)
+    // or https://github.com/stardot/b-em/blob/master/src/6502.c
     // TODO: some of these may be implemented incorrectly / are not finished yet
 
 

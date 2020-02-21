@@ -4,6 +4,8 @@ import org.junit.jupiter.api.parallel.ExecutionMode
 import kotlin.test.*
 
 // TODO: implement the still missing illegal instructions and replace these tests with the 'real' runTest
+// the instr_test_v5 from nesdev https://wiki.nesdev.com/w/index.php/Emulator_tests may be useful to test the instructions
+
 
 @Execution(ExecutionMode.CONCURRENT)
 class Test6502TestSuiteIllegalInstructions: FunctionalTestsBase() {
