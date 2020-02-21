@@ -41,13 +41,15 @@ For Maven:
     <dependency>
         <groupId>net.razorvine</groupId>
         <artifactId>ksim65</artifactId>
-        <version>1.7</version>
+        <version>1.8</version>
         <type>pom</type>
     </dependency>
 
 For Gradle:
 
-    implementation 'net.razorvine:ksim65:1.7'
+    implementation 'net.razorvine:ksim65:1.8'
+
+Update the version as required.
 
 
 ## Virtual machine examples
