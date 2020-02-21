@@ -86,7 +86,7 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address, val cpu: 
         totalCycles++
 
         if (totalCycles%20000 == 0) {
-            // TOD resolution is 0.1 second, no need to update it in every cycle
+            // TOD resolution is 0.1 second, no need to update it in every bus cycle
             tod.update()
         }
 

@@ -160,7 +160,7 @@ open class Cpu6502 : BusComponent() {
 
     /**
      * Process once clock cycle in the cpu.
-     * Use this if goal is cycle-perfect emulation.
+     * Use this if you need cycle-perfect instruction timing simulation.
      */
     override fun clock() {
         if (instrCycles == 0) {
@@ -222,7 +222,7 @@ open class Cpu6502 : BusComponent() {
 
     /**
      * Execute one single complete instruction.
-     * Use this when the goal is emulation performance and not a cycle perfect system.
+     * Use this when you don't care about clock cycle instruction timing simulation.
      */
     open fun step() {
         totalCycles += instrCycles

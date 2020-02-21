@@ -16,15 +16,15 @@ This is a Kotlin/JVM library that simulates the 8-bit 6502 and 65C02 microproces
 
 Properties of this simulator:
 
-- Written in Kotlin. It is low-level code, but hopefully still readable :-)
-- Designed to simulate various hardware components (bus, cpu, memory, i/o controllers)
-- IRQ and NMI simulation
-- Aims to simulate correct instruction cycle timing, but is not 100% cycle exact for simplicity
-- Aims to implements all 6502 and 65c02 instructions, including the 'illegal' 6502 instructions (not yet done)
+- written in Kotlin. It is low-level code, but hopefully still readable :-)
+- simulates various hardware components (bus, cpu, memory, i/o controllers)
+- IRQ and NMI
+- instruction cycle times are simulated (however the *internal* cpu behavior is not cycle-exact for simplicity reasons)
+- has all 6502 and 65c02 instructions, including many of the 'illegal' 6502 instructions (goal is 100% eventually)
 - correct BCD mode for adc/sbc instructions on both cpu types
 - passes several extensive unit test suites that verify instruction and cpu flags behavior
 - simple debugging machine monitor, which basic disassembler and assembler functions
-- provide a few virtual example machines, one of which is a Commodore-64
+- provide a few virtual example machines, one of which is a fairly capable Commodore-64
 
 
 ## Documentation

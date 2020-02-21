@@ -17,7 +17,7 @@ class Cpu65C02 : Cpu6502() {
 
     /**
      * Process once clock cycle in the cpu
-     * Use this if goal is cycle-perfect emulation.
+     * Use this if you need cycle-perfect instruction timing simulation.
      */
     override fun clock() {
         when (waiting) {
@@ -40,7 +40,7 @@ class Cpu65C02 : Cpu6502() {
 
     /**
      * Execute one single complete instruction.
-     * Use this when the goal is emulation performance and not a cycle perfect system.
+     * Use this when you don't care about clock cycle instruction timing simulation.
      */
     override fun step() {
         totalCycles += instrCycles
