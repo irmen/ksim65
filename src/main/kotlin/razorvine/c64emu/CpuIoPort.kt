@@ -6,7 +6,7 @@ import razorvine.ksim65.components.UByte
 /**
  * The 6510's IO port located at $00/$01
  * Controlling the memory layout, and cassette port (not processed at all).
- *
+ * TODO: there are a few functional tests that still fail. Is this not implemented correctly yet?
  */
 class CpuIoPort : MemMappedComponent(0x0000, 0x0001) {
 

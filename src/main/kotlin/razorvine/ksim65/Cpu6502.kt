@@ -1409,7 +1409,7 @@ open class Cpu6502 : BusComponent() {
     // unofficial/illegal 6502 instructions
     // see http://www.ffd2.com/fridge/docs/6502-NMOS.extra.opcodes
     // or https://github.com/quietust/nintendulator/blob/master/src/CPU.cpp (search for LogBadOps)
-    // TODO: actually implement the illegal opcodes
+    // TODO: some of these may be implemented incorrectly / are not finished yet
 
 
     private fun iAhx(): Boolean {
@@ -1438,6 +1438,7 @@ open class Cpu6502 : BusComponent() {
     }
 
     private fun iAxs(): Boolean {
+        // TODO may not be correct
         val oldA = regA
         regA = regA and regX
         regP.C = false
