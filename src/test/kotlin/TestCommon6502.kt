@@ -1,3 +1,4 @@
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.TestInstance
 import razorvine.ksim65.*
 import razorvine.ksim65.components.*
@@ -4150,13 +4151,13 @@ abstract class TestCommon6502 {
 
     @Test
     fun test_plp_pulls_top_byte_from_stack_into_flags_and_updates_sp() {
-        // $0000 PLP
-        memory[0x0000] = 0x28
-        memory[0x01FF] = 0xBA  // must have BREAK and UNUSED set
+        mpu.regP.fromInt(0)
+        memory[0x01FF] = 0xBA   // must have BREAK and UNUSED set
+        memory[0x0000] = 0x28   // PLP
         mpu.regSP = 0xFE
         mpu.step()
         assertEquals(0x0001, mpu.regPC)
-        assertEquals(0xBA, mpu.regP.asInt())
+        assertEquals(0xAA, mpu.regP.asInt())        // BREAK cleared
         assertEquals(0xFF, mpu.regSP)
     }
 
@@ -4166,8 +4167,7 @@ abstract class TestCommon6502 {
     fun test_rol_accumulator_zero_and_carry_zero_sets_z_flag() {
         mpu.regA = 0x00
         mpu.regP.C = false
-        // $0000 ROL A
-        memory[0x0000] = 0x2A
+        memory[0x0000] = 0x2A   // ROL A
         mpu.step()
         assertEquals(0x0001, mpu.regPC)
         assertEquals(0x00, mpu.regA)
@@ -4847,19 +4847,19 @@ abstract class TestCommon6502 {
         mpu.regSP = 0xFC
         mpu.step()
         assertEquals(0xFF, mpu.regSP)
-        assertEquals(0xFC, mpu.regP.asInt())
+        assertEquals(0xEC, mpu.regP.asInt())    // BREAK flag cleared
         assertEquals(0xC003, mpu.regPC)
     }
 
     @Test
+    @Disabled("this test is invalid")
     fun test_rti_forces_break_and_unused_flags_high() {
-        // $0000 RTI
-        memory[0x0000] = 0x40
+        assertEquals(0b00100000, mpu.regP.asInt())
+        memory[0x0000] = 0x40       // RTI
         writeMem(memory, 0x01FD, listOf(0x00, 0x03, 0xC0))  // Status, PCL, PCH
         mpu.regSP = 0xFC
         mpu.step()
-        assertTrue(mpu.regP.B)
-        // assertEquals(fUNUSED, mpu.Status.asByte().toInt() and fUNUSED)
+        assertEquals(0b00110000, mpu.regP.asInt())
     }
 
     // RTS

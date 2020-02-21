@@ -226,9 +226,9 @@ class Test6502CpuBasics {
         // http://www.qmtpro.com/~nes/misc/nestest.txt
 
         class NesCpu: Cpu6502() {
-            fun resetTotalCycles(cycles: Long) {
-                totalCycles = cycles
-                instrCycles = 0
+            override fun reset() {
+                super.reset()
+                instrCycles = 7    // the nintdulator cpu emu starts with this number of cycles
             }
 
             override fun iAdc(): Boolean {
@@ -252,7 +252,6 @@ class Test6502CpuBasics {
 
         val cpu = NesCpu()
         val ram = Ram(0, 0xffff)
-        val disassembler = Disassembler(cpu)
 
         val bytes = javaClass.getResource("nestest.nes").readBytes().drop(0x10).take(0x4000).toByteArray()
         ram.load(bytes, 0x8000)
@@ -261,10 +260,10 @@ class Test6502CpuBasics {
         bus.add(cpu)
         bus.add(ram)
         bus.reset()
-        cpu.resetTotalCycles(7)     // that is what the nes rom starts with
         cpu.regPC = 0xc000
         var tracingSnapshot = cpu.snapshot()
         cpu.tracing = { tracingSnapshot=it }
+//        val disassembler = Disassembler(cpu)
 
         val neslog = javaClass.getResource("nestest.log").readText().lineSequence()
         for(logline in neslog) {

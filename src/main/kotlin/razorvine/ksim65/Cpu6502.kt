@@ -1252,8 +1252,9 @@ open class Cpu6502 : BusComponent() {
     }
 
     protected fun iPlp(): Boolean {
+        val previousB = regP.B
         regP.fromInt(popStack())
-        regP.B = false
+        regP.B = previousB
         return false
     }
 
