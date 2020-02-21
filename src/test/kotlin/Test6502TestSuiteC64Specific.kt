@@ -10,6 +10,7 @@ import razorvine.ksim65.components.Rom
 import kotlin.test.*
 
 @Execution(ExecutionMode.CONCURRENT)
+@Disabled("requires the C-64 roms to be available - we don't ship them with this code")
 class Test6502TestSuiteC64Specific {
 
     val cpu: Cpu6502 = Cpu6502()
@@ -19,7 +20,7 @@ class Test6502TestSuiteC64Specific {
     val kernalStubs = C64KernalStubs(ram)
 
     init {
-        val romsPath = determineRomPath()
+        val romsPath = determineRomPath()       // this requires you to have the c64 roms somewhere available
         val chargenRom = Rom(0xd000, 0xdfff).also {
             val chargenData = romsPath.resolve("chargen").toFile().readBytes()
             it.load(chargenData)
