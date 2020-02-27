@@ -628,6 +628,8 @@ open class Cpu6502 : BusComponent() {
     }
 
     protected open fun dispatchOpcode(opcode: Int): Boolean {
+        // note: this giant when-statement seems to be the fastest way of doing a jump table like this.
+        //       experiments with an indexed array with function-pointers proved to be several times slower.
         return when (opcode) {
             0x00 -> iBrk()
             0x01 -> iOra()
