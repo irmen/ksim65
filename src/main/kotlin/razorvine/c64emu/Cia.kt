@@ -9,11 +9,19 @@ import java.awt.event.KeyEvent
 /**
  * Minimal simulation of the MOS 6526 CIA chip.
  * Depending on what CIA it is (1 or 2), some registers do different things on the C64.
- * This implementation provides a working keyboard matrix, TOD clock, and the essentials of the timer A and B.
+ * This implementation provides a working keyboard matrix, joystick in port#2 (cia 1),
+ * time of day clock, and the essentials of the timer A and B.
  */
 class Cia(val number: Int, startAddress: Address, endAddress: Address, val cpu: Cpu6502) : MemMappedComponent(startAddress, endAddress) {
     private var ramBuffer = Array<UByte>(endAddress-startAddress+1) { 0 }
     private var regPRA = 0xff
+
+    // joystick in port 2 configuration (only works on cia#1)
+    private var joy2up = false
+    private var joy2down = false
+    private var joy2left = false
+    private var joy2right = false
+    private var joy2fire = false
 
     class TimeOfDay {
         private var updatedAt = 0L
@@ -125,6 +133,11 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address, val cpu: 
         timerAset = 0
         timerBactual = 0
         timerBset = 0
+        joy2up = false
+        joy2down = false
+        joy2left = false
+        joy2right = false
+        joy2fire = false
     }
 
     override operator fun get(offset: Int): UByte {
@@ -139,71 +152,85 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address, val cpu: 
         }
 
         val register = offset and 15
-        if (number == 1 && register == 0x01) {
-            // register 1 on CIA#1 is the keyboard data port
-            // if bit is cleared in PRA, contains keys pressed in that column of the matrix
-            return when (regPRA) {
-                0b00000000 -> {
-                    // check if any keys are pressed at all (by checking all columns at once)
-                    if (hostKeyPresses.isEmpty()) 0xff.toShort() else 0x00.toShort()
-                }
-                0b11111110 -> {
-                    // read column 0
-                    scanColumn(HostKeyPress(KeyEvent.VK_DOWN), HostKeyPress(KeyEvent.VK_F5), HostKeyPress(KeyEvent.VK_F3),
-                               HostKeyPress(KeyEvent.VK_F1), HostKeyPress(KeyEvent.VK_F7), HostKeyPress(KeyEvent.VK_RIGHT),
-                               HostKeyPress(KeyEvent.VK_ENTER), HostKeyPress(KeyEvent.VK_BACK_SPACE))
-                }
-                0b11111101 -> {
-                    // read column 1
-                    scanColumn(HostKeyPress(KeyEvent.VK_SHIFT),     // left shift
-                               HostKeyPress(KeyEvent.VK_E), HostKeyPress(KeyEvent.VK_S), HostKeyPress(KeyEvent.VK_Z),
-                               HostKeyPress(KeyEvent.VK_4), HostKeyPress(KeyEvent.VK_A), HostKeyPress(KeyEvent.VK_W),
-                               HostKeyPress(KeyEvent.VK_3))
-                }
-                0b11111011 -> {
-                    // read column 2
-                    scanColumn(HostKeyPress(KeyEvent.VK_X), HostKeyPress(KeyEvent.VK_T), HostKeyPress(KeyEvent.VK_F),
-                               HostKeyPress(KeyEvent.VK_C), HostKeyPress(KeyEvent.VK_6), HostKeyPress(KeyEvent.VK_D),
-                               HostKeyPress(KeyEvent.VK_R), HostKeyPress(KeyEvent.VK_5))
-                }
-                0b11110111 -> {
-                    // read column 3
-                    scanColumn(HostKeyPress(KeyEvent.VK_V), HostKeyPress(KeyEvent.VK_U), HostKeyPress(KeyEvent.VK_H),
-                               HostKeyPress(KeyEvent.VK_B), HostKeyPress(KeyEvent.VK_8), HostKeyPress(KeyEvent.VK_G),
-                               HostKeyPress(KeyEvent.VK_Y), HostKeyPress(KeyEvent.VK_7))
-                }
-                0b11101111 -> {
-                    // read column 4
-                    scanColumn(HostKeyPress(KeyEvent.VK_N), HostKeyPress(KeyEvent.VK_O), HostKeyPress(KeyEvent.VK_K),
-                               HostKeyPress(KeyEvent.VK_M), HostKeyPress(KeyEvent.VK_0), HostKeyPress(KeyEvent.VK_J),
-                               HostKeyPress(KeyEvent.VK_I), HostKeyPress(KeyEvent.VK_9))
-                }
-                0b11011111 -> {
-                    // read column 5
-                    scanColumn(HostKeyPress(KeyEvent.VK_COMMA), HostKeyPress(KeyEvent.VK_AT), HostKeyPress(KeyEvent.VK_COLON),
-                               HostKeyPress(KeyEvent.VK_PERIOD), HostKeyPress(KeyEvent.VK_MINUS), HostKeyPress(KeyEvent.VK_L),
-                               HostKeyPress(KeyEvent.VK_P), HostKeyPress(KeyEvent.VK_PLUS))
-                }
-                0b10111111 -> {
-                    // read column 6
-                    scanColumn(HostKeyPress(KeyEvent.VK_SLASH), HostKeyPress(KeyEvent.VK_CIRCUMFLEX), HostKeyPress(KeyEvent.VK_EQUALS),
-                               HostKeyPress(KeyEvent.VK_SHIFT, rightSide = true), // right shift
-                               HostKeyPress(KeyEvent.VK_HOME), HostKeyPress(KeyEvent.VK_SEMICOLON), HostKeyPress(KeyEvent.VK_ASTERISK),
-                               HostKeyPress(KeyEvent.VK_DEAD_TILDE)     // pound sign
-                    )
-                }
-                0b01111111 -> {
-                    // read column 7
-                    scanColumn(HostKeyPress(KeyEvent.VK_ESCAPE), HostKeyPress(KeyEvent.VK_Q), HostKeyPress(KeyEvent.VK_ALT),
-                               HostKeyPress(KeyEvent.VK_SPACE), HostKeyPress(KeyEvent.VK_2), HostKeyPress(KeyEvent.VK_CONTROL),
-                               HostKeyPress(KeyEvent.VK_BACK_QUOTE), HostKeyPress(KeyEvent.VK_1))
-                }
-                else -> {
-                    // invalid column selection
-                    0xff
+
+        if(number==1) {
+            // first CIA has keyboard matrix
+            if(register==0x00) {
+                // reading $dc00 is joystick in port #2
+                return (0b01100000
+                        or (if(joy2up) 0 else 0b00000001)
+                        or (if(joy2down) 0 else 0b00000010)
+                        or (if(joy2left) 0 else 0b00000100)
+                        or (if(joy2right) 0 else 0b00001000)
+                        or (if(joy2fire) 0 else 0b00010000)).toShort()
+            } else if(register==0x01) {
+                // register 1 on CIA#1 is the keyboard data port (and joystick #1...)
+                // if bit is cleared in PRA, contains keys pressed in that column of the matrix
+                // NOTE: we do not emulate a joystick in port #1 as this conflicts with the keyboard.
+                //       just use the joystick in port #2 for now...
+                return when (regPRA) {
+                    0b00000000 -> {
+                        // check if any keys are pressed at all (by checking all columns at once)
+                        if (hostKeyPresses.isEmpty()) 0xff.toShort() else 0x00.toShort()
+                    }
+                    0b11111110 -> {
+                        // read column 0
+                        scanColumn(HostKeyPress(KeyEvent.VK_DOWN), HostKeyPress(KeyEvent.VK_F5), HostKeyPress(KeyEvent.VK_F3),
+                                   HostKeyPress(KeyEvent.VK_F1), HostKeyPress(KeyEvent.VK_F7), HostKeyPress(KeyEvent.VK_RIGHT),
+                                   HostKeyPress(KeyEvent.VK_ENTER), HostKeyPress(KeyEvent.VK_BACK_SPACE))
+                    }
+                    0b11111101 -> {
+                        // read column 1
+                        scanColumn(HostKeyPress(KeyEvent.VK_SHIFT),     // left shift
+                                   HostKeyPress(KeyEvent.VK_E), HostKeyPress(KeyEvent.VK_S), HostKeyPress(KeyEvent.VK_Z),
+                                   HostKeyPress(KeyEvent.VK_4), HostKeyPress(KeyEvent.VK_A), HostKeyPress(KeyEvent.VK_W),
+                                   HostKeyPress(KeyEvent.VK_3))
+                    }
+                    0b11111011 -> {
+                        // read column 2
+                        scanColumn(HostKeyPress(KeyEvent.VK_X), HostKeyPress(KeyEvent.VK_T), HostKeyPress(KeyEvent.VK_F),
+                                   HostKeyPress(KeyEvent.VK_C), HostKeyPress(KeyEvent.VK_6), HostKeyPress(KeyEvent.VK_D),
+                                   HostKeyPress(KeyEvent.VK_R), HostKeyPress(KeyEvent.VK_5))
+                    }
+                    0b11110111 -> {
+                        // read column 3
+                        scanColumn(HostKeyPress(KeyEvent.VK_V), HostKeyPress(KeyEvent.VK_U), HostKeyPress(KeyEvent.VK_H),
+                                   HostKeyPress(KeyEvent.VK_B), HostKeyPress(KeyEvent.VK_8), HostKeyPress(KeyEvent.VK_G),
+                                   HostKeyPress(KeyEvent.VK_Y), HostKeyPress(KeyEvent.VK_7))
+                    }
+                    0b11101111 -> {
+                        // read column 4
+                        scanColumn(HostKeyPress(KeyEvent.VK_N), HostKeyPress(KeyEvent.VK_O), HostKeyPress(KeyEvent.VK_K),
+                                   HostKeyPress(KeyEvent.VK_M), HostKeyPress(KeyEvent.VK_0), HostKeyPress(KeyEvent.VK_J),
+                                   HostKeyPress(KeyEvent.VK_I), HostKeyPress(KeyEvent.VK_9))
+                    }
+                    0b11011111 -> {
+                        // read column 5
+                        scanColumn(HostKeyPress(KeyEvent.VK_COMMA), HostKeyPress(KeyEvent.VK_AT), HostKeyPress(KeyEvent.VK_COLON),
+                                   HostKeyPress(KeyEvent.VK_PERIOD), HostKeyPress(KeyEvent.VK_MINUS), HostKeyPress(KeyEvent.VK_L),
+                                   HostKeyPress(KeyEvent.VK_P), HostKeyPress(KeyEvent.VK_PLUS))
+                    }
+                    0b10111111 -> {
+                        // read column 6
+                        scanColumn(HostKeyPress(KeyEvent.VK_SLASH), HostKeyPress(KeyEvent.VK_CIRCUMFLEX), HostKeyPress(KeyEvent.VK_EQUALS),
+                                   HostKeyPress(KeyEvent.VK_SHIFT, rightSide = true), // right shift
+                                   HostKeyPress(KeyEvent.VK_HOME), HostKeyPress(KeyEvent.VK_SEMICOLON), HostKeyPress(KeyEvent.VK_ASTERISK),
+                                   HostKeyPress(KeyEvent.VK_DEAD_TILDE)     // pound sign
+                        )
+                    }
+                    0b01111111 -> {
+                        // read column 7
+                        scanColumn(HostKeyPress(KeyEvent.VK_ESCAPE), HostKeyPress(KeyEvent.VK_Q), HostKeyPress(KeyEvent.VK_ALT),
+                                   HostKeyPress(KeyEvent.VK_SPACE), HostKeyPress(KeyEvent.VK_2), HostKeyPress(KeyEvent.VK_CONTROL),
+                                   HostKeyPress(KeyEvent.VK_BACK_QUOTE), HostKeyPress(KeyEvent.VK_1))
+                    }
+                    else -> {
+                        // invalid column selection
+                        0xff
+                    }
                 }
             }
-        } else ramBuffer[register]
+        }
 
         return when (register) {
             0x04 -> (timerAactual and 0xff).toShort()
@@ -222,19 +249,6 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address, val cpu: 
             }
             else -> ramBuffer[register]
         }
-    }
-
-    private fun toBCD(data: Int): UByte {
-        val tens = data/10
-        val ones = data-tens*10
-        return ((tens shl 4) or ones).toShort()
-    }
-
-    private fun fromBCD(bcd: UByte): Int {
-        val ibcd = bcd.toInt()
-        val tens = ibcd ushr 4
-        val ones = ibcd and 0x0f
-        return tens*10+ones
     }
 
     override operator fun set(offset: Int, data: UByte) {
@@ -294,6 +308,19 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address, val cpu: 
                 }
             }
         }
+    }
+
+    private fun toBCD(data: Int): UByte {
+        val tens = data/10
+        val ones = data-tens*10
+        return ((tens shl 4) or ones).toShort()
+    }
+
+    private fun fromBCD(bcd: UByte): Int {
+        val ibcd = bcd.toInt()
+        val tens = ibcd ushr 4
+        val ones = ibcd and 0x0f
+        return tens*10+ones
     }
 
     fun hostKeyPressed(event: KeyEvent) {
@@ -373,5 +400,16 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address, val cpu: 
                     else -> register(event.id, HostKeyPress(event.keyCode, rightSide, numpad))
                 }
         }
+    }
+
+    fun setJoystick2(up: Boolean, down: Boolean, left: Boolean, right: Boolean, fire: Boolean) {
+        if(number!=1)
+            throw NotImplementedError("joystick port 2 is connected to cia#1")
+
+        joy2up = up
+        joy2down = down
+        joy2left = left
+        joy2right = right
+        joy2fire = fire
     }
 }

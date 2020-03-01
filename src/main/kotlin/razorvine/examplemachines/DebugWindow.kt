@@ -182,6 +182,7 @@ class DebugWindow(private val vm: IVirtualMachine) : JFrame("Debugger - ksim65 v
 
             }
             "reset" -> {
+                vm.reset()
                 vm.bus.reset()
                 updateCpu(vm.cpu, vm.bus)
             }

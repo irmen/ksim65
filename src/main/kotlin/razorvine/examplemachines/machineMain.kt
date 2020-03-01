@@ -65,6 +65,11 @@ class VirtualMachine(title: String) : IVirtualMachine {
         while (cpu.instrCycles > 0) bus.clock()
     }
 
+    override fun reset() {
+        bus.reset()
+        hostDisplay.reset()
+    }
+
     override fun executeMonitorCommand(command: String) = monitor.command(command)
 
     fun start() {

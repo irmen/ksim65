@@ -242,4 +242,8 @@ class MainWindow(title: String) : JFrame(title), KeyListener, MouseInputListener
         else keyboardBuffer.pop()
     }
 
+    fun reset() {
+        // when the reset button is pressed
+    }
+
 }

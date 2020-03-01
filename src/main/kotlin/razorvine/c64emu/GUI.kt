@@ -82,16 +82,50 @@ class MainC64Window(title: String, chargen: Rom, val ram: MemoryComponent, val c
     // keyboard events:
     override fun keyTyped(event: KeyEvent) {}
 
+    private var joy2up = false
+    private var joy2down = false
+    private var joy2left = false
+    private var joy2right = false
+    private var joy2fire = false
+
     override fun keyPressed(event: KeyEvent) {
         // '\' is mapped as RESTORE, this causes a NMI on the cpu
         if (event.keyChar == '\\') {
             cpu.nmiAsserted = true
         } else {
-            keypressCia.hostKeyPressed(event)
+            if(event.keyLocation==KeyEvent.KEY_LOCATION_NUMPAD) {
+                // numpad is joystick #2
+                if (event.keyChar in "789") joy2up = true
+                if (event.keyChar in "123") joy2down = true
+                if (event.keyChar in "741") joy2left = true
+                if (event.keyChar in "963") joy2right = true
+                if (event.keyChar in "05\n") joy2fire = true
+                keypressCia.setJoystick2(joy2up, joy2down, joy2left, joy2right, joy2fire)
+            } else {
+                keypressCia.hostKeyPressed(event)
+            }
         }
     }
 
     override fun keyReleased(event: KeyEvent) {
-        keypressCia.hostKeyPressed(event)
+        if(event.keyLocation==KeyEvent.KEY_LOCATION_NUMPAD) {
+            // numpad is joystick #2
+            if (event.keyChar in "789") joy2up = false
+            if (event.keyChar in "123") joy2down = false
+            if (event.keyChar in "741") joy2left = false
+            if (event.keyChar in "963") joy2right = false
+            if (event.keyChar in "05\n") joy2fire = false
+            keypressCia.setJoystick2(joy2up, joy2down, joy2left, joy2right, joy2fire)
+        } else {
+            keypressCia.hostKeyPressed(event)
+        }
+    }
+
+    fun reset() {
+        joy2up = false
+        joy2down = false
+        joy2left = false
+        joy2right = false
+        joy2fire = false
     }
 }

@@ -7,6 +7,7 @@ import java.io.File
 interface IVirtualMachine {
     fun step()
     fun pause(paused: Boolean)
+    fun reset()
     fun getZeroAndStackPages(): Array<UByte>
     fun loadFileInRam(file: File, loadAddress: Address?)
 
