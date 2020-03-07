@@ -33,7 +33,7 @@ class TestDisassembler {
         val cpu = Cpu65C02()
         val disassembler = Disassembler(cpu)
         val memory = Ram(0, 0x0fff)
-        val source = javaClass.classLoader.getResource("disassem_r65c02.bin").readBytes()
+        val source = javaClass.classLoader.getResource("disassem_r65c02.bin")?.readBytes()!!
         memory.load(source, 0x0200)
         val disassem = disassembler.disassemble(memory.data, 0x0200..0x0250, 0)
         assertEquals(0x251, disassem.second)
@@ -80,7 +80,7 @@ ${'$'}0250  00          brk""", result)
         val cpu = Cpu65C02()
         val disassembler = Disassembler(cpu)
         val memory = Ram(0, 0x0fff)
-        val source = javaClass.classLoader.getResource("disassem_wdc65c02.bin").readBytes()
+        val source = javaClass.classLoader.getResource("disassem_wdc65c02.bin")?.readBytes()!!
         memory.load(source, 0x200)
         val disassem = disassembler.disassemble(memory.data, 0x0200..0x0215, 0)
         assertEquals(0x216, disassem.second)

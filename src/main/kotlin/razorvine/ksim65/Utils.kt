@@ -2,20 +2,16 @@ package razorvine.ksim65
 
 import razorvine.ksim65.components.Address
 
-fun hexW(number: Address, allowSingleByte: Boolean = false): String {
-    val msb = number ushr 8
-    val lsb = number and 0xff
-    return if (msb == 0 && allowSingleByte) hexB(lsb)
-    else hexB(msb)+hexB(lsb)
-}
+fun hexW(number: Int, allowSingleByte: Boolean = false) =
+        if(allowSingleByte && (number and 0xff00 == 0)) {
+            number.toString(16).padStart(2, '0')
+        } else {
+            number.toString(16).padStart(4, '0')
+        }
 
-fun hexB(number: Short): String = hexB(number.toInt())
 
-fun hexB(number: Int): String {
-    val hexdigits = "0123456789abcdef"
-    val loNibble = number and 15
-    val hiNibble = (number and 65535) ushr 4
-    return hexdigits[hiNibble].toString()+hexdigits[loNibble]
-}
+fun hexB(number: Int) = number.toString(16).padStart(2, '0')
+
+fun hexB(number: Short) = hexB(number.toInt())
 
 typealias BreakpointHandler = (cpu: Cpu6502, pc: Address) -> Cpu6502.BreakpointResultAction
