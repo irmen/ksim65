@@ -257,7 +257,7 @@ class C64Machine(title: String) : IVirtualMachine {
 
 
 fun determineRomPath(): Path {
-    val candidates = listOf("./roms", "~/roms/c64", "~/roms", "~/.vice/C64")
+    val candidates = listOf("./roms", "~/roms/c64", "~/roms", "~/.vice/C64", "/usr/lib/vice/C64")
     candidates.forEach {
         val path = Paths.get(expandUser(it))
         if (path.toFile().isDirectory) return path
