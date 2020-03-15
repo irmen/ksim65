@@ -1408,12 +1408,14 @@ open class Cpu6502 : BusComponent() {
         return false
     }
 
-    // unofficial/illegal 6502 instructions
+    // unofficial/illegal 6502 instructions now follow
+
     // see http://www.ffd2.com/fridge/docs/6502-NMOS.extra.opcodes
+    // and http://unusedino.de/ec64/technical/aay/c64/ibmain.htm
     // or https://github.com/quietust/nintendulator/blob/master/src/CPU.cpp (search for LogBadOps)
     // or https://github.com/stardot/b-em/blob/master/src/6502.c
-    // TODO: some of these may be implemented incorrectly / are not finished yet
-
+    // or https://github.com/wpmed92/MedNES/blob/master/NES/6502.cpp
+    // TODO: some of the instructions below may be implemented incorrectly / are not finished yet
 
     private fun iAhx(): Boolean {
         val addrHi = 0xff   // TODO get the correct byte from the instruction (=last byte read)
