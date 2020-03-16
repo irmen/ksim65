@@ -102,7 +102,7 @@ class Display(startAddress: Address, endAddress: Address, private val host: IHos
             0x05 -> pixelY = (pixelY and 0xff00) or data.toInt()
             0x06 -> pixelY = (pixelY and 0x00ff) or (data.toInt() shl 8)
             0x07 -> {
-                if (pixelX in 0 until ScreenDefs.SCREEN_WIDTH && pixelY in 0 until ScreenDefs.SCREEN_HEIGHT) {
+                if (pixelX in 0 until ScreenDefs.COLUMNS*charWidth && pixelY in 0 until ScreenDefs.ROWS*charHeight) {
                     if (data == 0.toShort()) host.clearPixel(pixelX, pixelY)
                     else host.setPixel(pixelX, pixelY)
                 }

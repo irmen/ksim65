@@ -1,57 +1,27 @@
 package razorvine.examplemachines
 
+import razorvine.fonts.PsfFont
 import razorvine.ksim65.*
 import java.awt.*
 import java.awt.event.*
 import java.awt.image.BufferedImage
 import java.util.*
-import javax.imageio.ImageIO
 import javax.swing.*
 import javax.swing.event.MouseInputListener
 
 
 /**
- * Define a monochrome screen that can display 640x480 pixels
- * and/or 80x30 characters (these are 8x16 pixels).
+ * Define a monochrome screen that can display 80x30 charaacters
+ * (usually equivalent to 640x480 pixels, but depends on the font size)
  */
 object ScreenDefs {
-    const val SCREEN_WIDTH_CHARS = 80
-    const val SCREEN_HEIGHT_CHARS = 30
-    const val SCREEN_WIDTH = SCREEN_WIDTH_CHARS*8
-    const val SCREEN_HEIGHT = SCREEN_HEIGHT_CHARS*16
-    const val PIXEL_SCALING = 1.5
+    const val COLUMNS = 80
+    const val ROWS = 30
     const val BORDER_SIZE = 32
 
     val BG_COLOR = Color(0, 10, 20)
     val FG_COLOR = Color(200, 255, 230)
     val BORDER_COLOR = Color(20, 30, 40)
-    val Characters = loadCharacters()
-
-    private fun loadCharacters(): Array<BufferedImage> {
-        val img = ImageIO.read(javaClass.getResourceAsStream("/charset/unscii8x16.png"))
-        val charactersImage = BufferedImage(img.width, img.height, BufferedImage.TYPE_INT_ARGB)
-        charactersImage.createGraphics().drawImage(img, 0, 0, null)
-
-        val black = Color(0, 0, 0).rgb
-        val foreground = FG_COLOR.rgb
-        val nopixel = Color(0, 0, 0, 0).rgb
-        for (y in 0 until charactersImage.height) {
-            for (x in 0 until charactersImage.width) {
-                val col = charactersImage.getRGB(x, y)
-                if (col == black) charactersImage.setRGB(x, y, nopixel)
-                else charactersImage.setRGB(x, y, foreground)
-            }
-        }
-
-        val numColumns = charactersImage.width/8
-        val charImages = (0..255).map {
-            val charX = it%numColumns
-            val charY = it/numColumns
-            charactersImage.getSubimage(charX*8, charY*16, 8, 16)
-        }
-
-        return charImages.toTypedArray()
-    }
 }
 
 private class BitmapScreenPanel : JPanel() {
@@ -61,15 +31,21 @@ private class BitmapScreenPanel : JPanel() {
     private var cursorX: Int = 0
     private var cursorY: Int = 0
     private var cursorState: Boolean = false
+    private val screenFont = PsfFont("spleen-12x24")   // nice fonts:  sun12x22, iso01-12x22, ter-124b, spleen-12x24, default8x16
+    private val PIXEL_SCALING: Double = if(screenFont.width <= 8) 1.5 else 1.0
+    private val screenFontImage: BufferedImage
 
     init {
+        println("SCREENFONT WIDTH: ${screenFont.width}")
+
         val ge = GraphicsEnvironment.getLocalGraphicsEnvironment()
         val gd = ge.defaultScreenDevice.defaultConfiguration
-        image = gd.createCompatibleImage(ScreenDefs.SCREEN_WIDTH, ScreenDefs.SCREEN_HEIGHT, Transparency.OPAQUE)
+        image = gd.createCompatibleImage(ScreenDefs.COLUMNS*screenFont.width, ScreenDefs.ROWS*screenFont.height, Transparency.OPAQUE)
         g2d = image.graphics as Graphics2D
+        screenFontImage = screenFont.convertToImage(g2d, ScreenDefs.FG_COLOR)
 
-        val size = Dimension((image.width*ScreenDefs.PIXEL_SCALING).toInt(),
-                             (image.height*ScreenDefs.PIXEL_SCALING).toInt())
+        val size = Dimension((image.width*PIXEL_SCALING).toInt(),
+                             (image.height*PIXEL_SCALING).toInt())
         minimumSize = size
         maximumSize = size
         preferredSize = size
@@ -82,13 +58,13 @@ private class BitmapScreenPanel : JPanel() {
     override fun paint(graphics: Graphics) {
         val g2d = graphics as Graphics2D
         g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR)
-        g2d.drawImage(image, 0, 0, (image.width*ScreenDefs.PIXEL_SCALING).toInt(),
-                      (image.height*ScreenDefs.PIXEL_SCALING).toInt(), null)
+        g2d.drawImage(image, 0, 0, (image.width*PIXEL_SCALING).toInt(),
+                      (image.height*PIXEL_SCALING).toInt(), null)
         if (cursorState) {
-            val scx = (cursorX*ScreenDefs.PIXEL_SCALING*8).toInt()
-            val scy = (cursorY*ScreenDefs.PIXEL_SCALING*16).toInt()
-            val scw = (8*ScreenDefs.PIXEL_SCALING).toInt()
-            val sch = (16*ScreenDefs.PIXEL_SCALING).toInt()
+            val scx = (cursorX*PIXEL_SCALING*screenFont.width).toInt()
+            val scy = (cursorY*PIXEL_SCALING*screenFont.height).toInt()
+            val scw = (screenFont.width*PIXEL_SCALING).toInt()
+            val sch = (screenFont.height*PIXEL_SCALING).toInt()
             g2d.setXORMode(Color.CYAN)
             g2d.fillRect(scx, scy, scw, sch)
             g2d.setPaintMode()
@@ -98,7 +74,7 @@ private class BitmapScreenPanel : JPanel() {
 
     fun clearScreen() {
         g2d.background = ScreenDefs.BG_COLOR
-        g2d.clearRect(0, 0, ScreenDefs.SCREEN_WIDTH, ScreenDefs.SCREEN_HEIGHT)
+        g2d.clearRect(0, 0, ScreenDefs.COLUMNS*screenFont.width, ScreenDefs.ROWS*screenFont.height)
         cursorPos(0, 0)
     }
 
@@ -110,20 +86,26 @@ private class BitmapScreenPanel : JPanel() {
     fun getPixel(x: Int, y: Int) = image.getRGB(x, y) != ScreenDefs.BG_COLOR.rgb
 
     fun setChar(x: Int, y: Int, character: Char) {
-        g2d.clearRect(8*x, 16*y, 8, 16)
-        val coloredImage = ScreenDefs.Characters[character.toInt()]
-        g2d.drawImage(coloredImage, 8*x, 16*y, null)
+        val charnum = character.toInt()
+        val cx = charnum % (screenFontImage.width/screenFont.width)
+        val cy = charnum / (screenFontImage.width/screenFont.width)
+        g2d.clearRect(x*screenFont.width, y*screenFont.height, screenFont.width, screenFont.height)
+        g2d.drawImage(screenFontImage, x*screenFont.width, y*screenFont.height, (x+1)*screenFont.width,
+                      (y+1)*screenFont.height, cx*screenFont.width, cy*screenFont.height,
+                      (cx+1)*screenFont.width, (cy+1)*screenFont.height, null)
     }
 
     fun scrollUp() {
-        g2d.copyArea(0, 16, ScreenDefs.SCREEN_WIDTH, ScreenDefs.SCREEN_HEIGHT-16, 0, -16)
+        g2d.copyArea(0, screenFont.height,
+                     ScreenDefs.COLUMNS*screenFont.width, (ScreenDefs.ROWS-1)*screenFont.height,
+                     0, -screenFont.height)
         g2d.background = ScreenDefs.BG_COLOR
-        g2d.clearRect(0, ScreenDefs.SCREEN_HEIGHT-16, ScreenDefs.SCREEN_WIDTH, 16)
+        g2d.clearRect(0, (ScreenDefs.ROWS-1)*screenFont.height, ScreenDefs.COLUMNS*screenFont.width, screenFont.height)
     }
 
     fun mousePixelPosition(): Point? {
         val pos = mousePosition ?: return null
-        return Point((pos.x/ScreenDefs.PIXEL_SCALING).toInt(), (pos.y/ScreenDefs.PIXEL_SCALING).toInt())
+        return Point((pos.x/PIXEL_SCALING).toInt(), (pos.y/PIXEL_SCALING).toInt())
     }
 
     fun cursorPos(x: Int, y: Int) {

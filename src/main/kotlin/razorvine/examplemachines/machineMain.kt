@@ -20,7 +20,7 @@ class VirtualMachine(title: String) : IVirtualMachine {
     private val monitor = Monitor(bus, cpu)
     private val debugWindow = DebugWindow(this)
     private val hostDisplay = MainWindow(title)
-    private val display = Display(0xd000, 0xd00a, hostDisplay, ScreenDefs.SCREEN_WIDTH_CHARS, ScreenDefs.SCREEN_HEIGHT_CHARS)
+    private val display = Display(0xd000, 0xd00a, hostDisplay, ScreenDefs.COLUMNS, ScreenDefs.ROWS)
     private val mouse = Mouse(0xd300, 0xd305, hostDisplay)
     private val keyboard = Keyboard(0xd400, 0xd400, hostDisplay)
     private var paused = false

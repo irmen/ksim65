@@ -21,7 +21,7 @@ class EhBasicMachine(title: String) {
     val rom = Rom(0xc000, 0xffff).also { it.load(javaClass.getResourceAsStream("/ehbasic_C000.bin").readBytes()) }
 
     private val hostDisplay = MainWindow(title)
-    private val display = Display(0xd000, 0xd00a, hostDisplay, ScreenDefs.SCREEN_WIDTH_CHARS, ScreenDefs.SCREEN_HEIGHT_CHARS)
+    private val display = Display(0xd000, 0xd00a, hostDisplay, ScreenDefs.COLUMNS, ScreenDefs.ROWS)
     private val keyboard = Keyboard(0xd400, 0xd400, hostDisplay)
     private var paused = false
 
