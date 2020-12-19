@@ -6,7 +6,7 @@ import kotlin.math.max
 
 plugins {
     // Apply the Kotlin JVM plugin to add support for Kotlin on the JVM.
-    kotlin("jvm") version "1.4.10"
+    kotlin("jvm") version "1.4.20"
     `maven-publish`
     application
     id("org.jetbrains.dokka") version "0.10.0"
@@ -64,7 +64,7 @@ tasks {
     }
 
     withType<KotlinCompile> {
-        kotlinOptions.jvmTarget = "1.8"
+        kotlinOptions.jvmTarget = "11"
     }
 
     named<DokkaTask>("dokka") {
