@@ -6,12 +6,19 @@ import kotlin.math.max
 
 plugins {
     // Apply the Kotlin JVM plugin to add support for Kotlin on the JVM.
-    kotlin("jvm") version "1.4.20"
+    kotlin("jvm") version "1.5.20"
     `maven-publish`
     application
-    id("org.jetbrains.dokka") version "0.10.0"
+    java
+    id("org.jetbrains.dokka") version "0.10.1"
     id("com.jfrog.bintray") version "1.8.4"
 }
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
+
 
 allprojects {
     val versionProps = Properties().also {
@@ -22,14 +29,12 @@ allprojects {
     base.archivesBaseName = "ksim65"
 
     repositories {
-        // Use jcenter for resolving dependencies.
         // You can declare any Maven/Ivy/file repository here.
         mavenLocal()
-        jcenter()
+        mavenCentral()
         maven("https://jitpack.io")
     }
 }
-
 
 dependencies {
     // Align versions of all Kotlin components
@@ -47,7 +52,7 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.4.0")
 
     subprojects.forEach {
-        archives(it)
+        implementation(it)
     }
 }
 
@@ -79,20 +84,20 @@ tasks {
 val c64emuScript by tasks.registering(CreateStartScripts::class) {
     outputDir = File(project.buildDir, "bin")
     applicationName = "c64emu"
-    mainClassName = "razorvine.c64emu.C64MainKt"
+    mainClass.set("razorvine.c64emu.C64MainKt")
     classpath = project.tasks["jar"].outputs.files+project.configurations.runtimeClasspath.get()
 }
 
 val ehbasicScript by tasks.registering(CreateStartScripts::class) {
     outputDir = File(project.buildDir, "bin")
     applicationName = "ehbasic"
-    mainClassName = "razorvine.examplemachines.EhBasicMainKt"
+    mainClass.set("razorvine.examplemachines.EhBasicMainKt")
     classpath = project.tasks["jar"].outputs.files+project.configurations.runtimeClasspath.get()
 }
 
 application {
     applicationName = "ksim65vm"
-    mainClassName = "razorvine.examplemachines.MachineMainKt"
+    mainClass.set("razorvine.examplemachines.MachineMainKt")
     applicationDistribution.into("bin") {
         from(c64emuScript, ehbasicScript)
         fileMode = 493
@@ -137,9 +142,9 @@ bintray {
         it.vcsUrl = "https://github.com/irmen/ksim65.git"
         it.setLabels("6502", "retro", "emulation", "c64")
         it.githubRepo = it.vcsUrl
-        it.version = VersionConfig().also {
-            it.gpg = GpgConfig().also {
-                it.sign = true
+        it.version = VersionConfig().also { vc->
+            vc.gpg = GpgConfig().also { gpg->
+                gpg.sign = true
             }
         }
     }

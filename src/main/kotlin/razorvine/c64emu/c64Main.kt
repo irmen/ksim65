@@ -87,7 +87,7 @@ class C64Machine(title: String) : IVirtualMachine {
             val txttab = ram[0x2b]+256*ram[0x2c]  // basic load address ($0801 usually)
             val fnaddr = ram[0xbb]+256*ram[0xbc]  // file name address
             return if (fnlen > 0) {
-                val filename = (0 until fnlen).map { ram[fnaddr+it].toChar() }.joinToString("")
+                val filename = (0 until fnlen).map { ram[fnaddr+it].toInt().toChar() }.joinToString("")
                 val loadEndAddress = searchAndLoadFile(filename, fa, sa, txttab)
                 if (loadEndAddress != null) {
                     ram[0x90] = 0  // status OK
@@ -108,7 +108,7 @@ class C64Machine(title: String) : IVirtualMachine {
             val fromAddr = ram[cpu.regA]+256*ram[cpu.regA+1]
             val endAddr = cpu.regX+256*cpu.regY
             val data = (fromAddr..endAddr).map { ram[it].toByte() }.toByteArray()
-            var filename = (0 until fnlen).map { ram[fnaddr+it].toChar() }.joinToString("").toLowerCase()
+            var filename = (0 until fnlen).map { ram[fnaddr+it].toInt().toChar() }.joinToString("").lowercase()
             if (!filename.endsWith(".prg")) filename += ".prg"
             File(filename).outputStream().use {
                 it.write(fromAddr and 0xff)
@@ -133,13 +133,13 @@ class C64Machine(title: String) : IVirtualMachine {
             "$" -> {
                 // load the directory
                 val files = File(".").listFiles(FileFilter { it.isFile })!!.associate {
-                    val name = it.nameWithoutExtension.toUpperCase()
-                    val ext = it.extension.toUpperCase()
+                    val name = it.nameWithoutExtension.uppercase()
+                    val ext = it.extension.uppercase()
                     val fileAndSize = Pair(it, it.length())
                     if (name.isEmpty()) Pair(".$ext", "") to fileAndSize
                     else Pair(name, ext) to fileAndSize
                 }
-                val dirname = File(".").canonicalPath.substringAfterLast(File.separator).toUpperCase()
+                val dirname = File(".").canonicalPath.substringAfterLast(File.separator).uppercase()
                 val dirlisting = makeDirListing(dirname, files, basicLoadAddress)
                 ram.load(dirlisting, basicLoadAddress)
                 return basicLoadAddress+dirlisting.size-1
@@ -147,7 +147,7 @@ class C64Machine(title: String) : IVirtualMachine {
             else -> {
                 fun findHostFile(filename: String): String? {
                     val file = File(".").listFiles(FileFilter { it.isFile })?.firstOrNull {
-                        it.name.toUpperCase() == filename
+                        it.name.uppercase() == filename
                     }
                     return file?.name
                 }
@@ -179,7 +179,7 @@ class C64Machine(title: String) : IVirtualMachine {
             listing.add((address ushr 8).toShort())
             listing.add((lineNumber and 0xff).toShort())
             listing.add((lineNumber ushr 8).toShort())
-            listing.addAll(line.map { it.toShort() })
+            listing.addAll(line.map { it.code.toShort() })
             listing.add(0)
         }
         addLine(0, "\u0012\"${dirname.take(16).padEnd(16)}\" 00 2A")

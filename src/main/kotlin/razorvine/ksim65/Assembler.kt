@@ -87,7 +87,7 @@ class Assembler(cpu: Cpu6502, val memory: MemMappedComponent, initialStartAddres
         }
 
         val instructionSize: Int
-        val mnemonic = args[0].toLowerCase().trim()
+        val mnemonic = args[0].lowercase().trim()
         when (args.size) {
             1 -> {
                 // implied or acc

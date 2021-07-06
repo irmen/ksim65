@@ -27,7 +27,7 @@ class ParallelPort(startAddress: Address, endAddress: Address) : MemMappedCompon
         if (offset == 0) dataByte = data
         else if (offset == 1) {
             if ((data.toInt() and 1) == 1) {
-                val char = dataByte.toChar()
+                val char = dataByte.toInt().toChar()
                 println("PARALLEL WRITE: '$char'")
             }
         }

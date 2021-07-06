@@ -34,7 +34,7 @@ class Monitor(val bus: Bus, val cpu: Cpu6502) {
                 val result = mutableListOf<String>()
                 for (addr in start until end step 16) {
                     result.add("m$${hexW(addr)}  "+(0..15).joinToString(" ") { hexB(bus.read(addr+it)) }+"  "+(0..15).joinToString("") {
-                        val chr = bus.read(addr+it).toChar()
+                        val chr = bus.read(addr+it).toInt().toChar()
                         if (chr.isLetterOrDigit()) chr.toString()
                         else "."
                     })
@@ -55,7 +55,7 @@ class Monitor(val bus: Bus, val cpu: Cpu6502) {
                 val result = mutableListOf<String>()
                 for (addr in start until end step 64) {
                     result.add("i$${hexW(addr)}  "+(0..63).joinToString("") {
-                        val chr = bus.read(addr+it).toChar()
+                        val chr = bus.read(addr+it).toInt().toChar()
                         if (chr.isLetterOrDigit()) chr.toString()
                         else "."
                     })

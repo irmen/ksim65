@@ -22,7 +22,7 @@ class PsfFont(name: String) {
     private val rawBitmaps: List<ByteArray>
 
     init {
-        var data = ByteArray(0)
+        val data: ByteArray
         val fontsDirectory = "/usr/share/kbd/consolefonts"
         var stream = javaClass.getResourceAsStream("/charset/$name.psfu.gz") ?:
                      javaClass.getResourceAsStream("/charset/$name.psf.gz") ?:

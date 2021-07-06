@@ -148,7 +148,7 @@ class Test6502CpuBasics {
         }
     }
 
-    fun runBCDbeebTest(cpu: Cpu6502, testChoice: Char) {
+    private fun runBCDbeebTest(cpu: Cpu6502, testChoice: Char) {
         // bcd test code from https://github.com/hoglet67/AtomSoftwareArchive/tree/master/tests/clark
         val bus = Bus()
         bus.add(cpu)
@@ -160,7 +160,7 @@ class Test6502CpuBasics {
         }
         cpu.addBreakpoint(0xffe0) { cpu, pc ->
             // OSRDCH read character
-            cpu.regA = testChoice.toInt()
+            cpu.regA = testChoice.code
             Cpu6502.BreakpointResultAction()
         }
         val ram = Ram(0, 0xffff)

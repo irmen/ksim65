@@ -52,7 +52,7 @@ class Display(startAddress: Address, endAddress: Address, private val host: IHos
     }
 
     override fun reset() {
-        charMatrix.forEach { it.fill(' '.toShort()) }
+        charMatrix.forEach { it.fill(' '.code.toShort()) }
         cursorX = 0
         cursorY = 0
         charposX = 0
@@ -94,7 +94,7 @@ class Display(startAddress: Address, endAddress: Address, private val host: IHos
             0x02 -> {
                 if (charposY in 0 until charHeight && charposX in 0 until charWidth) {
                     charMatrix[charposY][charposX] = data
-                    host.setChar(charposX, charposY, data.toChar())
+                    host.setChar(charposX, charposY, data.toInt().toChar())
                 }
             }
             0x03 -> pixelX = (pixelX and 0xff00) or data.toInt()
@@ -121,7 +121,7 @@ class Display(startAddress: Address, endAddress: Address, private val host: IHos
                                     cursorX = charWidth-1
                                 }
                             }
-                            charMatrix[cursorY][cursorX] = ' '.toShort()
+                            charMatrix[cursorY][cursorX] = ' '.code.toShort()
                             host.setChar(cursorX, cursorY, ' ')
                         }
                         0x09 -> {
@@ -142,7 +142,7 @@ class Display(startAddress: Address, endAddress: Address, private val host: IHos
                         else -> {
                             // set character on screen
                             charMatrix[cursorY][cursorX] = data
-                            host.setChar(cursorX, cursorY, data.toChar())
+                            host.setChar(cursorX, cursorY, data.toInt().toChar())
                             cursorX++
                             if (cursorX >= charWidth) {
                                 cursorX = 0
@@ -164,7 +164,7 @@ class Display(startAddress: Address, endAddress: Address, private val host: IHos
                 charMatrix[y+1].copyInto(charMatrix[y])
             }
             for (x in 0 until charWidth) {
-                charMatrix[charHeight-1][x] = ' '.toShort()
+                charMatrix[charHeight-1][x] = ' '.code.toShort()
             }
             cursorY--
             host.scrollUp()

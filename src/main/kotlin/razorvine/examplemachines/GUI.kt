@@ -32,7 +32,7 @@ private class BitmapScreenPanel : JPanel() {
     private var cursorY: Int = 0
     private var cursorState: Boolean = false
     private val screenFont = PsfFont("spleen-12x24")   // nice fonts:  sun12x22, iso01-12x22, ter-124b, spleen-12x24, default8x16
-    private val PIXEL_SCALING: Double = if(screenFont.width <= 8) 1.5 else 1.0
+    private val pixelScaling: Double = if(screenFont.width <= 8) 1.5 else 1.0
     private val screenFontImage: BufferedImage
 
     init {
@@ -44,8 +44,8 @@ private class BitmapScreenPanel : JPanel() {
         g2d = image.graphics as Graphics2D
         screenFontImage = screenFont.convertToImage(g2d, ScreenDefs.FG_COLOR)
 
-        val size = Dimension((image.width*PIXEL_SCALING).toInt(),
-                             (image.height*PIXEL_SCALING).toInt())
+        val size = Dimension((image.width*pixelScaling).toInt(),
+                             (image.height*pixelScaling).toInt())
         minimumSize = size
         maximumSize = size
         preferredSize = size
@@ -58,13 +58,13 @@ private class BitmapScreenPanel : JPanel() {
     override fun paint(graphics: Graphics) {
         val g2d = graphics as Graphics2D
         g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR)
-        g2d.drawImage(image, 0, 0, (image.width*PIXEL_SCALING).toInt(),
-                      (image.height*PIXEL_SCALING).toInt(), null)
+        g2d.drawImage(image, 0, 0, (image.width*pixelScaling).toInt(),
+                      (image.height*pixelScaling).toInt(), null)
         if (cursorState) {
-            val scx = (cursorX*PIXEL_SCALING*screenFont.width).toInt()
-            val scy = (cursorY*PIXEL_SCALING*screenFont.height).toInt()
-            val scw = (screenFont.width*PIXEL_SCALING).toInt()
-            val sch = (screenFont.height*PIXEL_SCALING).toInt()
+            val scx = (cursorX*pixelScaling*screenFont.width).toInt()
+            val scy = (cursorY*pixelScaling*screenFont.height).toInt()
+            val scw = (screenFont.width*pixelScaling).toInt()
+            val sch = (screenFont.height*pixelScaling).toInt()
             g2d.setXORMode(Color.CYAN)
             g2d.fillRect(scx, scy, scw, sch)
             g2d.setPaintMode()
@@ -86,7 +86,7 @@ private class BitmapScreenPanel : JPanel() {
     fun getPixel(x: Int, y: Int) = image.getRGB(x, y) != ScreenDefs.BG_COLOR.rgb
 
     fun setChar(x: Int, y: Int, character: Char) {
-        val charnum = character.toInt()
+        val charnum = character.code
         val cx = charnum % (screenFontImage.width/screenFont.width)
         val cy = charnum / (screenFontImage.width/screenFont.width)
         g2d.clearRect(x*screenFont.width, y*screenFont.height, screenFont.width, screenFont.height)
@@ -105,7 +105,7 @@ private class BitmapScreenPanel : JPanel() {
 
     fun mousePixelPosition(): Point? {
         val pos = mousePosition ?: return null
-        return Point((pos.x/PIXEL_SCALING).toInt(), (pos.y/PIXEL_SCALING).toInt())
+        return Point((pos.x/pixelScaling).toInt(), (pos.y/pixelScaling).toInt())
     }
 
     fun cursorPos(x: Int, y: Int) {

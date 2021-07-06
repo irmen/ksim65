@@ -50,7 +50,7 @@ abstract class TestCommon6502 {
     abstract fun createCpu(): Cpu6502
 
     init {
-        mpu = createCpu()
+        mpu = this.createCpu()
         bus.add(mpu)
         bus.add(memory)
         memory.fill(0xaa)

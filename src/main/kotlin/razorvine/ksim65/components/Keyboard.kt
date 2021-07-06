@@ -25,7 +25,7 @@ class Keyboard(startAddress: Address, endAddress: Address, private val host: IHo
 
     override operator fun get(offset: Int): UByte {
         return when (offset) {
-            0x00 -> host.keyboard()?.toShort() ?: 0
+            0x00 -> host.keyboard()?.code?.toShort() ?: 0
             else -> 0xff
         }
     }

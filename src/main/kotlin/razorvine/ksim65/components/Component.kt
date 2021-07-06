@@ -45,7 +45,7 @@ abstract class MemMappedComponent(val startAddress: Address, val endAddress: Add
             }
             print("  ")
             val chars = if (charmapper != null) bytes.map { b -> charmapper(b) }
-            else bytes.map { b -> if (b in 32..255) b.toChar() else '.' }
+            else bytes.map { b -> if (b in 32..255) b.toInt().toChar() else '.' }
             println(chars.joinToString(""))
         }
     }
