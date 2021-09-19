@@ -1,4 +1,3 @@
-import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.util.*
 import kotlin.math.max
@@ -6,11 +5,10 @@ import kotlin.math.max
 
 plugins {
     // Apply the Kotlin JVM plugin to add support for Kotlin on the JVM.
-    kotlin("jvm") version "1.5.20"
+    kotlin("jvm") version "1.5.30"
     `maven-publish`
     application
     java
-    id("org.jetbrains.dokka") version "0.10.1"
     id("com.jfrog.bintray") version "1.8.4"
 }
 
@@ -71,14 +69,6 @@ tasks {
     withType<KotlinCompile> {
         kotlinOptions.jvmTarget = "11"
     }
-
-    named<DokkaTask>("dokka") {
-        outputFormat = "html"
-        outputDirectory = "$buildDir/kdoc"
-        configuration {
-            skipEmptyPackages = true
-        }
-    }
 }
 
 val c64emuScript by tasks.registering(CreateStartScripts::class) {
@@ -110,12 +100,6 @@ val sourcesJar by tasks.registering(Jar::class) {
     from(sourceSets.main.get().allSource)
 }
 
-val dokkaDocs by tasks.registering(Jar::class) {
-    dependsOn("dokka")
-    archiveClassifier.set("kdoc")
-    from(fileTree(File(project.buildDir, "kdoc")))
-}
-
 publishing {
     repositories {
         mavenLocal()
@@ -124,7 +108,6 @@ publishing {
         register("mavenJava", MavenPublication::class) {
             from(components["java"])
             artifact(sourcesJar.get())
-            artifact(dokkaDocs.get())
         }
     }
 }
