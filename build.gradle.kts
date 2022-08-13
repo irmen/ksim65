@@ -5,7 +5,7 @@ import kotlin.math.max
 
 plugins {
     // Apply the Kotlin JVM plugin to add support for Kotlin on the JVM.
-    kotlin("jvm") version "1.6.10"
+    kotlin("jvm") version "1.7.10"
     `maven-publish`
     application
     java
@@ -37,6 +37,7 @@ allprojects {
 dependencies {
     // Align versions of all Kotlin components
     implementation(platform("org.jetbrains.kotlin:kotlin-bom"))
+    implementation("org.jetbrains.kotlin:kotlin-reflect")
 
     // Use the Kotlin JDK 8 standard library.
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")

@@ -188,9 +188,7 @@ open class Cpu6502 : BusComponent() {
 
             regPC++
             instrCycles = currentInstruction.cycles
-            val extraCycleFromAddr = applyAddressingMode(currentInstruction.mode)
-            val extraCycleFromInstr = dispatchOpcode(currentOpcode)
-            if(extraCycleFromAddr and extraCycleFromInstr)
+            if(applyAddressingMode(currentInstruction.mode) and dispatchOpcode(currentOpcode))
                 instrCycles++
         }
 
