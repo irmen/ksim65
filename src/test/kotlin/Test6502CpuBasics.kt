@@ -153,14 +153,14 @@ class Test6502CpuBasics {
         val bus = Bus()
         bus.add(cpu)
         cpu.breakpointForBRK = { _, pc -> fail("brk instruction at \$${hexW(pc)}") }
-        cpu.addBreakpoint(0xffee) { cpu, pc ->
+        cpu.addBreakpoint(0xffee) { cpu2, pc ->
             // OSWRCH write character
-            print("${cpu.regA.toChar()}")
+            print("${cpu2.regA.toChar()}")
             Cpu6502.BreakpointResultAction()
         }
-        cpu.addBreakpoint(0xffe0) { cpu, pc ->
+        cpu.addBreakpoint(0xffe0) { cpu2, pc ->
             // OSRDCH read character
-            cpu.regA = testChoice.code
+            cpu2.regA = testChoice.code
             Cpu6502.BreakpointResultAction()
         }
         val ram = Ram(0, 0xffff)

@@ -5,7 +5,7 @@ import kotlin.math.max
 
 plugins {
     // Apply the Kotlin JVM plugin to add support for Kotlin on the JVM.
-    kotlin("jvm") version "1.7.10"
+    kotlin("jvm") version "1.8.21"
     `maven-publish`
     application
     java
@@ -24,7 +24,7 @@ allprojects {
     }
     version = versionProps["version"] as String
     group = "net.razorvine"
-    base.archivesBaseName = "ksim65"
+    // base.archivesBaseName = "ksim65"
 
     repositories {
         // You can declare any Maven/Ivy/file repository here.
