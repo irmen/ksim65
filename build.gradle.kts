@@ -5,11 +5,10 @@ import kotlin.math.max
 
 plugins {
     // Apply the Kotlin JVM plugin to add support for Kotlin on the JVM.
-    kotlin("jvm") version "1.8.21"
+    kotlin("jvm") version "1.9.0"
     `maven-publish`
     application
     java
-    id("com.jfrog.bintray") version "1.8.4"
 }
 
 java {
@@ -47,8 +46,8 @@ dependencies {
 
     // Use the Kotlin JUnit5 integration.
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.4.0")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.4.0")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.0")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
     subprojects.forEach {
         implementation(it)
@@ -109,27 +108,6 @@ publishing {
         register("mavenJava", MavenPublication::class) {
             from(components["java"])
             artifact(sourcesJar.get())
-        }
-    }
-}
-
-bintray {
-    user = System.getenv("BINTRAY_USER")
-    key = System.getenv("BINTRAY_KEY")
-
-    setPublications(* publishing.publications.names.toTypedArray())
-    // setConfigurations("archives")
-    pkg = PackageConfig().also {
-        it.name = "ksim65"
-        it.repo = "maven"
-        it.setLicenses("MIT")
-        it.vcsUrl = "https://github.com/irmen/ksim65.git"
-        it.setLabels("6502", "retro", "emulation", "c64")
-        it.githubRepo = it.vcsUrl
-        it.version = VersionConfig().also { vc->
-            vc.gpg = GpgConfig().also { gpg->
-                gpg.sign = true
-            }
         }
     }
 }

@@ -1,6 +1,6 @@
 [![saythanks](https://img.shields.io/badge/say-thanks-ff69b4.svg)](https://saythanks.io/to/irmen)
 [![Build Status](https://travis-ci.org/irmen/ksim65.svg?branch=master)](https://travis-ci.org/irmen/ksim65)
-JCenter: [![Download from Jcenter](https://api.bintray.com/packages/irmen/maven/ksim65/images/download.svg)](https://bintray.com/irmen/maven/ksim65/_latestVersion)
+
 
 # KSim65 - Kotlin/JVM 6502/65C02 microprocessor simulator
 
@@ -30,7 +30,7 @@ Still to be written. For now, use the source ;-)
 
 ## Using it as a library in your own project
 
-Ksim65 is available on the [JCenter maven repository](https://bintray.com/irmen/maven/ksim65/_latestVersion).
+**TODO move to another repository for published packages.**
 
 You can simply add it as a dependency to your project.
 For Maven:
