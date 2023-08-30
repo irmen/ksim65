@@ -1,7 +1,3 @@
-[![saythanks](https://img.shields.io/badge/say-thanks-ff69b4.svg)](https://saythanks.io/to/irmen)
-[![Build Status](https://travis-ci.org/irmen/ksim65.svg?branch=master)](https://travis-ci.org/irmen/ksim65)
-
-
 # KSim65 - Kotlin/JVM 6502/65C02 microprocessor simulator
 
 *Written by Irmen de Jong (irmen@razorvine.net)*
@@ -38,13 +34,13 @@ For Maven:
     <dependency>
         <groupId>net.razorvine</groupId>
         <artifactId>ksim65</artifactId>
-        <version>1.8</version>
+        <version>1.10</version>
         <type>pom</type>
     </dependency>
 
 For Gradle:
 
-    implementation 'net.razorvine:ksim65:1.8'
+    implementation 'net.razorvine:ksim65:1.10'
 
 Update the version as required.
 
