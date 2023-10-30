@@ -72,14 +72,14 @@ tasks {
 }
 
 val c64emuScript by tasks.registering(CreateStartScripts::class) {
-    outputDir = File(project.buildDir, "bin")
+    outputDir = project.layout.buildDirectory.dir("bin").get().asFile
     applicationName = "c64emu"
     mainClass.set("razorvine.c64emu.C64MainKt")
     classpath = project.tasks["jar"].outputs.files+project.configurations.runtimeClasspath.get()
 }
 
 val ehbasicScript by tasks.registering(CreateStartScripts::class) {
-    outputDir = File(project.buildDir, "bin")
+    outputDir = project.layout.buildDirectory.dir("bin").get().asFile
     applicationName = "ehbasic"
     mainClass.set("razorvine.examplemachines.EhBasicMainKt")
     classpath = project.tasks["jar"].outputs.files+project.configurations.runtimeClasspath.get()
