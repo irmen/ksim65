@@ -1,3 +1,4 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.util.*
 import kotlin.math.max
@@ -5,16 +6,18 @@ import kotlin.math.max
 
 plugins {
     // Apply the Kotlin JVM plugin to add support for Kotlin on the JVM.
-    kotlin("jvm") version "1.9.10"
+    kotlin("jvm") version "2.0.20"
     `maven-publish`
     application
     java
 }
 
+/*
 java {
     sourceCompatibility = JavaVersion.VERSION_11
     targetCompatibility = JavaVersion.VERSION_11
 }
+*/
 
 
 allprojects {
@@ -46,7 +49,7 @@ dependencies {
 
     // Use the Kotlin JUnit5 integration.
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.0")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.3")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
     subprojects.forEach {
@@ -66,20 +69,23 @@ tasks {
         maxParallelForks = max(1, Runtime.getRuntime().availableProcessors()/2)
     }
 
-    withType<KotlinCompile> {
-        kotlinOptions.jvmTarget = "11"
-    }
+//    withType<KotlinCompile> {
+//        compilerOptions {
+//            jvmTarget.set(JvmTarget.JVM_11)
+//        }
+//    }
 }
 
+
 val c64emuScript by tasks.registering(CreateStartScripts::class) {
-    outputDir = File(project.buildDir, "bin")
+    outputDir = project.layout.buildDirectory.dir("bin").get().asFile
     applicationName = "c64emu"
     mainClass.set("razorvine.c64emu.C64MainKt")
     classpath = project.tasks["jar"].outputs.files+project.configurations.runtimeClasspath.get()
 }
 
 val ehbasicScript by tasks.registering(CreateStartScripts::class) {
-    outputDir = File(project.buildDir, "bin")
+    outputDir = project.layout.buildDirectory.dir("bin").get().asFile
     applicationName = "ehbasic"
     mainClass.set("razorvine.examplemachines.EhBasicMainKt")
     classpath = project.tasks["jar"].outputs.files+project.configurations.runtimeClasspath.get()
@@ -90,7 +96,15 @@ application {
     mainClass.set("razorvine.examplemachines.MachineMainKt")
     applicationDistribution.into("bin") {
         from(c64emuScript, ehbasicScript)
-        fileMode = 493
+        filePermissions {
+            user {
+                read=true
+                execute=true
+                write=true
+            }
+            other.execute = true
+            group.execute = true
+        }
     }
 }
 
