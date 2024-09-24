@@ -20,8 +20,8 @@ class VicII(startAddress: Address, endAddress: Address, val cpu: Cpu6502) : MemM
         get() = currentRasterLine == 0
 
     companion object {
-        const val framerate = 50
-        const val rasterlines = 312
+        const val FRAMERATE = 50
+        const val RASTERLINES = 312
     }
 
     init {
@@ -34,7 +34,7 @@ class VicII(startAddress: Address, endAddress: Address, val cpu: Cpu6502) : MemM
         if (scanlineClocks == 63) {
             scanlineClocks = 0
             currentRasterLine++
-            if (currentRasterLine >= rasterlines) currentRasterLine = 0
+            if (currentRasterLine >= RASTERLINES) currentRasterLine = 0
             interruptStatusRegisterD019 = if (currentRasterLine == rasterIrqLine) {
                 // signal that current raster line is equal to the desired IRQ raster line
                 // schedule an IRQ as well if the raster interrupt is enabled

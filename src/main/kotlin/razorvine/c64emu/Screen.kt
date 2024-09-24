@@ -147,9 +147,9 @@ internal class Screen(private val chargen: Rom, val ram: MemoryComponent) : JPan
     }
 
     private fun renderCharacterMode(vicBank: Address, vicVMCSB: Int, multiColorMode: Boolean) {
-        if (multiColorMode) {
-            // TODO multicolor character mode, for now, falls back to normal char mode
-        }
+//        if (multiColorMode) {
+//            // TODO multicolor character mode, for now, falls back to normal char mode
+//        }
 
         // normal character mode
         val screenAddress = vicBank+((vicVMCSB ushr 4) shl 10)
@@ -226,7 +226,7 @@ internal class Screen(private val chargen: Rom, val ram: MemoryComponent) : JPan
 
     private fun drawColoredChar(x: Int, y: Int, char: Int, color: Int, charsetAddr: Address) {
         // The vic 'sees' the charset ROM at these addresses: $1000(normal) + $1800(shifted), $9000(normal) + $9800(shifted)
-        // so we can use pre-loaded images to efficiently draw the default ROM characters.
+        // so we can use preloaded images to efficiently draw the default ROM characters.
         // If the address is different, the vic takes charset data from RAM instead (thus allowing user defined charsets)
         // A user-supplied character set in RAM must begin at an address that is 2048 byte aligned,
         // and lies within the same 16K VIC bank as the screen character memory.

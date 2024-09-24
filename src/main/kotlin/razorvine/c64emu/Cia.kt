@@ -61,7 +61,7 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address, val cpu: 
                 updatedAt = latchedTime
                 var elapsedSeconds = (latchedTime.toDouble()-startedAt)/1000.0+userStartTime
                 if(elapsedSeconds>60*3600)
-                    elapsedSeconds=0.0      // TOD counds max 60 hours
+                    elapsedSeconds=0.0      // T.O.D. counts max 60 hours
                 hours = (elapsedSeconds/3600).toInt()
                 elapsedSeconds -= hours*3600
                 minutes = (elapsedSeconds/60).toInt()
@@ -111,7 +111,7 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address, val cpu: 
             // timer B is enabled
             val regCRB = ramBuffer[0x0f].toInt()
             if (regCRB and 0b01000000 != 0) {
-                // timer B counts timer A underruns
+                // timer B counts timer A under-runs
                 if (timerAactual == 0) timerBactual--
             } else {
                 // timer B counts just the system cycles

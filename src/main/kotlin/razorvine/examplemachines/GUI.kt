@@ -11,7 +11,7 @@ import javax.swing.event.MouseInputListener
 
 
 /**
- * Define a monochrome screen that can display 80x30 charaacters
+ * Define a monochrome screen that can display 80x30 characters
  * (usually equivalent to 640x480 pixels, but depends on the font size)
  */
 object ScreenDefs {

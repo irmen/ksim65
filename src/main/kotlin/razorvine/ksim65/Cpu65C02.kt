@@ -32,7 +32,7 @@ class Cpu65C02 : Cpu6502() {
             Wait.Stopped -> {
                 if (nmiAsserted || irqAsserted) {
                     // jump to reset vector after hardware interrupt
-                    regPC = readWord(RESET_vector)
+                    regPC = readWord(RESET_VECTOR)
                 }
             }
         }
@@ -631,7 +631,7 @@ class Cpu65C02 : Cpu6502() {
         pushStack(regP)
         regP.I = true     // interrupts are now disabled
         regP.D = false    // this is different from NMOS 6502
-        regPC = readWord(IRQ_vector)
+        regPC = readWord(IRQ_VECTOR)
 
         // TODO prevent NMI from triggering immediately after IRQ/BRK... how does that work exactly?
         return false

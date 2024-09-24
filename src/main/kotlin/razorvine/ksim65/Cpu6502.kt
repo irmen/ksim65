@@ -20,9 +20,9 @@ open class Cpu6502 : BusComponent() {
     class InstructionError(msg: String) : RuntimeException(msg)
 
     companion object {
-        const val NMI_vector = 0xfffa
-        const val RESET_vector = 0xfffc
-        const val IRQ_vector = 0xfffe
+        const val NMI_VECTOR = 0xfffa
+        const val RESET_VECTOR = 0xfffc
+        const val IRQ_VECTOR = 0xfffe
     }
 
     class StatusRegister(var C: Boolean = false, var Z: Boolean = false, var I: Boolean = false, var D: Boolean = false,
@@ -69,7 +69,7 @@ open class Cpu6502 : BusComponent() {
      *    that's actually on the location of the breakpoint.
      *    (it's a bit limited; you can only use one-byte instructions for this)
      * Setting causeBRK will simulate a software interrupt via BRK,
-     *    without having to actually have a BRK in the breakpoint's memory location
+     *    without having to actually have a BRK in the breakpoint memory location
      *    (this is the same as changeOpcode=0x00)
      */
     class BreakpointResultAction(val changePC: Address? = null, val changeOpcode: Int? = null, val causeBRK: Boolean = false)
@@ -147,7 +147,7 @@ open class Cpu6502 : BusComponent() {
         regP.V = false
         regP.N = false
         regSP = 0xfd
-        regPC = readWord(RESET_vector)
+        regPC = readWord(RESET_VECTOR)
         regA = 0
         regX = 0
         regY = 0
@@ -1028,7 +1028,7 @@ open class Cpu6502 : BusComponent() {
         pushStack(regP)
         regP.I = true     // interrupts are now disabled
         // NMOS 6502 doesn't clear the D flag (CMOS 65C02 version does...)
-        regPC = readWord(IRQ_vector)
+        regPC = readWord(IRQ_VECTOR)
 
         // TODO prevent NMI from triggering immediately after IRQ/BRK... how does that work exactly?
         return false
@@ -1046,10 +1046,10 @@ open class Cpu6502 : BusComponent() {
         // jump to the appropriate irq vector and clear the assertion status of the irq
         // (hmm... should the cpu do that? or is this the peripheral's job?)
         if(nmiAsserted) {
-            regPC = readWord(NMI_vector)
+            regPC = readWord(NMI_VECTOR)
             nmiAsserted = false
         } else {
-            regPC = readWord(IRQ_vector)
+            regPC = readWord(IRQ_VECTOR)
             irqAsserted = false
         }
 

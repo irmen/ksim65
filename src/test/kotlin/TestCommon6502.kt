@@ -54,22 +54,22 @@ abstract class TestCommon6502 {
         bus.add(mpu)
         bus.add(memory)
         memory.fill(0xaa)
-        memory[Cpu6502.RESET_vector] = 0
-        memory[Cpu6502.RESET_vector + 1] = 0
+        memory[Cpu6502.RESET_VECTOR] = 0
+        memory[Cpu6502.RESET_VECTOR+1] = 0
         mpu.reset()
         mpu.regP.I = false        // allow interrupts again
     }
 
     companion object {
         // processor flags
-        const val fNEGATIVE = 128
-        const val fOVERFLOW = 64
-        const val fUNUSED = 32
-        const val fBREAK = 16
-        const val fDECIMAL = 8
-        const val fINTERRUPT = 4
-        const val fZERO = 2
-        const val fCARRY = 1
+        const val F_NEGATIVE = 128
+        const val F_OVERFLOW = 64
+        const val F_UNUSED = 32
+        const val F_BREAK = 16
+        const val F_DECIMAL = 8
+        const val F_INTERRUPT = 4
+        const val F_ZERO = 2
+        const val F_CARRY = 1
     }
 
     // test helpers
@@ -2099,8 +2099,8 @@ abstract class TestCommon6502 {
         assertEquals(0xFC, mpu.regSP)
         assertEquals(0xC0, memory[0x1FF])  // PCH
         assertEquals(0x02, memory[0x1FE])  // PCL
-        assertEquals(fBREAK or fUNUSED, memory[0x1FD].toInt(), "Status on stack should have no I flag")
-        assertEquals(fBREAK or fUNUSED or fINTERRUPT, mpu.regP.asInt())
+        assertEquals(F_BREAK or F_UNUSED, memory[0x1FD].toInt(), "Status on stack should have no I flag")
+        assertEquals(F_BREAK or F_UNUSED or F_INTERRUPT, mpu.regP.asInt())
     }
 
     // BVC
@@ -4123,13 +4123,13 @@ abstract class TestCommon6502 {
     fun test_php_pushes_processor_status_and_updates_sp() {
         for (flags in 0 until 0x100) {
             mpu.reset()
-            mpu.regP.fromInt(flags or fBREAK or fUNUSED)
+            mpu.regP.fromInt(flags or F_BREAK or F_UNUSED)
             // $0000 PHP
             memory[0x0000] = 0x08
             mpu.step()
             assertEquals(0x0001, mpu.regPC)
             assertEquals(0xFC, mpu.regSP)
-            assertEquals((flags or fBREAK or fUNUSED), memory[0x1FD].toInt())
+            assertEquals((flags or F_BREAK or F_UNUSED), memory[0x1FD].toInt())
         }
     }
 
@@ -5504,7 +5504,7 @@ abstract class TestCommon6502 {
 
     @Test
     fun test_sta_absolute_stores_a_leaves_a_and_n_flag_unchanged() {
-        val flags = 0xFF and fNEGATIVE.inv()
+        val flags = 0xFF and F_NEGATIVE.inv()
         mpu.regP.fromInt(flags)
         mpu.regA = 0xFF
         // $0000 STA $ABCD
@@ -5519,7 +5519,7 @@ abstract class TestCommon6502 {
 
     @Test
     fun test_sta_absolute_stores_a_leaves_a_and_z_flag_unchanged() {
-        val flags = 0xFF and fZERO.inv()
+        val flags = 0xFF and F_ZERO.inv()
         mpu.regP.fromInt(flags)
         mpu.regA = 0x00
         // $0000 STA $ABCD
@@ -5536,7 +5536,7 @@ abstract class TestCommon6502 {
 
     @Test
     fun test_sta_zp_stores_a_leaves_a_and_n_flag_unchanged() {
-        val flags = 0xFF and fNEGATIVE.inv()
+        val flags = 0xFF and F_NEGATIVE.inv()
         mpu.regP.fromInt(flags)
         mpu.regA = 0xFF
         // $0000 STA $0010
@@ -5551,7 +5551,7 @@ abstract class TestCommon6502 {
 
     @Test
     fun test_sta_zp_stores_a_leaves_a_and_z_flag_unchanged() {
-        val flags = 0xFF and fZERO.inv()
+        val flags = 0xFF and F_ZERO.inv()
         mpu.regP.fromInt(flags)
         mpu.regA = 0x00
         // $0000 STA $0010
@@ -5568,7 +5568,7 @@ abstract class TestCommon6502 {
 
     @Test
     fun test_sta_abs_x_indexed_stores_a_leaves_a_and_n_flag_unchanged() {
-        val flags = 0xFF and fNEGATIVE.inv()
+        val flags = 0xFF and F_NEGATIVE.inv()
         mpu.regP.fromInt(flags)
         mpu.regA = 0xFF
         mpu.regX = 0x03
@@ -5584,7 +5584,7 @@ abstract class TestCommon6502 {
 
     @Test
     fun test_sta_abs_x_indexed_stores_a_leaves_a_and_z_flag_unchanged() {
-        val flags = 0xFF and fZERO.inv()
+        val flags = 0xFF and F_ZERO.inv()
         mpu.regP.fromInt(flags)
         mpu.regA = 0x00
         mpu.regX = 0x03
@@ -5602,7 +5602,7 @@ abstract class TestCommon6502 {
 
     @Test
     fun test_sta_abs_y_indexed_stores_a_leaves_a_and_n_flag_unchanged() {
-        val flags = 0xFF and fNEGATIVE.inv()
+        val flags = 0xFF and F_NEGATIVE.inv()
         mpu.regP.fromInt(flags)
         mpu.regA = 0xFF
         mpu.regY = 0x03
@@ -5618,7 +5618,7 @@ abstract class TestCommon6502 {
 
     @Test
     fun test_sta_abs_y_indexed_stores_a_leaves_a_and_z_flag_unchanged() {
-        val flags = 0xFF and fZERO.inv()
+        val flags = 0xFF and F_ZERO.inv()
         mpu.regP.fromInt(flags)
         mpu.regA = 0x00
         mpu.regY = 0x03
@@ -5636,7 +5636,7 @@ abstract class TestCommon6502 {
 
     @Test
     fun test_sta_ind_indexed_x_stores_a_leaves_a_and_n_flag_unchanged() {
-        val flags = 0xFF and fNEGATIVE.inv()
+        val flags = 0xFF and F_NEGATIVE.inv()
         mpu.regP.fromInt(flags)
         mpu.regA = 0xFF
         mpu.regX = 0x03
@@ -5654,7 +5654,7 @@ abstract class TestCommon6502 {
 
     @Test
     fun test_sta_ind_indexed_x_stores_a_leaves_a_and_z_flag_unchanged() {
-        val flags = 0xFF and fZERO.inv()
+        val flags = 0xFF and F_ZERO.inv()
         mpu.regP.fromInt(flags)
         mpu.regA = 0x00
         mpu.regX = 0x03
@@ -5674,7 +5674,7 @@ abstract class TestCommon6502 {
 
     @Test
     fun test_sta_indexed_ind_y_stores_a_leaves_a_and_n_flag_unchanged() {
-        val flags = 0xFF and fNEGATIVE.inv()
+        val flags = 0xFF and F_NEGATIVE.inv()
         mpu.regP.fromInt(flags)
         mpu.regA = 0xFF
         mpu.regY = 0x03
@@ -5692,7 +5692,7 @@ abstract class TestCommon6502 {
 
     @Test
     fun test_sta_indexed_ind_y_stores_a_leaves_a_and_z_flag_unchanged() {
-        val flags = 0xFF and fZERO.inv()
+        val flags = 0xFF and F_ZERO.inv()
         mpu.regP.fromInt(flags)
         mpu.regA = 0x00
         mpu.regY = 0x03
@@ -5712,7 +5712,7 @@ abstract class TestCommon6502 {
 
     @Test
     fun test_sta_zp_x_indexed_stores_a_leaves_a_and_n_flag_unchanged() {
-        val flags = 0xFF and fNEGATIVE.inv()
+        val flags = 0xFF and F_NEGATIVE.inv()
         mpu.regP.fromInt(flags)
         mpu.regA = 0xFF
         mpu.regX = 0x03
@@ -5728,7 +5728,7 @@ abstract class TestCommon6502 {
 
     @Test
     fun test_sta_zp_x_indexed_stores_a_leaves_a_and_z_flag_unchanged() {
-        val flags = 0xFF and fZERO.inv()
+        val flags = 0xFF and F_ZERO.inv()
         mpu.regP.fromInt(flags)
         mpu.regA = 0x00
         mpu.regX = 0x03
@@ -5746,7 +5746,7 @@ abstract class TestCommon6502 {
 
     @Test
     fun test_stx_absolute_stores_x_leaves_x_and_n_flag_unchanged() {
-        val flags = 0xFF and fNEGATIVE.inv()
+        val flags = 0xFF and F_NEGATIVE.inv()
         mpu.regP.fromInt(flags)
         mpu.regX = 0xFF
         // $0000 STX $ABCD
@@ -5761,7 +5761,7 @@ abstract class TestCommon6502 {
 
     @Test
     fun test_stx_absolute_stores_x_leaves_x_and_z_flag_unchanged() {
-        val flags = 0xFF and fZERO.inv()
+        val flags = 0xFF and F_ZERO.inv()
         mpu.regP.fromInt(flags)
         mpu.regX = 0x00
         // $0000 STX $ABCD
@@ -5778,7 +5778,7 @@ abstract class TestCommon6502 {
 
     @Test
     fun test_stx_zp_stores_x_leaves_x_and_n_flag_unchanged() {
-        val flags = 0xFF and fNEGATIVE.inv()
+        val flags = 0xFF and F_NEGATIVE.inv()
         mpu.regP.fromInt(flags)
         mpu.regX = 0xFF
         // $0000 STX $0010
@@ -5793,7 +5793,7 @@ abstract class TestCommon6502 {
 
     @Test
     fun test_stx_zp_stores_x_leaves_x_and_z_flag_unchanged() {
-        val flags = 0xFF and fZERO.inv()
+        val flags = 0xFF and F_ZERO.inv()
         mpu.regP.fromInt(flags)
         mpu.regX = 0x00
         // $0000 STX $0010
@@ -5810,7 +5810,7 @@ abstract class TestCommon6502 {
 
     @Test
     fun test_stx_zp_y_indexed_stores_x_leaves_x_and_n_flag_unchanged() {
-        val flags = 0xFF and fNEGATIVE.inv()
+        val flags = 0xFF and F_NEGATIVE.inv()
         mpu.regP.fromInt(flags)
         mpu.regX = 0xFF
         mpu.regY = 0x03
@@ -5826,7 +5826,7 @@ abstract class TestCommon6502 {
 
     @Test
     fun test_stx_zp_y_indexed_stores_x_leaves_x_and_z_flag_unchanged() {
-        val flags = 0xFF and fZERO.inv()
+        val flags = 0xFF and F_ZERO.inv()
         mpu.regP.fromInt(flags)
         mpu.regX = 0x00
         mpu.regY = 0x03
@@ -5844,7 +5844,7 @@ abstract class TestCommon6502 {
 
     @Test
     fun test_sty_absolute_stores_y_leaves_y_and_n_flag_unchanged() {
-        val flags = 0xFF and fNEGATIVE.inv()
+        val flags = 0xFF and F_NEGATIVE.inv()
         mpu.regP.fromInt(flags)
         mpu.regY = 0xFF
         // $0000 STY $ABCD
@@ -5859,7 +5859,7 @@ abstract class TestCommon6502 {
 
     @Test
     fun test_sty_absolute_stores_y_leaves_y_and_z_flag_unchanged() {
-        val flags = 0xFF and fZERO.inv()
+        val flags = 0xFF and F_ZERO.inv()
         mpu.regP.fromInt(flags)
         mpu.regY = 0x00
         // $0000 STY $ABCD
@@ -5876,7 +5876,7 @@ abstract class TestCommon6502 {
 
     @Test
     fun test_sty_zp_stores_y_leaves_y_and_n_flag_unchanged() {
-        val flags = 0xFF and fNEGATIVE.inv()
+        val flags = 0xFF and F_NEGATIVE.inv()
         mpu.regP.fromInt(flags)
         mpu.regY = 0xFF
         // $0000 STY $0010
@@ -5891,7 +5891,7 @@ abstract class TestCommon6502 {
 
     @Test
     fun test_sty_zp_stores_y_leaves_y_and_z_flag_unchanged() {
-        val flags = 0xFF and fZERO.inv()
+        val flags = 0xFF and F_ZERO.inv()
         mpu.regP.fromInt(flags)
         mpu.regY = 0x00
         // $0000 STY $0010
@@ -5908,7 +5908,7 @@ abstract class TestCommon6502 {
 
     @Test
     fun test_sty_zp_x_indexed_stores_y_leaves_y_and_n_flag_unchanged() {
-        val flags = 0xFF and fNEGATIVE.inv()
+        val flags = 0xFF and F_NEGATIVE.inv()
         mpu.regP.fromInt(flags)
         mpu.regY = 0xFF
         mpu.regX = 0x03
@@ -5924,7 +5924,7 @@ abstract class TestCommon6502 {
 
     @Test
     fun test_sty_zp_x_indexed_stores_y_leaves_y_and_z_flag_unchanged() {
-        val flags = 0xFF and fZERO.inv()
+        val flags = 0xFF and F_ZERO.inv()
         mpu.regP.fromInt(flags)
         mpu.regY = 0x00
         mpu.regX = 0x03

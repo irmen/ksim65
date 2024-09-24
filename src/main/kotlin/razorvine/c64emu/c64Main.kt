@@ -231,7 +231,7 @@ class C64Machine(title: String) : IVirtualMachine {
         // we synchronise cpu cycles to the vertical blank of the Vic chip
         // this should result in ~1 Mhz cpu speed
         val timer = java.util.Timer("cpu-cycle", true)
-        timer.scheduleAtFixedRate(0, 1000L/VicII.framerate) {
+        timer.scheduleAtFixedRate(0, 1000L/VicII.FRAMERATE) {
 //            if(cpu.isLooping) {
 //                // cpu is jump looping, could do some sleeping here perhaps
 //                // but should still consider irqs occurring in the meantime...

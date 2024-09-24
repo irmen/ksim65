@@ -47,7 +47,7 @@ class Test65C02 : TestCommon6502() {
     @Test
     fun test_reset_clears_decimal_flag() {
         // W65C02S Datasheet, Apr 14 2009, Table 7-1 Operational Enhancements
-        // NMOS 6502 decimal flag = indetermine after reset, CMOS 65C02 = 0
+        // NMOS 6502 decimal flag = undetermined after reset, CMOS 65C02 = 0
         mpu.regP.D = true
         mpu.reset()
         assertFalse(mpu.regP.D)
@@ -984,7 +984,7 @@ class Test65C02 : TestCommon6502() {
 
     @Test
     fun test_sta_zp_ind_stores_a_leaves_a_and_n_flag_unchanged() {
-        val flags = 0xFF and fNEGATIVE.inv()
+        val flags = 0xFF and F_NEGATIVE.inv()
         mpu.regP.fromInt(flags)
         mpu.regA = 0xFF
         // $0000 STA ($0010)
@@ -1002,7 +1002,7 @@ class Test65C02 : TestCommon6502() {
 
     @Test
     fun test_sta_zp_ind_stores_a_leaves_a_and_z_flag_unchanged() {
-        val flags = 0xFF and fZERO.inv()
+        val flags = 0xFF and F_ZERO.inv()
         mpu.regP.fromInt(flags)
         mpu.regA = 0x00
         // $0000 STA ($0010)
@@ -1528,7 +1528,7 @@ class Test65C02 : TestCommon6502() {
         mpu.regPC = 0x0204
         mpu.step()
         assertEquals(0x1F6, mpu.regPC)
-        assertEquals(11, mpu.totalCycles)  // Crossed boundry
+        assertEquals(11, mpu.totalCycles)  // Crossed boundary
     }
 
     // WAI

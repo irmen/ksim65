@@ -50,10 +50,10 @@ abstract class FunctionalTestsBase {
         ram[0x02] = 0
         ram[0xa002] = 0
         ram[0xa003] = 0x80
-        ram[Cpu6502.IRQ_vector] = 0x48
-        ram[Cpu6502.IRQ_vector + 1] = 0xff
-        ram[Cpu6502.RESET_vector] = 0x01
-        ram[Cpu6502.RESET_vector + 1] = 0x08
+        ram[Cpu6502.IRQ_VECTOR] = 0x48
+        ram[Cpu6502.IRQ_VECTOR+1] = 0xff
+        ram[Cpu6502.RESET_VECTOR] = 0x01
+        ram[Cpu6502.RESET_VECTOR+1] = 0x08
         ram[0x01fe] = 0xff
         ram[0x01ff] = 0x7f
         cpu.regP.fromInt(4)

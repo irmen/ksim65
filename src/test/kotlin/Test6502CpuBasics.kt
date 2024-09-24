@@ -113,8 +113,8 @@ class Test6502CpuBasics {
         val bus = Bus()
         bus.add(cpu)
         val ram = Ram(0, 0xffff)
-        ram[Cpu6502.RESET_vector] = 0x00
-        ram[Cpu6502.RESET_vector +1] = 0x10
+        ram[Cpu6502.RESET_VECTOR] = 0x00
+        ram[Cpu6502.RESET_VECTOR+1] = 0x10
         val bytes = javaClass.getResource("bcdtest6502.bin").readBytes()
         ram.load(bytes, 0x1000)
         bus.add(ram)
@@ -160,7 +160,7 @@ class Test6502CpuBasics {
         }
         cpu.addBreakpoint(0xffe0) { cpu2, pc ->
             // OSRDCH read character
-            cpu2.regA = testChoice.code
+            cpu.regA = testChoice.code
             Cpu6502.BreakpointResultAction()
         }
         val ram = Ram(0, 0xffff)
@@ -228,7 +228,7 @@ class Test6502CpuBasics {
         class NesCpu: Cpu6502() {
             override fun reset() {
                 super.reset()
-                instrCycles = 7    // the nintdulator cpu emu starts with this number of cycles
+                instrCycles = 7    // the nintendulator cpu emu starts with this number of cycles
             }
 
             override fun iAdc(): Boolean {

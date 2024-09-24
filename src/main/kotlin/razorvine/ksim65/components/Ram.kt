@@ -35,7 +35,7 @@ class Ram(startAddress: Address, endAddress: Address) : MemoryComponent(startAdd
     fun loadPrg(stream: InputStream, overrideLoadAddress: Address?): Pair<Address, Int> {
         val bytes = stream.readBytes()
         if (bytes.size > 0xffff) throw IOException("file too large")
-        val loadAddress = overrideLoadAddress ?: bytes[0]+256*bytes[1]
+        val loadAddress = overrideLoadAddress ?: (bytes[0]+256*bytes[1])
         val baseAddress = loadAddress-startAddress
         bytes.drop(2).forEachIndexed { index, byte ->
             data[baseAddress+index] = if (byte >= 0) byte.toShort()

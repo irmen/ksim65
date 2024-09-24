@@ -52,7 +52,7 @@ class Test6502TestSuiteC64Specific {
     }
 
     private fun runTest(testprogram: String) {
-        // setup the irq/brk routine and other stubbing
+        // set up the irq/brk routine and other stubbing
         // http://www.softwolves.com/arkiv/cbm-hackers/7/7114.html
         val assembler = Assembler(cpu, ram, 0xff48)
         val result = assembler.assemble("""
@@ -74,10 +74,10 @@ class Test6502TestSuiteC64Specific {
         ram[0x02] = 0
         ram[0xa002] = 0
         ram[0xa003] = 0x80
-        ram[Cpu6502.IRQ_vector] = 0x48
-        ram[Cpu6502.IRQ_vector + 1] = 0xff
-        ram[Cpu6502.RESET_vector] = 0x01
-        ram[Cpu6502.RESET_vector + 1] = 0x08
+        ram[Cpu6502.IRQ_VECTOR] = 0x48
+        ram[Cpu6502.IRQ_VECTOR+1] = 0xff
+        ram[Cpu6502.RESET_VECTOR] = 0x01
+        ram[Cpu6502.RESET_VECTOR+1] = 0x08
         ram[0x01fe] = 0xff
         ram[0x01ff] = 0x7f
         bus[0] = 47
