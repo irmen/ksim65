@@ -684,11 +684,10 @@ class Cpu65C02 : Cpu6502() {
         return false
     }
 
-    override fun iSbc(operandOverride: Int?): Boolean {
+    override fun iSbc2(value: Int): Boolean {
         // see http://www.6502.org/tutorials/decimal_mode.html
         // and https://sourceforge.net/p/vice-emu/code/HEAD/tree/trunk/vice/src/65c02core.c#l1205
         // (the implementation below is based on the code used by Vice)
-        val value = operandOverride ?: getFetched()
         var tmp = (regA-value-if (regP.C) 0 else 1) and 0xffff
         regP.V = (regA xor tmp) and (regA xor value) and 0b10000000 != 0
         if (regP.D) {

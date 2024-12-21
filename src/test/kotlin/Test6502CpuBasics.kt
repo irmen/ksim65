@@ -240,11 +240,11 @@ class Test6502CpuBasics {
                 return result
             }
 
-            override fun iSbc(operandOverride: Int?): Boolean {
+            override fun iSbc2(operandOverride: Int): Boolean {
                 // NES cpu doesn't have BCD mode
                 val decimal = regP.D
                 regP.D = false
-                val result = super.iSbc(operandOverride)
+                val result = super.iSbc2(operandOverride)
                 regP.D = decimal
                 return result
             }

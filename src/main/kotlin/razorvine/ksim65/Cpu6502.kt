@@ -1096,8 +1096,8 @@ open class Cpu6502 : BusComponent() {
         return false
     }
 
-    protected fun iCmp(operandOverride: Int? = null): Boolean {
-        val fetched = operandOverride ?: getFetched()
+    protected fun iCmp(): Boolean {
+        val fetched = getFetched()
         regP.C = regA >= fetched
         regP.Z = regA == fetched
         regP.N = ((regA-fetched) and 0b10000000) != 0
@@ -1307,8 +1307,9 @@ open class Cpu6502 : BusComponent() {
         return false
     }
 
-    protected open fun iSbc(operandOverride: Int? = null): Boolean {
-        val operand = operandOverride ?: getFetched()
+    protected fun iSbc(): Boolean = iSbc2(getFetched())
+
+    protected open fun iSbc2(operand: Int): Boolean {
         val tmp = (regA-operand-if (regP.C) 0 else 1) and 0xffff
         regP.V = (regA xor operand) and (regA xor tmp) and 0b10000000 != 0
         if (regP.D) {
@@ -1454,14 +1455,19 @@ open class Cpu6502 : BusComponent() {
     private fun iDcp(): Boolean {
         val data = (read(fetchedAddress)-1) and 0xff
         write(fetchedAddress, data)
-        iCmp(data)
+
+        // this part is the same as Cmp
+        regP.C = regA >= data
+        regP.Z = regA == data
+        regP.N = ((regA-data) and 0b10000000) != 0
+
         return false
     }
 
     private fun iIsc(): Boolean {
         val data = (read(fetchedAddress)+1) and 0xff
         write(fetchedAddress, data)
-        iSbc(data)
+        iSbc2(data)
         return false
     }
 

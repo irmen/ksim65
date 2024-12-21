@@ -4,21 +4,10 @@ import kotlin.math.max
 
 plugins {
     // Apply the Kotlin JVM plugin to add support for Kotlin on the JVM.
-    kotlin("jvm") version "2.0.20"
+    kotlin("jvm") version "2.1.0"
     `maven-publish`
     application
     java
-}
-
-/*
-java {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
-}
-*/
-
-kotlin {
-    jvmToolchain(17)
 }
 
 allprojects {
@@ -69,12 +58,6 @@ tasks {
         systemProperty("junit.jupiter.execution.parallel.mode.default", "concurrent")
         maxParallelForks = max(1, Runtime.getRuntime().availableProcessors()/2)
     }
-
-//    withType<KotlinCompile> {
-//        compilerOptions {
-//            jvmTarget.set(JvmTarget.JVM_11)
-//        }
-//    }
 }
 
 
