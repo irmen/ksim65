@@ -26,23 +26,8 @@ Still to be written. For now, use the source ;-)
 
 ## Using it as a library in your own project
 
-**TODO move to another repository for published packages.**
-
-You can simply add it as a dependency to your project.
-For Maven:
-
-    <dependency>
-        <groupId>net.razorvine</groupId>
-        <artifactId>ksim65</artifactId>
-        <version>1.10</version>
-        <type>pom</type>
-    </dependency>
-
-For Gradle:
-
-    implementation 'net.razorvine:ksim65:1.10'
-
-Update the version as required.
+Get it via the Jitpack.io repository that publishes builds based on Github releases.
+See https://jitpack.io/#irmen/ksim65/
 
 
 ## Virtual machine examples
