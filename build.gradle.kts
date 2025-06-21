@@ -5,7 +5,7 @@ import kotlin.math.max
 plugins {
     // Apply the Kotlin JVM plugin to add support for Kotlin on the JVM.
     kotlin("jvm") version "2.1.21"
-    `maven-publish`
+    // `maven-publish`
     application
     java
 }
@@ -22,7 +22,7 @@ allprojects {
         // You can declare any Maven/Ivy/file repository here.
         mavenLocal()
         mavenCentral()
-        maven("https://jitpack.io")
+        // maven("https://jitpack.io")
     }
 }
 
@@ -43,7 +43,7 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-api")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
-    implementation("com.github.jitpack:gradle-simple:1.0")
+    // implementation("com.github.jitpack:gradle-simple:1.0")
 
     subprojects.forEach {
         implementation(it)
@@ -101,14 +101,14 @@ val sourcesJar by tasks.registering(Jar::class) {
     from(sourceSets.main.get().allSource)
 }
 
-publishing {
-    repositories {
-        mavenLocal()
-    }
-    publications {
-        register("mavenJava", MavenPublication::class) {
-            from(components["java"])
-            artifact(sourcesJar.get())
-        }
-    }
-}
+//publishing {
+//    repositories {
+//        mavenLocal()
+//    }
+//    publications {
+//        register("mavenJava", MavenPublication::class) {
+//            from(components["java"])
+//            artifact(sourcesJar.get())
+//        }
+//    }
+//}
