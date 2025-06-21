@@ -21,7 +21,7 @@ class Test6502CpuBasics {
         assertEquals(0, cpu.regX)
         assertEquals(0, cpu.regY)
         assertEquals(0, cpu.currentOpcode)
-        assertEquals(Cpu6502.StatusRegister(C = false, Z = false, I = true, D = false, B = false, V = false, N = false), cpu.regP)
+        assertEquals(Cpu6502Core.StatusRegister(C = false, Z = false, I = true, D = false, B = false, V = false, N = false), cpu.regP)
         assertEquals(0b00100100, cpu.regP.asInt())
     }
 
@@ -39,7 +39,7 @@ class Test6502CpuBasics {
         assertEquals(0, cpu.regX)
         assertEquals(0, cpu.regY)
         assertEquals(0, cpu.currentOpcode)
-        assertEquals(Cpu6502.StatusRegister(C = false, Z = false, I = true, D = false, B = false, V = false, N = false), cpu.regP)
+        assertEquals(Cpu6502Core.StatusRegister(C = false, Z = false, I = true, D = false, B = false, V = false, N = false), cpu.regP)
         assertEquals(0b00100100, cpu.regP.asInt())
     }
 
@@ -113,8 +113,8 @@ class Test6502CpuBasics {
         val bus = Bus()
         bus.add(cpu)
         val ram = Ram(0, 0xffff)
-        ram[Cpu6502.RESET_VECTOR] = 0x00
-        ram[Cpu6502.RESET_VECTOR+1] = 0x10
+        ram[Cpu6502Core.RESET_VECTOR] = 0x00
+        ram[Cpu6502Core.RESET_VECTOR+1] = 0x10
         val bytes = javaClass.getResource("bcdtest6502.bin").readBytes()
         ram.load(bytes, 0x1000)
         bus.add(ram)
@@ -124,7 +124,7 @@ class Test6502CpuBasics {
             while (true) {
                 bus.clock()
             }
-        } catch(e: Cpu6502.InstructionError) {
+        } catch(e: Cpu6502Core.InstructionError) {
             // do nothing
         }
 
@@ -148,7 +148,7 @@ class Test6502CpuBasics {
         }
     }
 
-    private fun runBCDbeebTest(cpu: Cpu6502, testChoice: Char) {
+    private fun runBCDbeebTest(cpu: Cpu6502Core, testChoice: Char) {
         // bcd test code from https://github.com/hoglet67/AtomSoftwareArchive/tree/master/tests/clark
         val bus = Bus()
         bus.add(cpu)
@@ -156,12 +156,12 @@ class Test6502CpuBasics {
         cpu.addBreakpoint(0xffee) { cpu2, pc ->
             // OSWRCH write character
             print("${cpu2.regA.toChar()}")
-            Cpu6502.BreakpointResultAction()
+            Cpu6502Core.BreakpointResultAction()
         }
         cpu.addBreakpoint(0xffe0) { cpu2, pc ->
             // OSRDCH read character
             cpu.regA = testChoice.code
-            Cpu6502.BreakpointResultAction()
+            Cpu6502Core.BreakpointResultAction()
         }
         val ram = Ram(0, 0xffff)
         val bytes = javaClass.getResource("BCDTEST_beeb.bin").readBytes()
@@ -214,43 +214,20 @@ class Test6502CpuBasics {
         cpu.regPC = 0x200
         cpu.breakpointForBRK = { theCpu, _ ->
             theCpu.regA = 123
-            Cpu6502.BreakpointResultAction(changePC = 0x3333)
+            Cpu6502Core.BreakpointResultAction(changePC = 0x3333)
         }
         cpu.step()
         assertEquals(123, cpu.regA)
         assertEquals(0x3334, cpu.regPC)
     }
 
+
+
     @Test
     fun testNesTest() {
         // http://www.qmtpro.com/~nes/misc/nestest.txt
 
-        class NesCpu: Cpu6502() {
-            override fun reset() {
-                super.reset()
-                instrCycles = 7    // the nintendulator cpu emu starts with this number of cycles
-            }
-
-            override fun iAdc(): Boolean {
-                // NES cpu doesn't have BCD mode
-                val decimal = regP.D
-                regP.D = false
-                val result = super.iAdc()
-                regP.D = decimal
-                return result
-            }
-
-            override fun iSbc2(operandOverride: Int): Boolean {
-                // NES cpu doesn't have BCD mode
-                val decimal = regP.D
-                regP.D = false
-                val result = super.iSbc2(operandOverride)
-                regP.D = decimal
-                return result
-            }
-        }
-
-        val cpu = NesCpu()
+        val cpu = CpuNes()
         val ram = Ram(0, 0xffff)
 
         val bytes = javaClass.getResource("nestest.nes").readBytes().drop(0x10).take(0x4000).toByteArray()

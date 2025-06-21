@@ -1,12 +1,13 @@
 import razorvine.ksim65.components.Address
 import razorvine.ksim65.Cpu6502
+import razorvine.ksim65.Cpu6502Core
 import razorvine.ksim65.components.Ram
 import razorvine.ksim65.hexW
 
 
 class C64KernalStubs(private val ram: Ram) {
 
-    fun handleBreakpoint(cpu: Cpu6502, pc: Address): Cpu6502.BreakpointResultAction {
+    fun handleBreakpoint(cpu: Cpu6502Core, pc: Address): Cpu6502Core.BreakpointResultAction {
         when(pc) {
             0xffd2 -> {
                 // CHROUT
@@ -16,7 +17,7 @@ class C64KernalStubs(private val ram: Ram) {
                     println()
                 else if(char in ' '..'~')
                     print(char)
-                return Cpu6502.BreakpointResultAction(null, 0x60)     // perform an RTS to exit this subroutine
+                return Cpu6502Core.BreakpointResultAction(null, 0x60)     // perform an RTS to exit this subroutine
             }
             0xffe4 -> {
                 // GETIN
@@ -44,7 +45,7 @@ class C64KernalStubs(private val ram: Ram) {
             }
         }
 
-        return Cpu6502.BreakpointResultAction(null, null)
+        return Cpu6502Core.BreakpointResultAction(null, null)
     }
 }
 

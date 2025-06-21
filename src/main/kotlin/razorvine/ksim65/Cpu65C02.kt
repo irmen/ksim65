@@ -5,7 +5,7 @@ import razorvine.ksim65.components.Address
 /**
  * 65C02 cpu simulation (the CMOS version of the 6502).
  */
-class Cpu65C02 : Cpu6502() {
+class Cpu65C02 : Cpu6502Core() {
     override val name = "65C02"
 
     enum class Wait {
@@ -684,18 +684,18 @@ class Cpu65C02 : Cpu6502() {
         return false
     }
 
-    override fun iSbc2(value: Int): Boolean {
+    override fun iSbc2(operand: Int): Boolean {
         // see http://www.6502.org/tutorials/decimal_mode.html
         // and https://sourceforge.net/p/vice-emu/code/HEAD/tree/trunk/vice/src/65c02core.c#l1205
         // (the implementation below is based on the code used by Vice)
-        var tmp = (regA-value-if (regP.C) 0 else 1) and 0xffff
-        regP.V = (regA xor tmp) and (regA xor value) and 0b10000000 != 0
+        var tmp = (regA-operand-if (regP.C) 0 else 1) and 0xffff
+        regP.V = (regA xor tmp) and (regA xor operand) and 0b10000000 != 0
         if (regP.D) {
             if (tmp > 0xff) tmp = (tmp-0x60) and 0xffff
-            val tmp2 = ((regA and 0x0f)-(value and 0x0f)-if (regP.C) 0 else 1) and 0xffff
+            val tmp2 = ((regA and 0x0f)-(operand and 0x0f)-if (regP.C) 0 else 1) and 0xffff
             if (tmp2 > 0xff) tmp -= 6
         }
-        regP.C = (regA-if (regP.C) 0 else 1) >= value
+        regP.C = (regA-if (regP.C) 0 else 1) >= operand
         regP.Z = (tmp and 0xff) == 0
         regP.N = (tmp and 0b10000000) != 0
         regA = tmp and 0xff

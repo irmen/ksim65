@@ -8,7 +8,7 @@ import razorvine.ksim65.components.UByte
 /**
  * 6502 cpu simulation (the NMOS version) including the 'illegal' opcodes.
  */
-open class Cpu6502 : BusComponent() {
+sealed class Cpu6502Core : BusComponent() {
     open val name = "6502"
     var tracing: ((state: State) -> Unit)? = null
     var totalCycles = 0L
@@ -1544,3 +1544,6 @@ open class Cpu6502 : BusComponent() {
         throw InstructionError("invalid instruction encountered: opcode=${hexB(currentOpcode)} instr=${currentInstruction.mnemonic} @ ${hexW(currentOpcodeAddress)}")
     }
 }
+
+
+class Cpu6502: Cpu6502Core()

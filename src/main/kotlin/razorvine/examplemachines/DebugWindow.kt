@@ -208,7 +208,7 @@ class DebugWindow(private val vm: IVirtualMachine) : JFrame("Debugger - ksim65 v
         }
     }
 
-    fun updateCpu(cpu: Cpu6502, bus: Bus) {
+    fun updateCpu(cpu: Cpu6502Core, bus: Bus) {
         val state = cpu.snapshot()
         cyclesTf.text = state.cycles.toString()
         regAtf.text = hexB(state.A)
@@ -227,12 +227,12 @@ class DebugWindow(private val vm: IVirtualMachine) : JFrame("Debugger - ksim65 v
             val pages = vm.getZeroAndStackPages()
             if (pages.isNotEmpty()) {
                 val zpLines = (0..0xff step 32).map { location ->
-                    " ${'$'}${location.toString(16).padStart(2, '0')}  "+((0..31).joinToString(" ") { lineoffset ->
+                    " $${location.toString(16).padStart(2, '0')}  "+((0..31).joinToString(" ") { lineoffset ->
                         pages[location+lineoffset].toString(16).padStart(2, '0')
                     })
                 }
                 val stackLines = (0x100..0x1ff step 32).map { location ->
-                    "${'$'}${location.toString(16).padStart(2, '0')}  "+((0..31).joinToString(" ") { lineoffset ->
+                    "$${location.toString(16).padStart(2, '0')}  "+((0..31).joinToString(" ") { lineoffset ->
                         pages[location+lineoffset].toString(16).padStart(2, '0')
                     })
                 }

@@ -2,7 +2,7 @@ package razorvine.ksim65
 
 import kotlin.math.max
 
-class Monitor(val bus: Bus, val cpu: Cpu6502) {
+class Monitor(val bus: Bus, val cpu: Cpu6502Core) {
 
     private val disassembler = Disassembler(cpu)
 

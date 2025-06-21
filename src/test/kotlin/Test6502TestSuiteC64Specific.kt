@@ -5,6 +5,7 @@ import razorvine.c64emu.*
 import razorvine.ksim65.Assembler
 import razorvine.ksim65.Bus
 import razorvine.ksim65.Cpu6502
+import razorvine.ksim65.Cpu6502Core
 import razorvine.ksim65.components.Ram
 import razorvine.ksim65.components.Rom
 import kotlin.test.*
@@ -74,10 +75,10 @@ class Test6502TestSuiteC64Specific {
         ram[0x02] = 0
         ram[0xa002] = 0
         ram[0xa003] = 0x80
-        ram[Cpu6502.IRQ_VECTOR] = 0x48
-        ram[Cpu6502.IRQ_VECTOR+1] = 0xff
-        ram[Cpu6502.RESET_VECTOR] = 0x01
-        ram[Cpu6502.RESET_VECTOR+1] = 0x08
+        ram[Cpu6502Core.IRQ_VECTOR] = 0x48
+        ram[Cpu6502Core.IRQ_VECTOR+1] = 0xff
+        ram[Cpu6502Core.RESET_VECTOR] = 0x01
+        ram[Cpu6502Core.RESET_VECTOR+1] = 0x08
         ram[0x01fe] = 0xff
         ram[0x01ff] = 0x7f
         bus[0] = 47
@@ -89,7 +90,7 @@ class Test6502TestSuiteC64Specific {
                 bus.clock()
             }
             fail("test hangs: " + cpu.snapshot())
-        } catch (e: Cpu6502.InstructionError) {
+        } catch (e: Cpu6502Core.InstructionError) {
             println(">>> INSTRUCTION ERROR: ${e.message}")
         } catch (le: KernalLoadNextPart) {
             return  // test ok

@@ -38,7 +38,7 @@ abstract class MemMappedComponent(val startAddress: Address, val endAddress: Add
 
     fun hexDump(from: Address, to: Address, charmapper: ((Short) -> Char)? = null) {
         (from..to).chunked(16).forEach {
-            print("\$${it.first().toString(16).padStart(4, '0')}  ")
+            print("$${it.first().toString(16).padStart(4, '0')}  ")
             val bytes = it.map { address -> get(address - startAddress) }
             bytes.forEach { byte ->
                 print(byte.toString(16).padStart(2, '0')+" ")

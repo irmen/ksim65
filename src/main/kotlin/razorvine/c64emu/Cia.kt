@@ -1,6 +1,6 @@
 package razorvine.c64emu
 
-import razorvine.ksim65.Cpu6502
+import razorvine.ksim65.Cpu6502Core
 import razorvine.ksim65.components.Address
 import razorvine.ksim65.components.MemMappedComponent
 import razorvine.ksim65.components.UByte
@@ -12,7 +12,7 @@ import java.awt.event.KeyEvent
  * This implementation provides a working keyboard matrix, joystick in port#2 (cia 1),
  * time of day clock, and the essentials of the timer A and B.
  */
-class Cia(val number: Int, startAddress: Address, endAddress: Address, val cpu: Cpu6502) : MemMappedComponent(startAddress, endAddress) {
+class Cia(val number: Int, startAddress: Address, endAddress: Address, val cpu: Cpu6502Core) : MemMappedComponent(startAddress, endAddress) {
     private var ramBuffer = Array<UByte>(endAddress-startAddress+1) { 0 }
     private var regPRA = 0xff
 

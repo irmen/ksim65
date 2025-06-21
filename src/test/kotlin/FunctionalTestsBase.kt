@@ -1,6 +1,7 @@
 import razorvine.ksim65.Assembler
 import razorvine.ksim65.Bus
 import razorvine.ksim65.Cpu6502
+import razorvine.ksim65.Cpu6502Core
 import razorvine.ksim65.components.Ram
 import kotlin.test.*
 
@@ -10,7 +11,7 @@ See http://www.softwolves.com/arkiv/cbm-hackers/7/7114.html
  */
 abstract class FunctionalTestsBase {
 
-    val cpu: Cpu6502 = Cpu6502()
+    val cpu = Cpu6502()
     val ram = Ram(0, 0xffff)
     val bus = Bus()
     val kernalStubs = C64KernalStubs(ram)
@@ -50,10 +51,10 @@ abstract class FunctionalTestsBase {
         ram[0x02] = 0
         ram[0xa002] = 0
         ram[0xa003] = 0x80
-        ram[Cpu6502.IRQ_VECTOR] = 0x48
-        ram[Cpu6502.IRQ_VECTOR+1] = 0xff
-        ram[Cpu6502.RESET_VECTOR] = 0x01
-        ram[Cpu6502.RESET_VECTOR+1] = 0x08
+        ram[Cpu6502Core.IRQ_VECTOR] = 0x48
+        ram[Cpu6502Core.IRQ_VECTOR+1] = 0xff
+        ram[Cpu6502Core.RESET_VECTOR] = 0x01
+        ram[Cpu6502Core.RESET_VECTOR+1] = 0x08
         ram[0x01fe] = 0xff
         ram[0x01ff] = 0x7f
         cpu.regP.fromInt(4)
@@ -63,7 +64,7 @@ abstract class FunctionalTestsBase {
                 bus.clock()
             }
             fail("test hangs: " + cpu.snapshot())
-        } catch (e: Cpu6502.InstructionError) {
+        } catch (e: Cpu6502Core.InstructionError) {
             println(">>> INSTRUCTION ERROR: ${e.message}")
         } catch (le: KernalLoadNextPart) {
             return  // test ok

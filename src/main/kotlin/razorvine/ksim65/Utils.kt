@@ -14,4 +14,4 @@ fun hexB(number: Int) = number.toString(16).padStart(2, '0')
 
 fun hexB(number: Short) = hexB(number.toInt())
 
-typealias BreakpointHandler = (cpu: Cpu6502, pc: Address) -> Cpu6502.BreakpointResultAction
+typealias BreakpointHandler = (cpu: Cpu6502Core, pc: Address) -> Cpu6502Core.BreakpointResultAction

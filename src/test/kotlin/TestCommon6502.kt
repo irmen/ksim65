@@ -43,19 +43,19 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 abstract class TestCommon6502 {
     // Tests common to 6502-based microprocessors
 
-    val mpu: Cpu6502
+    val mpu: Cpu6502Core
     val memory = Ram(0, 0xffff)
     val bus = Bus()
 
-    abstract fun createCpu(): Cpu6502
+    abstract fun createCpu(): Cpu6502Core
 
     init {
         mpu = this.createCpu()
         bus.add(mpu)
         bus.add(memory)
         memory.fill(0xaa)
-        memory[Cpu6502.RESET_VECTOR] = 0
-        memory[Cpu6502.RESET_VECTOR+1] = 0
+        memory[Cpu6502Core.RESET_VECTOR] = 0
+        memory[Cpu6502Core.RESET_VECTOR+1] = 0
         mpu.reset()
         mpu.regP.I = false        // allow interrupts again
     }

@@ -79,7 +79,7 @@ class C64Machine(title: String) : IVirtualMachine {
         //hostDisplay.start(30)
     }
 
-    private fun breakpointKernelLoad(cpu: Cpu6502, pc: Address): Cpu6502.BreakpointResultAction {
+    private fun breakpointKernelLoad(cpu: Cpu6502Core, pc: Address): Cpu6502Core.BreakpointResultAction {
         if (cpu.regA == 0) {
             val fnlen = ram[0xb7]   // file name length
             val fa = ram[0xba]      // device number
@@ -93,13 +93,13 @@ class C64Machine(title: String) : IVirtualMachine {
                     ram[0x90] = 0  // status OK
                     ram[0xae] = (loadEndAddress and 0xff).toShort()
                     ram[0xaf] = (loadEndAddress ushr 8).toShort()
-                    Cpu6502.BreakpointResultAction(changePC = 0xf5a9)  // success!
-                } else Cpu6502.BreakpointResultAction(changePC = 0xf704)   // 'file not found'
-            } else Cpu6502.BreakpointResultAction(changePC = 0xf710)  // 'missing file name'
-        } else return Cpu6502.BreakpointResultAction(changePC = 0xf707)   // 'device not present' (VERIFY command not supported)
+                    Cpu6502Core.BreakpointResultAction(changePC = 0xf5a9)  // success!
+                } else Cpu6502Core.BreakpointResultAction(changePC = 0xf704)   // 'file not found'
+            } else Cpu6502Core.BreakpointResultAction(changePC = 0xf710)  // 'missing file name'
+        } else return Cpu6502Core.BreakpointResultAction(changePC = 0xf707)   // 'device not present' (VERIFY command not supported)
     }
 
-    private fun breakpointKernelSave(cpu: Cpu6502, pc: Address): Cpu6502.BreakpointResultAction {
+    private fun breakpointKernelSave(cpu: Cpu6502Core, pc: Address): Cpu6502Core.BreakpointResultAction {
         val fnlen = ram[0xb7]   // file name length
         //        val fa = ram[0xba]      // device number
         //        val sa = ram[0xb9]      // secondary address
@@ -116,12 +116,12 @@ class C64Machine(title: String) : IVirtualMachine {
                 it.write(data)
             }
             ram[0x90] = 0  // status OK
-            Cpu6502.BreakpointResultAction(changePC = 0xf5a9)  // success!
-        } else Cpu6502.BreakpointResultAction(changePC = 0xf710)  // 'missing file name'
+            Cpu6502Core.BreakpointResultAction(changePC = 0xf5a9)  // success!
+        } else Cpu6502Core.BreakpointResultAction(changePC = 0xf710)  // 'missing file name'
     }
 
-    private fun breakpointBRK(cpu: Cpu6502, pc: Address): Cpu6502.BreakpointResultAction {
-        throw Cpu6502.InstructionError("BRK instruction hit at $${hexW(pc)}")
+    private fun breakpointBRK(cpu: Cpu6502Core, pc: Address): Cpu6502Core.BreakpointResultAction {
+        throw Cpu6502Core.InstructionError("BRK instruction hit at $${hexW(pc)}")
     }
 
     private fun searchAndLoadFile(filename: String, device: UByte, secondary: UByte, basicLoadAddress: Address): Address? {

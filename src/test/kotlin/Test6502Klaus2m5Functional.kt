@@ -1,6 +1,7 @@
 import razorvine.ksim65.Bus
 import razorvine.ksim65.components.Ram
 import razorvine.ksim65.Cpu6502
+import razorvine.ksim65.Cpu6502Core
 import razorvine.ksim65.Cpu65C02
 import razorvine.ksim65.components.Address
 import razorvine.ksim65.components.MemMappedComponent
@@ -151,7 +152,7 @@ class Test6502Klaus2m5Functional {
                 if(error==0.toShort())
                     throw SuccessfulTestResult()
             }
-            Cpu6502.BreakpointResultAction(null, null)
+            Cpu6502Core.BreakpointResultAction(null, null)
         }
         try {
             while (cpu.totalCycles < 100000000) {
@@ -184,7 +185,7 @@ class Test6502Klaus2m5Functional {
                 if(error==0.toShort())
                     throw SuccessfulTestResult()
             }
-            Cpu6502.BreakpointResultAction(null, null)
+            Cpu6502Core.BreakpointResultAction(null, null)
         }
         try {
             while (cpu.totalCycles < 100000000) {

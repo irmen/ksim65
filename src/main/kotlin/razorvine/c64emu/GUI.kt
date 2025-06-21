@@ -1,6 +1,6 @@
 package razorvine.c64emu
 
-import razorvine.ksim65.Cpu6502
+import razorvine.ksim65.Cpu6502Core
 import razorvine.ksim65.components.MemoryComponent
 import razorvine.ksim65.components.Rom
 import razorvine.ksim65.components.UByte
@@ -53,7 +53,7 @@ object ScreenDefs {
     val colorPalette = Palette()
 }
 
-class MainC64Window(title: String, chargen: Rom, val ram: MemoryComponent, val cpu: Cpu6502, private val keypressCia: Cia) :
+class MainC64Window(title: String, chargen: Rom, val ram: MemoryComponent, val cpu: Cpu6502Core, private val keypressCia: Cia) :
         JFrame(title), KeyListener {
     init {
         defaultCloseOperation = EXIT_ON_CLOSE

@@ -1,6 +1,6 @@
 package razorvine.c64emu
 
-import razorvine.ksim65.Cpu6502
+import razorvine.ksim65.Cpu6502Core
 import razorvine.ksim65.components.Address
 import razorvine.ksim65.components.MemMappedComponent
 import razorvine.ksim65.components.UByte
@@ -10,7 +10,7 @@ import razorvine.ksim65.components.UByte
  * It only has some logic to keep track of the raster line
  * This chip is the PAL version (50 Hz screen refresh, 312 vertical raster lines)
  */
-class VicII(startAddress: Address, endAddress: Address, val cpu: Cpu6502) : MemMappedComponent(startAddress, endAddress) {
+class VicII(startAddress: Address, endAddress: Address, val cpu: Cpu6502Core) : MemMappedComponent(startAddress, endAddress) {
     private var ramBuffer = Array<UByte>(endAddress-startAddress+1) { 0xff }
     private var rasterIrqLine = 0
     private var scanlineClocks = 0
