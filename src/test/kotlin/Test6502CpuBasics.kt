@@ -152,7 +152,7 @@ class Test6502CpuBasics {
         // bcd test code from https://github.com/hoglet67/AtomSoftwareArchive/tree/master/tests/clark
         val bus = Bus()
         bus.add(cpu)
-        cpu.breakpointForBRK = { _, pc -> fail("brk instruction at \$${hexW(pc)}") }
+        cpu.breakpointForBRK = { _, pc -> fail("brk instruction at $${hexW(pc)}") }
         cpu.addBreakpoint(0xffee) { cpu2, pc ->
             // OSWRCH write character
             print("${cpu2.regA.toChar()}")
@@ -249,7 +249,7 @@ class Test6502CpuBasics {
 
             cpu.step()
 
-            val nesAddressHex = logline.substring(0, 4).toInt(16)
+            val nesAddressHex = logline.take(4).toInt(16)
             assertEquals(nesAddressHex, tracingSnapshot.PC)
 
 //            println("NES: $logline")

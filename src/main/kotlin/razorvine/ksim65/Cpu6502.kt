@@ -25,6 +25,7 @@ sealed class Cpu6502Core : BusComponent() {
         const val IRQ_VECTOR = 0xfffe
     }
 
+    @Suppress("PropertyName")
     class StatusRegister(var C: Boolean = false, var Z: Boolean = false, var I: Boolean = false, var D: Boolean = false,
                          var B: Boolean = false, var V: Boolean = false, var N: Boolean = false) {
         fun asInt(): Int {
@@ -74,6 +75,7 @@ sealed class Cpu6502Core : BusComponent() {
      */
     class BreakpointResultAction(val changePC: Address? = null, val changeOpcode: Int? = null, val causeBRK: Boolean = false)
 
+    @Suppress("PropertyName")
     class State(val A: UByte, val X: UByte, val Y: UByte, val SP: Address, val P: StatusRegister, val PC: Address, val cycles: Long) {
         override fun toString(): String {
             return "cycle:$cycles - pc=${hexW(PC)} "+"A=${hexB(A)} "+"X=${hexB(X)} "+"Y=${hexB(Y)} "+

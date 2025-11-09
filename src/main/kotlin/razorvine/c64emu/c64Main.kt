@@ -7,7 +7,6 @@ import razorvine.ksim65.components.Ram
 import razorvine.ksim65.components.Rom
 import razorvine.ksim65.components.UByte
 import java.io.File
-import java.io.FileFilter
 import java.io.FileNotFoundException
 import java.io.IOException
 import java.nio.file.Path
@@ -132,7 +131,7 @@ class C64Machine(title: String) : IVirtualMachine {
             }
             "$" -> {
                 // load the directory
-                val files = File(".").listFiles(FileFilter { it.isFile })!!.associate {
+                val files = File(".").listFiles { it.isFile }!!.associate {
                     val name = it.nameWithoutExtension.uppercase()
                     val ext = it.extension.uppercase()
                     val fileAndSize = Pair(it, it.length())
@@ -146,7 +145,7 @@ class C64Machine(title: String) : IVirtualMachine {
             }
             else -> {
                 fun findHostFile(filename: String): String? {
-                    val file = File(".").listFiles(FileFilter { it.isFile })?.firstOrNull {
+                    val file = File(".").listFiles { it.isFile }?.firstOrNull {
                         it.name.uppercase() == filename
                     }
                     return file?.name

@@ -4,7 +4,7 @@ import kotlin.math.max
 
 plugins {
     // Apply the Kotlin JVM plugin to add support for Kotlin on the JVM.
-    kotlin("jvm") version "2.1.21"
+    kotlin("jvm") version "2.3.20"
     // `maven-publish`
     application
     java
