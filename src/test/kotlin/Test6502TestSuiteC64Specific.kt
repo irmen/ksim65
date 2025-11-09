@@ -63,11 +63,11 @@ class Test6502TestSuiteC64Specific {
    tya
    pha
    tsx
-   lda ${'$'}0104,x
-   and #${'$'}10
+   lda $0104,x
+   and #$10
    beq *+5
-   jmp (${'$'}0316)
-   jmp (${'$'}0314)            
+   jmp ($0316)
+   jmp ($0314)            
 """.lines())
         assertTrue(result.success)
 
@@ -92,9 +92,9 @@ class Test6502TestSuiteC64Specific {
             fail("test hangs: " + cpu.snapshot())
         } catch (e: Cpu6502Core.InstructionError) {
             println(">>> INSTRUCTION ERROR: ${e.message}")
-        } catch (le: KernalLoadNextPart) {
+        } catch (_: KernalLoadNextPart) {
             return  // test ok
-        } catch (ie: KernalInputRequired) {
+        } catch (_: KernalInputRequired) {
             fail("test failed")
         }
         fail("test failed")
