@@ -27,17 +27,17 @@ class Mouse(startAddress: Address, endAddress: Address, private val host: IHostI
 
     override operator fun get(offset: Int): UByte {
         return when (offset) {
-            0x00 -> (mouse.x and 0xff).toShort()
-            0x01 -> (mouse.x ushr 8).toShort()
-            0x02 -> (mouse.y and 0xff).toShort()
-            0x03 -> (mouse.y ushr 8).toShort()
+            0x00 -> (mouse.x and 0xff).toUByte()
+            0x01 -> (mouse.x ushr 8).toUByte()
+            0x02 -> (mouse.y and 0xff).toUByte()
+            0x03 -> (mouse.y ushr 8).toUByte()
             0x04 -> {
                 val b1 = if (mouse.left) 0b00000001 else 0
                 val b2 = if (mouse.right) 0b00000010 else 0
                 val b3 = if (mouse.middle) 0b00000100 else 0
-                return (b1 or b2 or b3).toShort()
+                (b1 or b2 or b3).toUByte()
             }
-            else -> 0xff
+            else -> 0xff.toUByte()
         }
     }
 

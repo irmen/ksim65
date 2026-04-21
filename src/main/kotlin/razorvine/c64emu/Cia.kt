@@ -3,7 +3,6 @@ package razorvine.c64emu
 import razorvine.ksim65.Cpu6502Core
 import razorvine.ksim65.components.Address
 import razorvine.ksim65.components.MemMappedComponent
-import razorvine.ksim65.components.UByte
 import java.awt.event.KeyEvent
 
 /**
@@ -13,7 +12,7 @@ import java.awt.event.KeyEvent
  * time of day clock, and the essentials of the timer A and B.
  */
 class Cia(val number: Int, startAddress: Address, endAddress: Address, val cpu: Cpu6502Core) : MemMappedComponent(startAddress, endAddress) {
-    private var ramBuffer = Array<UByte>(endAddress-startAddress+1) { 0 }
+    private var ramBuffer = Array(endAddress-startAddress+1) { 0.toUByte() }
     private var regPRA = 0xff
 
     // joystick in port 2 configuration (only works on cia#1)
@@ -128,7 +127,7 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address, val cpu: 
     override fun reset() {
         hostKeyPresses.clear()
         tod.stop()
-        ramBuffer.fill(0)
+        ramBuffer.fill(0.toUByte())
         timerAactual = 0
         timerAset = 0
         timerBactual = 0
@@ -148,7 +147,7 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address, val cpu: 
                 if (key in hostKeyPresses) presses = presses or bits
                 bits = bits ushr 1
             }
-            return (presses.inv() and 255).toShort()
+            return (presses.inv() and 255).toUByte()
         }
 
         val register = offset and 15
@@ -162,7 +161,7 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address, val cpu: 
                         or (if(joy2down) 0 else 0b00000010)
                         or (if(joy2left) 0 else 0b00000100)
                         or (if(joy2right) 0 else 0b00001000)
-                        or (if(joy2fire) 0 else 0b00010000)).toShort()
+                        or (if(joy2fire) 0 else 0b00010000)).toUByte()
             } else if(register==0x01) {
                 // register 1 on CIA#1 is the keyboard data port (and joystick #1...)
                 // if bit is cleared in PRA, contains keys pressed in that column of the matrix
@@ -171,7 +170,7 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address, val cpu: 
                 return when (regPRA) {
                     0b00000000 -> {
                         // check if any keys are pressed at all (by checking all columns at once)
-                        if (hostKeyPresses.isEmpty()) 0xff.toShort() else 0x00.toShort()
+                        if (hostKeyPresses.isEmpty()) 0xff.toUByte() else 0x00.toUByte()
                     }
                     0b11111110 -> {
                         // read column 0
@@ -226,20 +225,20 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address, val cpu: 
                     }
                     else -> {
                         // invalid column selection
-                        0xff
+                        0xff.toUByte()
                     }
                 }
             }
         }
 
         return when (register) {
-            0x04 -> (timerAactual and 0xff).toShort()
-            0x05 -> (timerAactual ushr 8).toShort()
-            0x06 -> (timerBactual and 0xff).toShort()
-            0x07 -> (timerBactual ushr 8).toShort()
+            0x04 -> (timerAactual and 0xff).toUByte()
+            0x05 -> (timerAactual ushr 8).toUByte()
+            0x06 -> (timerBactual and 0xff).toUByte()
+            0x07 -> (timerBactual ushr 8).toUByte()
             0x08 -> {
                 tod.start()
-                (tod.tenths and 0x0f).toShort()
+                (tod.tenths and 0x0f).toUByte()
             }
             0x09 -> toBCD(tod.seconds)
             0x0a -> toBCD(tod.minutes)
@@ -298,13 +297,13 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address, val cpu: 
                     val newICR = ramBuffer[0x0d].toInt() or (data.toInt() and 0b01111111)
                     timerAinterruptEnabled = newICR and 1 != 0
                     timerBinterruptEnabled = newICR and 2 != 0
-                    ramBuffer[0x0d] = newICR.toShort()
+                    ramBuffer[0x0d] = newICR.toUByte()
                 } else {
                     // clear ICR bits
                     val newICR = ramBuffer[0x0d].toInt() and (data.toInt() and 0b01111111).inv()
                     timerAinterruptEnabled = newICR and 1 != 0
                     timerBinterruptEnabled = newICR and 2 != 0
-                    ramBuffer[0x0d] = newICR.toShort()
+                    ramBuffer[0x0d] = newICR.toUByte()
                 }
             }
         }
@@ -313,7 +312,7 @@ class Cia(val number: Int, startAddress: Address, endAddress: Address, val cpu: 
     private fun toBCD(data: Int): UByte {
         val tens = data/10
         val ones = data-tens*10
-        return ((tens shl 4) or ones).toShort()
+        return ((tens shl 4) or ones).toUByte()
     }
 
     private fun fromBCD(bcd: UByte): Int {

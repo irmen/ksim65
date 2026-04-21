@@ -44,6 +44,7 @@ class C64KernalStubs(private val ram: Ram) {
             }
         }
 
+        // unreachable:
         return Cpu6502Core.BreakpointResultAction(null, null)
     }
 }

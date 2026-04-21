@@ -1,7 +1,6 @@
 package razorvine.ksim65
 
 import razorvine.ksim65.components.Address
-import razorvine.ksim65.components.UByte
 
 
 class Disassembler(cpu: Cpu6502Core) {
@@ -45,7 +44,7 @@ class Disassembler(cpu: Cpu6502Core) {
                 // addressing mode used by the 65C02, put here for convenience rather than the subclass
                 val zpAddr = memory[offset+1]
                 val rel = memory[offset+2]
-                val target = (if (rel <= 0x7f) offset+3+rel+baseAddress else offset+3-(256-rel)+baseAddress) and 0xffff
+                val target = (if (rel.toInt() <= 0x7f) offset+3+rel.toInt()+baseAddress else offset+3-(256-rel.toInt())+baseAddress) and 0xffff
                 Pair(line+"${hexB(zpAddr)} ${hexB(rel)} $spacing3 ${opcode.mnemonic}  $${hexB(zpAddr)}, $${hexW(target, true)}", 3)
             }
             Cpu6502Core.AddrMode.Izp -> {
@@ -70,7 +69,7 @@ class Disassembler(cpu: Cpu6502Core) {
             }
             Cpu6502Core.AddrMode.Rel -> {
                 val rel = memory[offset+1]
-                val target = (if (rel <= 0x7f) offset+2+rel+baseAddress else offset+2-(256-rel)+baseAddress) and 0xffff
+                val target = (if (rel.toInt() <= 0x7f) offset+2+rel.toInt()+baseAddress else offset+2-(256-rel.toInt())+baseAddress) and 0xffff
                 Pair(line+"${hexB(rel)} $spacing2 ${opcode.mnemonic}  $${hexW(target, true)}", 2)
             }
             Cpu6502Core.AddrMode.Abs -> {

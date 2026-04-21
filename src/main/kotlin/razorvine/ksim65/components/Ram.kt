@@ -8,7 +8,7 @@ import java.io.InputStream
  * A RAM chip with read/write memory.
  */
 class Ram(startAddress: Address, endAddress: Address) : MemoryComponent(startAddress, endAddress) {
-    override val data = Array<UByte>(endAddress-startAddress+1) { 0 }
+    override val data = Array(endAddress-startAddress+1) { 0.toUByte() }
 
     override operator fun get(offset: Int): UByte = data[offset]
 
@@ -23,6 +23,7 @@ class Ram(startAddress: Address, endAddress: Address) : MemoryComponent(startAdd
     }
 
     fun fill(data: UByte) = this.data.fill(data)
+    fun fill(data: Int) = this.data.fill(data.toUByte())
 
     /**
      * Load a c64-style prg program. This file type has the load address as the first two bytes.
@@ -38,8 +39,8 @@ class Ram(startAddress: Address, endAddress: Address) : MemoryComponent(startAdd
         val loadAddress = overrideLoadAddress ?: (bytes[0]+256*bytes[1])
         val baseAddress = loadAddress-startAddress
         bytes.drop(2).forEachIndexed { index, byte ->
-            data[baseAddress+index] = if (byte >= 0) byte.toShort()
-            else (256+byte).toShort()
+            data[baseAddress+index] = if (byte >= 0) byte.toUByte()
+            else (256+byte).toUByte()
         }
         return Pair(baseAddress, bytes.size-2)
     }
@@ -59,7 +60,7 @@ class Ram(startAddress: Address, endAddress: Address) : MemoryComponent(startAdd
 
     fun load(data: ByteArray, address: Address) = data.forEachIndexed { index, byte ->
         val baseAddress = address-startAddress
-        this.data[baseAddress+index] = if (byte >= 0) byte.toShort()
-        else (256+byte).toShort()
+        this.data[baseAddress+index] = if (byte >= 0) byte.toUByte()
+        else (256+byte).toUByte()
     }
 }

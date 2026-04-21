@@ -28,6 +28,8 @@ import kotlin.math.min
  *  0a      r/w character at cursor pos, updates cursor position, scrolls up if necessary
  *          control chars: 8=backspace, 9=tab, 10=newline, 12=form feed (clear screen), 13=carriage return
  */
+
+@OptIn(ExperimentalUnsignedTypes::class)
 class Display(startAddress: Address, endAddress: Address, private val host: IHostInterface,
               private val charWidth: Int, private val charHeight: Int) :
         MemMappedComponent(startAddress, endAddress) {
@@ -42,7 +44,9 @@ class Display(startAddress: Address, endAddress: Address, private val host: IHos
     private var charposY = 0
     private var pixelX = 0
     private var pixelY = 0
-    private val charMatrix = Array(charHeight) { ShortArray(charWidth) }    // matrix[y][x] to access
+
+
+    private val charMatrix = Array<UByteArray>(charHeight) { UByteArray(charWidth) }    // matrix[y][x] to access
 
     override fun clock() {
         // if the system clock is synced to the display refresh,
@@ -52,7 +56,7 @@ class Display(startAddress: Address, endAddress: Address, private val host: IHos
     }
 
     override fun reset() {
-        charMatrix.forEach { it.fill(' '.code.toShort()) }
+        charMatrix.forEach { it.fill(' '.code.toUByte()) }
         cursorX = 0
         cursorY = 0
         charposX = 0
@@ -64,26 +68,26 @@ class Display(startAddress: Address, endAddress: Address, private val host: IHos
 
     override operator fun get(offset: Int): UByte {
         return when (offset) {
-            0x00 -> charposX.toShort()
-            0x01 -> charposY.toShort()
+            0x00 -> charposX.toUByte()
+            0x01 -> charposY.toUByte()
             0x02 -> {
                 if (charposY in 0 until charHeight && charposX in 0 until charWidth) {
                     charMatrix[charposY][charposX]
-                } else 0xff
+                } else 0xff.toUByte()
             }
-            0x03 -> (pixelX and 0xff).toShort()
-            0x04 -> (pixelX ushr 8).toShort()
-            0x05 -> (pixelY and 0xff).toShort()
-            0x06 -> (pixelY ushr 8).toShort()
-            0x07 -> if (host.getPixel(pixelX, pixelY)) 1 else 0
-            0x08 -> cursorX.toShort()
-            0x09 -> cursorY.toShort()
+            0x03 -> (pixelX and 0xff).toUByte()
+            0x04 -> (pixelX ushr 8).toUByte()
+            0x05 -> (pixelY and 0xff).toUByte()
+            0x06 -> (pixelY ushr 8).toUByte()
+            0x07 -> if (host.getPixel(pixelX, pixelY)) 1.toUByte() else 0.toUByte()
+            0x08 -> cursorX.toUByte()
+            0x09 -> cursorY.toUByte()
             0x0a -> {
                 if (cursorY in 0 until charHeight && cursorX in 0 until charWidth) {
                     charMatrix[cursorY][cursorX]
-                } else 0xff
+                } else 0xff.toUByte()
             }
-            else -> return 0xff
+            else -> 0xff.toUByte()
         }
     }
 
@@ -103,7 +107,7 @@ class Display(startAddress: Address, endAddress: Address, private val host: IHos
             0x06 -> pixelY = (pixelY and 0x00ff) or (data.toInt() shl 8)
             0x07 -> {
                 if (pixelX in 0 until ScreenDefs.COLUMNS*charWidth && pixelY in 0 until ScreenDefs.ROWS*charHeight) {
-                    if (data == 0.toShort()) host.clearPixel(pixelX, pixelY)
+                    if (data == 0.toUByte()) host.clearPixel(pixelX, pixelY)
                     else host.setPixel(pixelX, pixelY)
                 }
             }
@@ -121,7 +125,7 @@ class Display(startAddress: Address, endAddress: Address, private val host: IHos
                                     cursorX = charWidth-1
                                 }
                             }
-                            charMatrix[cursorY][cursorX] = ' '.code.toShort()
+                            charMatrix[cursorY][cursorX] = ' '.code.toUByte()
                             host.setChar(cursorX, cursorY, ' ')
                         }
                         0x09 -> {
@@ -164,7 +168,7 @@ class Display(startAddress: Address, endAddress: Address, private val host: IHos
                 charMatrix[y+1].copyInto(charMatrix[y])
             }
             for (x in 0 until charWidth) {
-                charMatrix[charHeight-1][x] = ' '.code.toShort()
+                charMatrix[charHeight-1][x] = ' '.code.toUByte()
             }
             cursorY--
             host.scrollUp()

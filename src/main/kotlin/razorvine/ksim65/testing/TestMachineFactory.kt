@@ -1,11 +1,15 @@
-package razorvine.ksim65
+package razorvine.ksim65.testing
 
+import razorvine.ksim65.Bus
+import razorvine.ksim65.Cpu6502
+import razorvine.ksim65.Cpu6502Core
+import razorvine.ksim65.Cpu65C02
 import razorvine.ksim65.components.*
 
 /**
  * Factory for creating a configured 65xx computer system for automated testing purposes.
  */
-object TestMachineFactory {
+object MachineFactory {
 
     enum class CpuType {
         CPU6502,    // NMOS 6502 with illegal opcodes
@@ -13,39 +17,13 @@ object TestMachineFactory {
     }
 
     /**
-     * Simple I/O device for testing.
-     * Provides read from input callback and write to output callback.
-     */
-    class SimpleIO(
-        startAddress: Address,
-        val input: () -> Short,
-        val output: (Short) -> Unit
-    ) : MemMappedComponent(startAddress, startAddress) {
-
-        companion object {
-            const val DEFAULT_ADDRESS = 0xf030
-        }
-
-        override fun clock() {}
-        override fun reset() {}
-
-        override operator fun get(offset: Int): UByte {
-            return if (offset == 0x00) input() else 0.toShort()
-        }
-
-        override operator fun set(offset: Int, data: UByte) {
-            if (offset == 0x01) output(data)
-        }
-    }
-
-    /**
      * Result of creating a machine.
      */
     data class Machine(
-        val bus: Bus,
-        val cpu: Cpu6502Core,
-        val ram: Ram,
-        val cpuType: CpuType
+            val bus: Bus,
+            val cpu: Cpu6502Core,
+            val ram: Ram,
+            val cpuType: CpuType
     )
 
     /**
@@ -71,12 +49,12 @@ object TestMachineFactory {
         val bus = Bus()
 
         // Set up reset vector
-        ram[0xfffa] = 0
-        ram[0xfffb] = 0
-        ram[0xfffc] = (resetAddress and 0xff).toShort()
-        ram[0xfffd] = ((resetAddress shr 8) and 0xff).toShort()
-        ram[0xfffe] = 0
-        ram[0xffff] = 0
+        ram[0xfffa] = 0.toUByte()
+        ram[0xfffb] = 0.toUByte()
+        ram[0xfffc] = (resetAddress and 0xff).toUByte()
+        ram[0xfffd] = ((resetAddress shr 8) and 0xff).toUByte()
+        ram[0xfffe] = 0.toUByte()
+        ram[0xffff] = 0.toUByte()
 
         // Add optional components
         if (timerAddress != null) {
@@ -88,7 +66,7 @@ object TestMachineFactory {
             bus += rtc
         }
         if (ioAddress != null && input != null && output != null) {
-            val io = SimpleIO(ioAddress, input, output)
+            val io = SerialInputOutputInterface(ioAddress, input, output)
             bus += io
         }
 
@@ -130,8 +108,8 @@ object TestMachineFactory {
      * Input returns -1 when no data available.
      */
     fun createWithIO(
-        ioAddress: Int = SimpleIO.DEFAULT_ADDRESS,
-        input: () -> UByte = { -1 },
-        output: (UByte) -> Unit = {}
+            ioAddress: Int = SerialInputOutputInterface.DEFAULT_ADDRESS,
+            input: () -> UByte = { 0xff.toUByte() },
+            output: (UByte) -> Unit = {}
     ): Machine = create(ioAddress = ioAddress, input = input, output = output)
 }

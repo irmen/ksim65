@@ -5,7 +5,6 @@ import razorvine.ksim65.Cpu6502Core
 import razorvine.ksim65.Cpu65C02
 import razorvine.ksim65.components.Address
 import razorvine.ksim65.components.MemMappedComponent
-import razorvine.ksim65.components.UByte
 import razorvine.ksim65.hexW
 import java.lang.Exception
 import kotlin.test.*
@@ -78,7 +77,7 @@ class Test6502Klaus2m5Functional {
     fun testInterrupts6502() {
         val cpu = Cpu6502()
         class Trigger(startAddress: Address, endAddress: Address) : MemMappedComponent(startAddress, endAddress) {
-            var value: UByte = 0
+            var value: UByte = 0.toUByte()
             var lastIRQpc: Address = 0
             var lastNMIpc: Address = 0
 
@@ -149,7 +148,7 @@ class Test6502Klaus2m5Functional {
         cpu.breakpointForBRK = { _, address ->
             if(address==0x024b) {    // test end address
                 val error=bus.read(0x000b)      // the 'ERROR' variable is stored here
-                if(error==0.toShort())
+                if(error==0.toUByte())
                     throw SuccessfulTestResult()
             }
             Cpu6502Core.BreakpointResultAction(null, null)
@@ -182,7 +181,7 @@ class Test6502Klaus2m5Functional {
         cpu.breakpointForBRK = { _, address ->
             if(address==0x024b) {   // test end address
                 val error=bus.read(0x000b)      // the 'ERROR' variable is stored here
-                if(error==0.toShort())
+                if(error==0.toUByte())
                     throw SuccessfulTestResult()
             }
             Cpu6502Core.BreakpointResultAction(null, null)

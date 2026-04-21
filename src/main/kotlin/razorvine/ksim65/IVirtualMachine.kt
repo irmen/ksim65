@@ -1,7 +1,6 @@
 package razorvine.ksim65
 
 import razorvine.ksim65.components.Address
-import razorvine.ksim65.components.UByte
 import java.io.File
 
 interface IVirtualMachine {

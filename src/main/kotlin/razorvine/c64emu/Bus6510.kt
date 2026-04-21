@@ -2,7 +2,6 @@ package razorvine.c64emu
 
 import razorvine.ksim65.components.Address
 import razorvine.ksim65.components.Rom
-import razorvine.ksim65.components.UByte
 
 /**
  * The C64's bus is a bit peculiar:

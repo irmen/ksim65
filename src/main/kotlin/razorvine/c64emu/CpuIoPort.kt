@@ -1,7 +1,6 @@
 package razorvine.c64emu
 
 import razorvine.ksim65.components.MemMappedComponent
-import razorvine.ksim65.components.UByte
 
 /**
  * The 6510's IO port located at $00/$01
@@ -29,12 +28,12 @@ class CpuIoPort : MemMappedComponent(0x0000, 0x0001) {
 
     override operator fun get(offset: Int): UByte {
         return if(offset==0) {
-            dataDirections.toShort()
+            dataDirections.toUByte()
         } else {
             if(dataDirections and 0b00100000 == 0)
-                (ioPort and 0b11011111).toShort()        // bit 5 is low when input
+                (ioPort and 0b11011111).toUByte()        // bit 5 is low when input
             else
-                ioPort.toShort()
+                ioPort.toUByte()
         }
     }
 

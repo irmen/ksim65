@@ -20,7 +20,7 @@ class Monitor(val bus: Bus, val cpu: Cpu6502Core) {
                 else {
                     val start = Assembler.parseNumber(parts[0])
                     val end = Assembler.parseNumber(parts[1])
-                    val value = Assembler.parseNumber(parts[2]).toShort()
+                    val value = Assembler.parseNumber(parts[2]).toUByte()
                     for (addr in start..end) {
                         bus.write(addr, value)
                     }
@@ -45,7 +45,7 @@ class Monitor(val bus: Bus, val cpu: Cpu6502Core) {
                 val numbers = command.substring(1).trim().split(' ')
                 val address = Assembler.parseNumber(numbers[0])
                 val values = numbers.drop(1).map { Assembler.parseNumber(it) }
-                values.forEachIndexed { index, i -> bus.write(address+index, i.toShort()) }
+                values.forEachIndexed { index, i -> bus.write(address+index, i.toUByte()) }
                 IVirtualMachine.MonitorCmdResult("ok", "", true)
             }
             'i' -> {

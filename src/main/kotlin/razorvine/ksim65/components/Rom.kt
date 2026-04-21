@@ -6,7 +6,7 @@ import java.io.File
  * A ROM chip (read-only memory).
  */
 class Rom(startAddress: Address, endAddress: Address, initialData: Array<UByte>? = null) : MemoryComponent(startAddress, endAddress) {
-    override val data: Array<UByte> = initialData?.copyOf() ?: Array(endAddress-startAddress+1) { 0 }
+    override val data: Array<UByte> = initialData?.copyOf() ?: Array(endAddress-startAddress+1) { 0.toUByte() }
 
     init {
         require(endAddress-startAddress+1 == data.size) { "rom address range doesn't match size of data bytes" }
@@ -28,5 +28,5 @@ class Rom(startAddress: Address, endAddress: Address, initialData: Array<UByte>?
 
     fun load(data: Array<UByte>) = data.copyInto(this.data)
 
-    fun load(data: ByteArray) = data.map { (it.toInt() and 255).toShort() }.toTypedArray().copyInto(this.data)
+    fun load(data: ByteArray) = data.map { (it.toInt() and 255).toUByte() }.toTypedArray().copyInto(this.data)
 }

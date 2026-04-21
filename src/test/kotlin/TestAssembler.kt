@@ -16,9 +16,9 @@ class TestAssembler {
         assertEquals("", result.error)
         assertEquals(0xc000, result.startAddress)
         assertEquals(3, result.numBytes)
-        assertEquals(0x4c, ram[0xc000])
-        assertEquals(0x31, ram[0xc001])
-        assertEquals(0xea, ram[0xc002])
+        assertEquals(0x4c.toUByte(),  ram[0xc000])
+        assertEquals(0x31.toUByte(),  ram[0xc001])
+        assertEquals(0xea.toUByte(),  ram[0xc002])
     }
 
     @Test

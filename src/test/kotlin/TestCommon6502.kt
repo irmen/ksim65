@@ -73,9 +73,9 @@ abstract class TestCommon6502 {
     }
 
     // test helpers
-    fun writeMem(memory: MemMappedComponent, startAddress: Address, data: Iterable<UByte>) {
+    fun writeMem(memory: MemMappedComponent, startAddress: Address, data: Iterable<Int>) {
         var addr = startAddress
-        data.forEach { memory[addr++] = it }
+        data.forEach { memory[addr++] = it.toUByte() }
     }
 
 
@@ -1506,7 +1506,7 @@ abstract class TestCommon6502 {
         memory[0xABCD] = 0x00
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(0x00, memory[0xABCD])
+        assertEquals(0x00.toUByte(),  memory[0xABCD])
         assertTrue(mpu.regP.Z)
         assertFalse(mpu.regP.N)
     }
@@ -1518,7 +1518,7 @@ abstract class TestCommon6502 {
         memory[0xABCD] = 0x40
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(0x80, memory[0xABCD])
+        assertEquals(0x80.toUByte(),  memory[0xABCD])
         assertTrue(mpu.regP.N)
         assertFalse(mpu.regP.Z)
     }
@@ -1532,7 +1532,7 @@ abstract class TestCommon6502 {
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
         assertEquals(0xAA, mpu.regA)
-        assertEquals(0xFE, memory[0xABCD])
+        assertEquals(0xFE.toUByte(),  memory[0xABCD])
         assertFalse(mpu.regP.C)
     }
 
@@ -1545,7 +1545,7 @@ abstract class TestCommon6502 {
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
         assertEquals(0xAA, mpu.regA)
-        assertEquals(0xFE, memory[0xABCD])
+        assertEquals(0xFE.toUByte(),  memory[0xABCD])
         assertTrue(mpu.regP.C)
     }
 
@@ -1558,7 +1558,7 @@ abstract class TestCommon6502 {
         memory[0x0010] = 0x00
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0x00, memory[0x0010])
+        assertEquals(0x00.toUByte(),  memory[0x0010])
         assertTrue(mpu.regP.Z)
         assertFalse(mpu.regP.N)
     }
@@ -1570,7 +1570,7 @@ abstract class TestCommon6502 {
         memory[0x0010] = 0x40
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0x80, memory[0x0010])
+        assertEquals(0x80.toUByte(),  memory[0x0010])
         assertTrue(mpu.regP.N)
         assertFalse(mpu.regP.Z)
     }
@@ -1584,7 +1584,7 @@ abstract class TestCommon6502 {
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
         assertEquals(0xAA, mpu.regA)
-        assertEquals(0xFE, memory[0x0010])
+        assertEquals(0xFE.toUByte(),  memory[0x0010])
         assertFalse(mpu.regP.C)
     }
 
@@ -1597,7 +1597,7 @@ abstract class TestCommon6502 {
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
         assertEquals(0xAA, mpu.regA)
-        assertEquals(0xFE, memory[0x0010])
+        assertEquals(0xFE.toUByte(),  memory[0x0010])
         assertTrue(mpu.regP.C)
     }
 
@@ -1611,7 +1611,7 @@ abstract class TestCommon6502 {
         memory[0xABCD + mpu.regX] = 0x00
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(0x00, memory[0xABCD + mpu.regX])
+        assertEquals(0x00.toUByte(),  memory[0xABCD + mpu.regX])
         assertTrue(mpu.regP.Z)
         assertFalse(mpu.regP.N)
     }
@@ -1624,7 +1624,7 @@ abstract class TestCommon6502 {
         memory[0xABCD + mpu.regX] = 0x40
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(0x80, memory[0xABCD + mpu.regX])
+        assertEquals(0x80.toUByte(),  memory[0xABCD + mpu.regX])
         assertTrue(mpu.regP.N)
         assertFalse(mpu.regP.Z)
     }
@@ -1639,7 +1639,7 @@ abstract class TestCommon6502 {
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
         assertEquals(0xAA, mpu.regA)
-        assertEquals(0xFE, memory[0xABCD + mpu.regX])
+        assertEquals(0xFE.toUByte(),  memory[0xABCD + mpu.regX])
         assertFalse(mpu.regP.C)
     }
 
@@ -1653,7 +1653,7 @@ abstract class TestCommon6502 {
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
         assertEquals(0xAA, mpu.regA)
-        assertEquals(0xFE, memory[0xABCD + mpu.regX])
+        assertEquals(0xFE.toUByte(),  memory[0xABCD + mpu.regX])
         assertTrue(mpu.regP.C)
     }
 
@@ -1667,7 +1667,7 @@ abstract class TestCommon6502 {
         memory[0x0010 + mpu.regX] = 0x00
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0x00, memory[0x0010 + mpu.regX])
+        assertEquals(0x00.toUByte(),  memory[0x0010 + mpu.regX])
         assertTrue(mpu.regP.Z)
         assertFalse(mpu.regP.N)
     }
@@ -1680,7 +1680,7 @@ abstract class TestCommon6502 {
         memory[0x0010 + mpu.regX] = 0x40
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0x80, memory[0x0010 + mpu.regX])
+        assertEquals(0x80.toUByte(),  memory[0x0010 + mpu.regX])
         assertTrue(mpu.regP.N)
         assertFalse(mpu.regP.Z)
     }
@@ -1695,7 +1695,7 @@ abstract class TestCommon6502 {
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
         assertEquals(0xAA, mpu.regA)
-        assertEquals(0xFE, memory[0x0010 + mpu.regX])
+        assertEquals(0xFE.toUByte(),  memory[0x0010 + mpu.regX])
         assertFalse(mpu.regP.C)
     }
 
@@ -1709,7 +1709,7 @@ abstract class TestCommon6502 {
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
         assertEquals(0xAA, mpu.regA)
-        assertEquals(0xFE, memory[0x0010 + mpu.regX])
+        assertEquals(0xFE.toUByte(),  memory[0x0010 + mpu.regX])
         assertTrue(mpu.regP.C)
     }
 
@@ -1730,7 +1730,7 @@ abstract class TestCommon6502 {
         mpu.regPC = 0x0050
         val rel = 256 + (-6)  // two's complement of 6
         // $0000 BCC -6
-        writeMem(memory, 0x0050, listOf(0x90, rel.toShort()))
+        writeMem(memory, 0x0050, listOf(0x90, rel))
         mpu.step()
         assertEquals(0x0052 - 6, mpu.regPC)
     }
@@ -1761,7 +1761,7 @@ abstract class TestCommon6502 {
         mpu.regPC = 0x0050
         val rel = 256 + (-6)  // two's complement of 6
         // $0000 BCS -6
-        writeMem(memory, 0x0050, listOf(0xB0, rel.toShort()))
+        writeMem(memory, 0x0050, listOf(0xB0, rel))
         mpu.step()
         assertEquals(0x0052 - 6, mpu.regPC)
     }
@@ -1792,7 +1792,7 @@ abstract class TestCommon6502 {
         mpu.regPC = 0x0050
         val rel = 256 + (-6)  // two's complement of 6
         // $0000 BEQ -6
-        writeMem(memory, 0x0050, listOf(0xF0, rel.toShort()))
+        writeMem(memory, 0x0050, listOf(0xF0, rel))
         mpu.step()
         assertEquals(0x0052 - 6, mpu.regPC)
     }
@@ -1862,7 +1862,7 @@ abstract class TestCommon6502 {
         mpu.step()
         assertTrue(mpu.regP.Z)
         assertEquals(0x01, mpu.regA)
-        assertEquals(0x00, memory[0xFEED])
+        assertEquals(0x00.toUByte(),  memory[0xFEED])
     }
 
     @Test
@@ -1875,7 +1875,7 @@ abstract class TestCommon6502 {
         mpu.step()
         assertFalse(mpu.regP.Z)  // result of AND is non-zero
         assertEquals(0x01, mpu.regA)
-        assertEquals(0x01, memory[0xFEED])
+        assertEquals(0x01.toUByte(),  memory[0xFEED])
     }
 
     @Test
@@ -1888,7 +1888,7 @@ abstract class TestCommon6502 {
         mpu.step()
         assertTrue(mpu.regP.Z)  // result of AND is zero
         assertEquals(0x01, mpu.regA)
-        assertEquals(0x00, memory[0xFEED])
+        assertEquals(0x00.toUByte(),  memory[0xFEED])
     }
 
     // BIT (Zero Page)
@@ -1957,7 +1957,7 @@ abstract class TestCommon6502 {
         assertEquals(11L, mpu.totalCycles)
         assertTrue(mpu.regP.Z)
         assertEquals(0x01, mpu.regA)
-        assertEquals(0x00, memory[0x0010])
+        assertEquals(0x00.toUByte(),  memory[0x0010])
     }
 
     @Test
@@ -1972,7 +1972,7 @@ abstract class TestCommon6502 {
         assertEquals(11L, mpu.totalCycles)
         assertFalse(mpu.regP.Z)  // result of AND is non-zero
         assertEquals(0x01, mpu.regA)
-        assertEquals(0x01, memory[0x0010])
+        assertEquals(0x01.toUByte(),  memory[0x0010])
     }
 
     @Test
@@ -1987,7 +1987,7 @@ abstract class TestCommon6502 {
         assertEquals(11L, mpu.totalCycles)
         assertTrue(mpu.regP.Z)  // result of AND is zero
         assertEquals(0x01, mpu.regA)
-        assertEquals(0x00, memory[0x0010])
+        assertEquals(0x00.toUByte(),  memory[0x0010])
     }
 
     // BMI
@@ -2007,7 +2007,7 @@ abstract class TestCommon6502 {
         mpu.regPC = 0x0050
         // $0000 BMI -6
         val rel = 256 + (-6)  // two's complement of 6
-        writeMem(memory, 0x0050, listOf(0x30, rel.toShort()))
+        writeMem(memory, 0x0050, listOf(0x30, rel))
         mpu.step()
         assertEquals(0x0052 - 6, mpu.regPC)
     }
@@ -2038,7 +2038,7 @@ abstract class TestCommon6502 {
         mpu.regPC = 0x0050
         // $0050 BNE -6
         val rel = 256 + (-6)  // two's complement of 6
-        writeMem(memory, 0x0050, listOf(0xD0, rel.toShort()))
+        writeMem(memory, 0x0050, listOf(0xD0, rel))
         mpu.step()
         assertEquals(0x0052 - 6, mpu.regPC)
     }
@@ -2069,7 +2069,7 @@ abstract class TestCommon6502 {
         mpu.regPC = 0x0050
         // $0050 BPL -6
         val rel = 256 + (-6)  // two's complement of 6
-        writeMem(memory, 0x0050, listOf(0x10, rel.toShort()))
+        writeMem(memory, 0x0050, listOf(0x10, rel))
         mpu.step()
         assertEquals(0x0052 - 6, mpu.regPC)
     }
@@ -2097,9 +2097,9 @@ abstract class TestCommon6502 {
         assertEquals(0xABCD, mpu.regPC)
 
         assertEquals(0xFC, mpu.regSP)
-        assertEquals(0xC0, memory[0x1FF])  // PCH
-        assertEquals(0x02, memory[0x1FE])  // PCL
-        assertEquals(F_BREAK or F_UNUSED, memory[0x1FD].toInt(), "Status on stack should have no I flag")
+        assertEquals(0xC0.toUByte(),  memory[0x1FF])  // PCH
+        assertEquals(0x02.toUByte(),  memory[0x1FE])  // PCL
+        assertEquals((F_BREAK or F_UNUSED).toUByte(), memory[0x1FD], "Status on stack should have no I flag")
         assertEquals(F_BREAK or F_UNUSED or F_INTERRUPT, mpu.regP.asInt())
     }
 
@@ -2120,7 +2120,7 @@ abstract class TestCommon6502 {
         mpu.regPC = 0x0050
         val rel = 256 + (-6)  // two's complement of 6
         // $0050 BVC -6
-        writeMem(memory, 0x0050, listOf(0x50, rel.toShort()))
+        writeMem(memory, 0x0050, listOf(0x50, rel))
         mpu.step()
         assertEquals(0x0052 - 6, mpu.regPC)
     }
@@ -2151,7 +2151,7 @@ abstract class TestCommon6502 {
         mpu.regPC = 0x0050
         val rel = 256 + (-6)  // two's complement of 6
         // $0050 BVS -6
-        writeMem(memory, 0x0050, listOf(0x70, rel.toShort()))
+        writeMem(memory, 0x0050, listOf(0x70, rel))
         mpu.step()
         assertEquals(0x0052 - 6, mpu.regPC)
     }
@@ -2353,7 +2353,7 @@ abstract class TestCommon6502 {
         memory[0xABCD] = 0x10
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(0x0F, memory[0xABCD])
+        assertEquals(0x0F.toUByte(),  memory[0xABCD])
         assertFalse(mpu.regP.N)
         assertFalse(mpu.regP.Z)
     }
@@ -2365,7 +2365,7 @@ abstract class TestCommon6502 {
         memory[0xABCD] = 0x00
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(0xFF, memory[0xABCD])
+        assertEquals(0xFF.toUByte(),  memory[0xABCD])
         assertFalse(mpu.regP.Z)
         assertTrue(mpu.regP.N)
     }
@@ -2377,7 +2377,7 @@ abstract class TestCommon6502 {
         memory[0xABCD] = 0x01
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(0x00, memory[0xABCD])
+        assertEquals(0x00.toUByte(),  memory[0xABCD])
         assertTrue(mpu.regP.Z)
         assertFalse(mpu.regP.N)
     }
@@ -2391,7 +2391,7 @@ abstract class TestCommon6502 {
         memory[0x0010] = 0x10
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0x0F, memory[0x0010])
+        assertEquals(0x0F.toUByte(),  memory[0x0010])
         assertFalse(mpu.regP.N)
         assertFalse(mpu.regP.Z)
     }
@@ -2403,7 +2403,7 @@ abstract class TestCommon6502 {
         memory[0x0010] = 0x00
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0xFF, memory[0x0010])
+        assertEquals(0xFF.toUByte(),  memory[0x0010])
         assertFalse(mpu.regP.Z)
         assertTrue(mpu.regP.N)
     }
@@ -2415,7 +2415,7 @@ abstract class TestCommon6502 {
         memory[0x0010] = 0x01
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0x00, memory[0x0010])
+        assertEquals(0x00.toUByte(),  memory[0x0010])
         assertTrue(mpu.regP.Z)
         assertFalse(mpu.regP.N)
     }
@@ -2430,7 +2430,7 @@ abstract class TestCommon6502 {
         memory[0xABCD + mpu.regX] = 0x10
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(0x0F, memory[0xABCD + mpu.regX])
+        assertEquals(0x0F.toUByte(),  memory[0xABCD + mpu.regX])
         assertFalse(mpu.regP.N)
         assertFalse(mpu.regP.Z)
     }
@@ -2442,7 +2442,7 @@ abstract class TestCommon6502 {
         memory[0xABCD + mpu.regX] = 0x00
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(0xFF, memory[0xABCD + mpu.regX])
+        assertEquals(0xFF.toUByte(),  memory[0xABCD + mpu.regX])
         assertFalse(mpu.regP.Z)
         assertTrue(mpu.regP.N)
     }
@@ -2454,7 +2454,7 @@ abstract class TestCommon6502 {
         memory[0xABCD + mpu.regX] = 0x01
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(0x00, memory[0xABCD + mpu.regX])
+        assertEquals(0x00.toUByte(),  memory[0xABCD + mpu.regX])
         assertTrue(mpu.regP.Z)
         assertFalse(mpu.regP.N)
     }
@@ -2469,7 +2469,7 @@ abstract class TestCommon6502 {
         memory[0x0010 + mpu.regX] = 0x10
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0x0F, memory[0x0010 + mpu.regX])
+        assertEquals(0x0F.toUByte(),  memory[0x0010 + mpu.regX])
         assertFalse(mpu.regP.N)
         assertFalse(mpu.regP.Z)
     }
@@ -2482,7 +2482,7 @@ abstract class TestCommon6502 {
         memory[0x0010 + mpu.regX] = 0x00
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0xFF, memory[0x0010 + mpu.regX])
+        assertEquals(0xFF.toUByte(),  memory[0x0010 + mpu.regX])
         assertFalse(mpu.regP.Z)
         assertTrue(mpu.regP.N)
     }
@@ -2495,7 +2495,7 @@ abstract class TestCommon6502 {
         memory[0x0010 + mpu.regX] = 0x01
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0x00, memory[0x0010 + mpu.regX])
+        assertEquals(0x00.toUByte(),  memory[0x0010 + mpu.regX])
         assertTrue(mpu.regP.Z)
         assertFalse(mpu.regP.N)
     }
@@ -2584,7 +2584,7 @@ abstract class TestCommon6502 {
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
         assertEquals(0x00, mpu.regA)
-        assertEquals(0xFF, memory[0xABCD])
+        assertEquals(0xFF.toUByte(),  memory[0xABCD])
         assertTrue(mpu.regP.Z)
     }
 
@@ -2596,7 +2596,7 @@ abstract class TestCommon6502 {
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
         assertEquals(0xFF, mpu.regA)
-        assertEquals(0xFF, memory[0xABCD])
+        assertEquals(0xFF.toUByte(),  memory[0xABCD])
         assertTrue(mpu.regP.N)
         assertFalse(mpu.regP.Z)
     }
@@ -2611,7 +2611,7 @@ abstract class TestCommon6502 {
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
         assertEquals(0x00, mpu.regA)
-        assertEquals(0xFF, memory[0x0010])
+        assertEquals(0xFF.toUByte(),  memory[0x0010])
         assertTrue(mpu.regP.Z)
     }
 
@@ -2623,7 +2623,7 @@ abstract class TestCommon6502 {
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
         assertEquals(0xFF, mpu.regA)
-        assertEquals(0xFF, memory[0x0010])
+        assertEquals(0xFF.toUByte(),  memory[0x0010])
         assertTrue(mpu.regP.N)
         assertFalse(mpu.regP.Z)
     }
@@ -2662,7 +2662,7 @@ abstract class TestCommon6502 {
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
         assertEquals(0x00, mpu.regA)
-        assertEquals(0xFF, memory[0xABCD + mpu.regX])
+        assertEquals(0xFF.toUByte(),  memory[0xABCD + mpu.regX])
         assertTrue(mpu.regP.Z)
     }
 
@@ -2675,7 +2675,7 @@ abstract class TestCommon6502 {
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
         assertEquals(0xFF, mpu.regA)
-        assertEquals(0xFF, memory[0xABCD + mpu.regX])
+        assertEquals(0xFF.toUByte(),  memory[0xABCD + mpu.regX])
         assertTrue(mpu.regP.N)
         assertFalse(mpu.regP.Z)
     }
@@ -2691,7 +2691,7 @@ abstract class TestCommon6502 {
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
         assertEquals(0x00, mpu.regA)
-        assertEquals(0xFF, memory[0xABCD + mpu.regY])
+        assertEquals(0xFF.toUByte(),  memory[0xABCD + mpu.regY])
         assertTrue(mpu.regP.Z)
     }
 
@@ -2704,7 +2704,7 @@ abstract class TestCommon6502 {
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
         assertEquals(0xFF, mpu.regA)
-        assertEquals(0xFF, memory[0xABCD + mpu.regY])
+        assertEquals(0xFF.toUByte(),  memory[0xABCD + mpu.regY])
         assertTrue(mpu.regP.N)
         assertFalse(mpu.regP.Z)
     }
@@ -2721,7 +2721,7 @@ abstract class TestCommon6502 {
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
         assertEquals(0x00, mpu.regA)
-        assertEquals(0xFF, memory[0xABCD])
+        assertEquals(0xFF.toUByte(),  memory[0xABCD])
         assertTrue(mpu.regP.Z)
     }
 
@@ -2735,7 +2735,7 @@ abstract class TestCommon6502 {
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
         assertEquals(0xFF, mpu.regA)
-        assertEquals(0xFF, memory[0xABCD])
+        assertEquals(0xFF.toUByte(),  memory[0xABCD])
         assertTrue(mpu.regP.N)
         assertFalse(mpu.regP.Z)
     }
@@ -2752,7 +2752,7 @@ abstract class TestCommon6502 {
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
         assertEquals(0x00, mpu.regA)
-        assertEquals(0xFF, memory[0xABCD + mpu.regY])
+        assertEquals(0xFF.toUByte(),  memory[0xABCD + mpu.regY])
         assertTrue(mpu.regP.Z)
     }
 
@@ -2766,7 +2766,7 @@ abstract class TestCommon6502 {
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
         assertEquals(0xFF, mpu.regA)
-        assertEquals(0xFF, memory[0xABCD + mpu.regY])
+        assertEquals(0xFF.toUByte(),  memory[0xABCD + mpu.regY])
         assertTrue(mpu.regP.N)
         assertFalse(mpu.regP.Z)
     }
@@ -2782,7 +2782,7 @@ abstract class TestCommon6502 {
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
         assertEquals(0x00, mpu.regA)
-        assertEquals(0xFF, memory[0x0010 + mpu.regX])
+        assertEquals(0xFF.toUByte(),  memory[0x0010 + mpu.regX])
         assertTrue(mpu.regP.Z)
     }
 
@@ -2795,7 +2795,7 @@ abstract class TestCommon6502 {
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
         assertEquals(0xFF, mpu.regA)
-        assertEquals(0xFF, memory[0x0010 + mpu.regX])
+        assertEquals(0xFF.toUByte(),  memory[0x0010 + mpu.regX])
         assertTrue(mpu.regP.N)
         assertFalse(mpu.regP.Z)
     }
@@ -2808,7 +2808,7 @@ abstract class TestCommon6502 {
         memory[0xABCD] = 0x09
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(0x0A, memory[0xABCD])
+        assertEquals(0x0A.toUByte(),  memory[0xABCD])
         assertFalse(mpu.regP.Z)
         assertFalse(mpu.regP.N)
     }
@@ -2819,7 +2819,7 @@ abstract class TestCommon6502 {
         memory[0xABCD] = 0xFF
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(0x00, memory[0xABCD])
+        assertEquals(0x00.toUByte(),  memory[0xABCD])
         assertTrue(mpu.regP.Z)
         assertFalse(mpu.regP.N)
     }
@@ -2830,7 +2830,7 @@ abstract class TestCommon6502 {
         memory[0xABCD] = 0x7F
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(0x80, memory[0xABCD])
+        assertEquals(0x80.toUByte(),  memory[0xABCD])
         assertFalse(mpu.regP.Z)
         assertTrue(mpu.regP.N)
     }
@@ -2843,7 +2843,7 @@ abstract class TestCommon6502 {
         memory[0x0010] = 0x09
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0x0A, memory[0x0010])
+        assertEquals(0x0A.toUByte(),  memory[0x0010])
         assertFalse(mpu.regP.Z)
         assertFalse(mpu.regP.N)
     }
@@ -2854,7 +2854,7 @@ abstract class TestCommon6502 {
         memory[0x0010] = 0xFF
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0x00, memory[0x0010])
+        assertEquals(0x00.toUByte(),  memory[0x0010])
         assertTrue(mpu.regP.Z)
         assertFalse(mpu.regP.N)
     }
@@ -2865,7 +2865,7 @@ abstract class TestCommon6502 {
         memory[0x0010] = 0x7F
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0x80, memory[0x0010])
+        assertEquals(0x80.toUByte(),  memory[0x0010])
         assertFalse(mpu.regP.Z)
         assertTrue(mpu.regP.N)
     }
@@ -2879,7 +2879,7 @@ abstract class TestCommon6502 {
         memory[0xABCD + mpu.regX] = 0x09
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(0x0A, memory[0xABCD + mpu.regX])
+        assertEquals(0x0A.toUByte(),  memory[0xABCD + mpu.regX])
         assertFalse(mpu.regP.Z)
         assertFalse(mpu.regP.N)
     }
@@ -2891,7 +2891,7 @@ abstract class TestCommon6502 {
         memory[0xABCD + mpu.regX] = 0xFF
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(0x00, memory[0xABCD + mpu.regX])
+        assertEquals(0x00.toUByte(),  memory[0xABCD + mpu.regX])
         assertTrue(mpu.regP.Z)
         assertFalse(mpu.regP.N)
     }
@@ -2903,7 +2903,7 @@ abstract class TestCommon6502 {
         memory[0xABCD + mpu.regX] = 0x7F
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(0x80, memory[0xABCD + mpu.regX])
+        assertEquals(0x80.toUByte(),  memory[0xABCD + mpu.regX])
         assertFalse(mpu.regP.Z)
         assertTrue(mpu.regP.N)
     }
@@ -2917,7 +2917,7 @@ abstract class TestCommon6502 {
         memory[0x0010 + mpu.regX] = 0x09
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0x0A, memory[0x0010 + mpu.regX])
+        assertEquals(0x0A.toUByte(),  memory[0x0010 + mpu.regX])
         assertFalse(mpu.regP.Z)
         assertFalse(mpu.regP.N)
     }
@@ -2928,7 +2928,7 @@ abstract class TestCommon6502 {
         memory[0x0010 + mpu.regX] = 0xFF
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0x00, memory[0x0010 + mpu.regX])
+        assertEquals(0x00.toUByte(),  memory[0x0010 + mpu.regX])
         assertTrue(mpu.regP.Z)
         assertFalse(mpu.regP.N)
     }
@@ -2939,7 +2939,7 @@ abstract class TestCommon6502 {
         memory[0x0010 + mpu.regX] = 0x7F
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0x80, memory[0x0010 + mpu.regX])
+        assertEquals(0x80.toUByte(),  memory[0x0010 + mpu.regX])
         assertFalse(mpu.regP.Z)
         assertTrue(mpu.regP.N)
     }
@@ -3042,8 +3042,8 @@ abstract class TestCommon6502 {
         mpu.step()
         assertEquals(0xFFD2, mpu.regPC)
         assertEquals(0xFD, mpu.regSP)
-        assertEquals(0xC0, memory[0x01FF])  // PCH
-        assertEquals(0x02, memory[0x01FE])  // PCL+2
+        assertEquals(0xC0.toUByte(),  memory[0x01FF])  // PCH
+        assertEquals(0x02.toUByte(),  memory[0x01FE])  // PCL+2
     }
 
     // LDA Absolute
@@ -3674,7 +3674,7 @@ abstract class TestCommon6502 {
         memory[0xABCD] = 0x00
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(0x00, memory[0xABCD])
+        assertEquals(0x00.toUByte(),  memory[0xABCD])
         assertTrue(mpu.regP.Z)
         assertFalse(mpu.regP.C)
         assertFalse(mpu.regP.N)
@@ -3688,7 +3688,7 @@ abstract class TestCommon6502 {
         memory[0xABCD] = 0x01
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(0x00, memory[0xABCD])
+        assertEquals(0x00.toUByte(),  memory[0xABCD])
         assertTrue(mpu.regP.Z)
         assertTrue(mpu.regP.C)
         assertFalse(mpu.regP.N)
@@ -3702,7 +3702,7 @@ abstract class TestCommon6502 {
         memory[0xABCD] = 0x04
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(0x02, memory[0xABCD])
+        assertEquals(0x02.toUByte(),  memory[0xABCD])
         assertFalse(mpu.regP.Z)
         assertFalse(mpu.regP.C)
         assertFalse(mpu.regP.N)
@@ -3718,7 +3718,7 @@ abstract class TestCommon6502 {
         memory[0x0010] = 0x00
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0x00, memory[0x0010])
+        assertEquals(0x00.toUByte(),  memory[0x0010])
         assertTrue(mpu.regP.Z)
         assertFalse(mpu.regP.C)
         assertFalse(mpu.regP.N)
@@ -3732,7 +3732,7 @@ abstract class TestCommon6502 {
         memory[0x0010] = 0x01
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0x00, memory[0x0010])
+        assertEquals(0x00.toUByte(),  memory[0x0010])
         assertTrue(mpu.regP.Z)
         assertTrue(mpu.regP.C)
         assertFalse(mpu.regP.N)
@@ -3746,7 +3746,7 @@ abstract class TestCommon6502 {
         memory[0x0010] = 0x04
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0x02, memory[0x0010])
+        assertEquals(0x02.toUByte(),  memory[0x0010])
         assertFalse(mpu.regP.Z)
         assertFalse(mpu.regP.C)
         assertFalse(mpu.regP.N)
@@ -3763,7 +3763,7 @@ abstract class TestCommon6502 {
         memory[0xABCD + mpu.regX] = 0x00
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(0x00, memory[0xABCD + mpu.regX])
+        assertEquals(0x00.toUByte(),  memory[0xABCD + mpu.regX])
         assertTrue(mpu.regP.Z)
         assertFalse(mpu.regP.C)
         assertFalse(mpu.regP.N)
@@ -3778,7 +3778,7 @@ abstract class TestCommon6502 {
         memory[0xABCD + mpu.regX] = 0x01
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(0x00, memory[0xABCD + mpu.regX])
+        assertEquals(0x00.toUByte(),  memory[0xABCD + mpu.regX])
         assertTrue(mpu.regP.Z)
         assertTrue(mpu.regP.C)
         assertFalse(mpu.regP.N)
@@ -3792,7 +3792,7 @@ abstract class TestCommon6502 {
         memory[0xABCD + mpu.regX] = 0x04
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(0x02, memory[0xABCD + mpu.regX])
+        assertEquals(0x02.toUByte(),  memory[0xABCD + mpu.regX])
         assertFalse(mpu.regP.Z)
         assertFalse(mpu.regP.C)
         assertFalse(mpu.regP.N)
@@ -3809,7 +3809,7 @@ abstract class TestCommon6502 {
         memory[0x0010 + mpu.regX] = 0x00
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0x00, memory[0x0010 + mpu.regX])
+        assertEquals(0x00.toUByte(),  memory[0x0010 + mpu.regX])
         assertTrue(mpu.regP.Z)
         assertFalse(mpu.regP.C)
         assertFalse(mpu.regP.N)
@@ -3824,7 +3824,7 @@ abstract class TestCommon6502 {
         memory[0x0010 + mpu.regX] = 0x01
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0x00, memory[0x0010 + mpu.regX])
+        assertEquals(0x00.toUByte(),  memory[0x0010 + mpu.regX])
         assertTrue(mpu.regP.Z)
         assertTrue(mpu.regP.C)
         assertFalse(mpu.regP.N)
@@ -3839,7 +3839,7 @@ abstract class TestCommon6502 {
         memory[0x0010 + mpu.regX] = 0x04
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0x02, memory[0x0010 + mpu.regX])
+        assertEquals(0x02.toUByte(),  memory[0x0010 + mpu.regX])
         assertFalse(mpu.regP.Z)
         assertFalse(mpu.regP.C)
         assertFalse(mpu.regP.N)
@@ -4114,7 +4114,7 @@ abstract class TestCommon6502 {
         assertEquals(0x0001, mpu.regPC)
         assertEquals(0xAB, mpu.regA)
         assertEquals(0xFC, mpu.regSP)
-        assertEquals(0xAB, memory[0x01FD])
+        assertEquals(0xAB.toUByte(),  memory[0x01FD])
     }
 
     // PHP
@@ -4129,7 +4129,7 @@ abstract class TestCommon6502 {
             mpu.step()
             assertEquals(0x0001, mpu.regPC)
             assertEquals(0xFC, mpu.regSP)
-            assertEquals((flags or F_BREAK or F_UNUSED), memory[0x1FD].toInt())
+            assertEquals((flags or F_BREAK or F_UNUSED).toUByte(),  memory[0x1FD])
         }
     }
 
@@ -4249,7 +4249,7 @@ abstract class TestCommon6502 {
         memory[0xABCD] = 0x00
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(0x00, memory[0xABCD])
+        assertEquals(0x00.toUByte(),  memory[0xABCD])
         assertTrue(mpu.regP.Z)
         assertFalse(mpu.regP.N)
     }
@@ -4263,7 +4263,7 @@ abstract class TestCommon6502 {
         memory[0xABCD] = 0x80
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(0x00, memory[0xABCD])
+        assertEquals(0x00.toUByte(),  memory[0xABCD])
         assertTrue(mpu.regP.Z)
         assertFalse(mpu.regP.N)
     }
@@ -4277,7 +4277,7 @@ abstract class TestCommon6502 {
         memory[0xABCD] = 0x00
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(0x01, memory[0xABCD])
+        assertEquals(0x01.toUByte(),  memory[0xABCD])
         assertFalse(mpu.regP.Z)
         assertFalse(mpu.regP.N)
     }
@@ -4290,7 +4290,7 @@ abstract class TestCommon6502 {
         memory[0xABCD] = 0x40
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(0x81, memory[0xABCD])
+        assertEquals(0x81.toUByte(),  memory[0xABCD])
         assertTrue(mpu.regP.N)
         assertFalse(mpu.regP.Z)
     }
@@ -4303,7 +4303,7 @@ abstract class TestCommon6502 {
         memory[0xABCD] = 0x7F
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(0xFE, memory[0xABCD])
+        assertEquals(0xFE.toUByte(),  memory[0xABCD])
         assertFalse(mpu.regP.C)
     }
 
@@ -4315,7 +4315,7 @@ abstract class TestCommon6502 {
         memory[0xABCD] = 0xFF
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(0xFE, memory[0xABCD])
+        assertEquals(0xFE.toUByte(),  memory[0xABCD])
         assertTrue(mpu.regP.C)
     }
 
@@ -4329,7 +4329,7 @@ abstract class TestCommon6502 {
         memory[0x0010] = 0x00
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0x00, memory[0x0010])
+        assertEquals(0x00.toUByte(),  memory[0x0010])
         assertTrue(mpu.regP.Z)
         assertFalse(mpu.regP.N)
     }
@@ -4343,7 +4343,7 @@ abstract class TestCommon6502 {
         memory[0x0010] = 0x80
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0x00, memory[0x0010])
+        assertEquals(0x00.toUByte(),  memory[0x0010])
         assertTrue(mpu.regP.Z)
         assertFalse(mpu.regP.N)
     }
@@ -4357,7 +4357,7 @@ abstract class TestCommon6502 {
         memory[0x0010] = 0x00
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0x01, memory[0x0010])
+        assertEquals(0x01.toUByte(),  memory[0x0010])
         assertFalse(mpu.regP.Z)
         assertFalse(mpu.regP.N)
     }
@@ -4370,7 +4370,7 @@ abstract class TestCommon6502 {
         memory[0x0010] = 0x40
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0x81, memory[0x0010])
+        assertEquals(0x81.toUByte(),  memory[0x0010])
         assertTrue(mpu.regP.N)
         assertFalse(mpu.regP.Z)
     }
@@ -4383,7 +4383,7 @@ abstract class TestCommon6502 {
         memory[0x0010] = 0x7F
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0xFE, memory[0x0010])
+        assertEquals(0xFE.toUByte(),  memory[0x0010])
         assertFalse(mpu.regP.C)
     }
 
@@ -4395,7 +4395,7 @@ abstract class TestCommon6502 {
         memory[0x0010] = 0xFF
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0xFE, memory[0x0010])
+        assertEquals(0xFE.toUByte(),  memory[0x0010])
         assertTrue(mpu.regP.C)
     }
 
@@ -4410,7 +4410,7 @@ abstract class TestCommon6502 {
         memory[0xABCD + mpu.regX] = 0x00
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(0x00, memory[0xABCD + mpu.regX])
+        assertEquals(0x00.toUByte(),  memory[0xABCD + mpu.regX])
         assertTrue(mpu.regP.Z)
         assertFalse(mpu.regP.N)
     }
@@ -4425,7 +4425,7 @@ abstract class TestCommon6502 {
         memory[0xABCD + mpu.regX] = 0x80
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(0x00, memory[0xABCD + mpu.regX])
+        assertEquals(0x00.toUByte(),  memory[0xABCD + mpu.regX])
         assertTrue(mpu.regP.Z)
         assertFalse(mpu.regP.N)
     }
@@ -4439,7 +4439,7 @@ abstract class TestCommon6502 {
         memory[0xABCD + mpu.regX] = 0x00
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(0x01, memory[0xABCD + mpu.regX])
+        assertEquals(0x01.toUByte(),  memory[0xABCD + mpu.regX])
         assertFalse(mpu.regP.Z)
         assertFalse(mpu.regP.N)
     }
@@ -4453,7 +4453,7 @@ abstract class TestCommon6502 {
         memory[0xABCD + mpu.regX] = 0x40
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(0x81, memory[0xABCD + mpu.regX])
+        assertEquals(0x81.toUByte(),  memory[0xABCD + mpu.regX])
         assertTrue(mpu.regP.N)
         assertFalse(mpu.regP.Z)
     }
@@ -4467,7 +4467,7 @@ abstract class TestCommon6502 {
         memory[0xABCD + mpu.regX] = 0x7F
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(0xFE, memory[0xABCD + mpu.regX])
+        assertEquals(0xFE.toUByte(),  memory[0xABCD + mpu.regX])
         assertFalse(mpu.regP.C)
     }
 
@@ -4480,7 +4480,7 @@ abstract class TestCommon6502 {
         memory[0xABCD + mpu.regX] = 0xFF
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(0xFE, memory[0xABCD + mpu.regX])
+        assertEquals(0xFE.toUByte(),  memory[0xABCD + mpu.regX])
         assertTrue(mpu.regP.C)
     }
 
@@ -4495,7 +4495,7 @@ abstract class TestCommon6502 {
         memory[0x0010 + mpu.regX] = 0x00
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0x00, memory[0x0010 + mpu.regX])
+        assertEquals(0x00.toUByte(),  memory[0x0010 + mpu.regX])
         assertTrue(mpu.regP.Z)
         assertFalse(mpu.regP.N)
     }
@@ -4510,7 +4510,7 @@ abstract class TestCommon6502 {
         memory[0x0010 + mpu.regX] = 0x80
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0x00, memory[0x0010 + mpu.regX])
+        assertEquals(0x00.toUByte(),  memory[0x0010 + mpu.regX])
         assertTrue(mpu.regP.Z)
         assertFalse(mpu.regP.N)
     }
@@ -4524,7 +4524,7 @@ abstract class TestCommon6502 {
         memory[0x0010 + mpu.regX] = 0x00
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0x01, memory[0x0010 + mpu.regX])
+        assertEquals(0x01.toUByte(),  memory[0x0010 + mpu.regX])
         assertFalse(mpu.regP.Z)
         assertFalse(mpu.regP.N)
     }
@@ -4538,7 +4538,7 @@ abstract class TestCommon6502 {
         memory[0x0010 + mpu.regX] = 0x40
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0x81, memory[0x0010 + mpu.regX])
+        assertEquals(0x81.toUByte(),  memory[0x0010 + mpu.regX])
         assertTrue(mpu.regP.N)
         assertFalse(mpu.regP.Z)
     }
@@ -4552,7 +4552,7 @@ abstract class TestCommon6502 {
         memory[0x0010 + mpu.regX] = 0x7F
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0xFE, memory[0x0010 + mpu.regX])
+        assertEquals(0xFE.toUByte(),  memory[0x0010 + mpu.regX])
         assertFalse(mpu.regP.C)
     }
 
@@ -4565,7 +4565,7 @@ abstract class TestCommon6502 {
         memory[0x0010 + mpu.regX] = 0xFF
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0xFE, memory[0x0010 + mpu.regX])
+        assertEquals(0xFE.toUByte(),  memory[0x0010 + mpu.regX])
         assertTrue(mpu.regP.C)
     }
 
@@ -4631,7 +4631,7 @@ abstract class TestCommon6502 {
         memory[0xABCD] = 0x00
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(0x00, memory[0xABCD])
+        assertEquals(0x00.toUByte(),  memory[0xABCD])
         assertTrue(mpu.regP.Z)
         assertFalse(mpu.regP.N)
     }
@@ -4644,7 +4644,7 @@ abstract class TestCommon6502 {
         memory[0xABCD] = 0x00
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(0x80, memory[0xABCD])
+        assertEquals(0x80.toUByte(),  memory[0xABCD])
         assertFalse(mpu.regP.Z)
         assertTrue(mpu.regP.N)
     }
@@ -4657,7 +4657,7 @@ abstract class TestCommon6502 {
         memory[0xABCD] = 0x02
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(0x81, memory[0xABCD])
+        assertEquals(0x81.toUByte(),  memory[0xABCD])
         assertFalse(mpu.regP.C)
     }
 
@@ -4669,7 +4669,7 @@ abstract class TestCommon6502 {
         memory[0xABCD] = 0x03
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(0x81, memory[0xABCD])
+        assertEquals(0x81.toUByte(),  memory[0xABCD])
         assertTrue(mpu.regP.C)
     }
 
@@ -4683,7 +4683,7 @@ abstract class TestCommon6502 {
         memory[0x0010] = 0x00
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0x00, memory[0x0010])
+        assertEquals(0x00.toUByte(),  memory[0x0010])
         assertTrue(mpu.regP.Z)
         assertFalse(mpu.regP.N)
     }
@@ -4696,7 +4696,7 @@ abstract class TestCommon6502 {
         memory[0x0010] = 0x00
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0x80, memory[0x0010])
+        assertEquals(0x80.toUByte(),  memory[0x0010])
         assertFalse(mpu.regP.Z)
         assertTrue(mpu.regP.N)
     }
@@ -4709,7 +4709,7 @@ abstract class TestCommon6502 {
         memory[0x0010] = 0x02
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0x81, memory[0x0010])
+        assertEquals(0x81.toUByte(),  memory[0x0010])
         assertFalse(mpu.regP.C)
     }
 
@@ -4721,7 +4721,7 @@ abstract class TestCommon6502 {
         memory[0x0010] = 0x03
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0x81, memory[0x0010])
+        assertEquals(0x81.toUByte(),  memory[0x0010])
         assertTrue(mpu.regP.C)
     }
 
@@ -4736,7 +4736,7 @@ abstract class TestCommon6502 {
         memory[0xABCD + mpu.regX] = 0x00
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(0x00, memory[0xABCD + mpu.regX])
+        assertEquals(0x00.toUByte(),  memory[0xABCD + mpu.regX])
         assertTrue(mpu.regP.Z)
         assertFalse(mpu.regP.N)
     }
@@ -4750,7 +4750,7 @@ abstract class TestCommon6502 {
         memory[0xABCD + mpu.regX] = 0x00
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(0x80, memory[0xABCD + mpu.regX])
+        assertEquals(0x80.toUByte(),  memory[0xABCD + mpu.regX])
         assertFalse(mpu.regP.Z)
         assertTrue(mpu.regP.N)
     }
@@ -4764,7 +4764,7 @@ abstract class TestCommon6502 {
         memory[0xABCD + mpu.regX] = 0x02
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(0x81, memory[0xABCD + mpu.regX])
+        assertEquals(0x81.toUByte(),  memory[0xABCD + mpu.regX])
         assertFalse(mpu.regP.C)
     }
 
@@ -4777,7 +4777,7 @@ abstract class TestCommon6502 {
         memory[0xABCD + mpu.regX] = 0x03
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(0x81, memory[0xABCD + mpu.regX])
+        assertEquals(0x81.toUByte(),  memory[0xABCD + mpu.regX])
         assertTrue(mpu.regP.C)
     }
 
@@ -4792,7 +4792,7 @@ abstract class TestCommon6502 {
         memory[0x0010 + mpu.regX] = 0x00
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0x00, memory[0x0010 + mpu.regX])
+        assertEquals(0x00.toUByte(),  memory[0x0010 + mpu.regX])
         assertTrue(mpu.regP.Z)
         assertFalse(mpu.regP.N)
     }
@@ -4806,7 +4806,7 @@ abstract class TestCommon6502 {
         memory[0x0010 + mpu.regX] = 0x00
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0x80, memory[0x0010 + mpu.regX])
+        assertEquals(0x80.toUByte(),  memory[0x0010 + mpu.regX])
         assertFalse(mpu.regP.Z)
         assertTrue(mpu.regP.N)
     }
@@ -4820,7 +4820,7 @@ abstract class TestCommon6502 {
         memory[0x0010 + mpu.regX] = 0x02
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0x81, memory[0x0010 + mpu.regX])
+        assertEquals(0x81.toUByte(),  memory[0x0010 + mpu.regX])
         assertFalse(mpu.regP.C)
     }
 
@@ -4833,7 +4833,7 @@ abstract class TestCommon6502 {
         memory[0x0010 + mpu.regX] = 0x03
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0x81, memory[0x0010 + mpu.regX])
+        assertEquals(0x81.toUByte(),  memory[0x0010 + mpu.regX])
         assertTrue(mpu.regP.C)
     }
 
@@ -5512,7 +5512,7 @@ abstract class TestCommon6502 {
         memory[0xABCD] = 0x00
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(0xFF, memory[0xABCD])
+        assertEquals(0xFF.toUByte(),  memory[0xABCD])
         assertEquals(0xFF, mpu.regA)
         assertEquals(flags, mpu.regP.asInt())
     }
@@ -5527,7 +5527,7 @@ abstract class TestCommon6502 {
         memory[0xABCD] = 0xFF
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(0x00, memory[0xABCD])
+        assertEquals(0x00.toUByte(),  memory[0xABCD])
         assertEquals(0x00, mpu.regA)
         assertEquals(flags, mpu.regP.asInt())
     }
@@ -5544,7 +5544,7 @@ abstract class TestCommon6502 {
         memory[0x0010] = 0x00
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0xFF, memory[0x0010])
+        assertEquals(0xFF.toUByte(),  memory[0x0010])
         assertEquals(0xFF, mpu.regA)
         assertEquals(flags, mpu.regP.asInt())
     }
@@ -5559,7 +5559,7 @@ abstract class TestCommon6502 {
         memory[0x0010] = 0xFF
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0x00, memory[0x0010])
+        assertEquals(0x00.toUByte(),  memory[0x0010])
         assertEquals(0x00, mpu.regA)
         assertEquals(flags, mpu.regP.asInt())
     }
@@ -5577,7 +5577,7 @@ abstract class TestCommon6502 {
         memory[0xABCD + mpu.regX] = 0x00
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(0xFF, memory[0xABCD + mpu.regX])
+        assertEquals(0xFF.toUByte(),  memory[0xABCD + mpu.regX])
         assertEquals(0xFF, mpu.regA)
         assertEquals(flags, mpu.regP.asInt())
     }
@@ -5593,7 +5593,7 @@ abstract class TestCommon6502 {
         memory[0xABCD + mpu.regX] = 0xFF
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(0x00, memory[0xABCD + mpu.regX])
+        assertEquals(0x00.toUByte(),  memory[0xABCD + mpu.regX])
         assertEquals(0x00, mpu.regA)
         assertEquals(flags, mpu.regP.asInt())
     }
@@ -5611,7 +5611,7 @@ abstract class TestCommon6502 {
         memory[0xABCD + mpu.regY] = 0x00
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(0xFF, memory[0xABCD + mpu.regY])
+        assertEquals(0xFF.toUByte(),  memory[0xABCD + mpu.regY])
         assertEquals(0xFF, mpu.regA)
         assertEquals(flags, mpu.regP.asInt())
     }
@@ -5627,7 +5627,7 @@ abstract class TestCommon6502 {
         memory[0xABCD + mpu.regY] = 0xFF
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(0x00, memory[0xABCD + mpu.regY])
+        assertEquals(0x00.toUByte(),  memory[0xABCD + mpu.regY])
         assertEquals(0x00, mpu.regA)
         assertEquals(flags, mpu.regP.asInt())
     }
@@ -5647,7 +5647,7 @@ abstract class TestCommon6502 {
         memory[0xFEED] = 0x00
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0xFF, memory[0xFEED])
+        assertEquals(0xFF.toUByte(),  memory[0xFEED])
         assertEquals(0xFF, mpu.regA)
         assertEquals(flags, mpu.regP.asInt())
     }
@@ -5665,7 +5665,7 @@ abstract class TestCommon6502 {
         memory[0xFEED] = 0xFF
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0x00, memory[0xFEED])
+        assertEquals(0x00.toUByte(),  memory[0xFEED])
         assertEquals(0x00, mpu.regA)
         assertEquals(flags, mpu.regP.asInt())
     }
@@ -5685,7 +5685,7 @@ abstract class TestCommon6502 {
         memory[0xFEED + mpu.regY] = 0x00
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0xFF, memory[0xFEED + mpu.regY])
+        assertEquals(0xFF.toUByte(),  memory[0xFEED + mpu.regY])
         assertEquals(0xFF, mpu.regA)
         assertEquals(flags, mpu.regP.asInt())
     }
@@ -5703,7 +5703,7 @@ abstract class TestCommon6502 {
         memory[0xFEED + mpu.regY] = 0xFF
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0x00, memory[0xFEED + mpu.regY])
+        assertEquals(0x00.toUByte(),  memory[0xFEED + mpu.regY])
         assertEquals(0x00, mpu.regA)
         assertEquals(flags, mpu.regP.asInt())
     }
@@ -5721,7 +5721,7 @@ abstract class TestCommon6502 {
         memory[0x0010 + mpu.regX] = 0x00
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0xFF, memory[0x0010 + mpu.regX])
+        assertEquals(0xFF.toUByte(),  memory[0x0010 + mpu.regX])
         assertEquals(0xFF, mpu.regA)
         assertEquals(flags, mpu.regP.asInt())
     }
@@ -5737,7 +5737,7 @@ abstract class TestCommon6502 {
         memory[0x0010 + mpu.regX] = 0xFF
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0x00, memory[0x0010 + mpu.regX])
+        assertEquals(0x00.toUByte(),  memory[0x0010 + mpu.regX])
         assertEquals(0x00, mpu.regA)
         assertEquals(flags, mpu.regP.asInt())
     }
@@ -5754,7 +5754,7 @@ abstract class TestCommon6502 {
         memory[0xABCD] = 0x00
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(0xFF, memory[0xABCD])
+        assertEquals(0xFF.toUByte(),  memory[0xABCD])
         assertEquals(0xFF, mpu.regX)
         assertEquals(flags, mpu.regP.asInt())
     }
@@ -5769,7 +5769,7 @@ abstract class TestCommon6502 {
         memory[0xABCD] = 0xFF
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(0x00, memory[0xABCD])
+        assertEquals(0x00.toUByte(),  memory[0xABCD])
         assertEquals(0x00, mpu.regX)
         assertEquals(flags, mpu.regP.asInt())
     }
@@ -5786,7 +5786,7 @@ abstract class TestCommon6502 {
         memory[0x0010] = 0x00
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0xFF, memory[0x0010])
+        assertEquals(0xFF.toUByte(),  memory[0x0010])
         assertEquals(0xFF, mpu.regX)
         assertEquals(flags, mpu.regP.asInt())
     }
@@ -5801,7 +5801,7 @@ abstract class TestCommon6502 {
         memory[0x0010] = 0xFF
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0x00, memory[0x0010])
+        assertEquals(0x00.toUByte(),  memory[0x0010])
         assertEquals(0x00, mpu.regX)
         assertEquals(flags, mpu.regP.asInt())
     }
@@ -5819,7 +5819,7 @@ abstract class TestCommon6502 {
         memory[0x0010 + mpu.regY] = 0x00
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0xFF, memory[0x0010 + mpu.regY])
+        assertEquals(0xFF.toUByte(),  memory[0x0010 + mpu.regY])
         assertEquals(0xFF, mpu.regX)
         assertEquals(flags, mpu.regP.asInt())
     }
@@ -5835,7 +5835,7 @@ abstract class TestCommon6502 {
         memory[0x0010 + mpu.regY] = 0xFF
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0x00, memory[0x0010 + mpu.regY])
+        assertEquals(0x00.toUByte(),  memory[0x0010 + mpu.regY])
         assertEquals(0x00, mpu.regX)
         assertEquals(flags, mpu.regP.asInt())
     }
@@ -5852,7 +5852,7 @@ abstract class TestCommon6502 {
         memory[0xABCD] = 0x00
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(0xFF, memory[0xABCD])
+        assertEquals(0xFF.toUByte(),  memory[0xABCD])
         assertEquals(0xFF, mpu.regY)
         assertEquals(flags, mpu.regP.asInt())
     }
@@ -5867,7 +5867,7 @@ abstract class TestCommon6502 {
         memory[0xABCD] = 0xFF
         mpu.step()
         assertEquals(0x0003, mpu.regPC)
-        assertEquals(0x00, memory[0xABCD])
+        assertEquals(0x00.toUByte(),  memory[0xABCD])
         assertEquals(0x00, mpu.regY)
         assertEquals(flags, mpu.regP.asInt())
     }
@@ -5884,7 +5884,7 @@ abstract class TestCommon6502 {
         memory[0x0010] = 0x00
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0xFF, memory[0x0010])
+        assertEquals(0xFF.toUByte(),  memory[0x0010])
         assertEquals(0xFF, mpu.regY)
         assertEquals(flags, mpu.regP.asInt())
     }
@@ -5899,7 +5899,7 @@ abstract class TestCommon6502 {
         memory[0x0010] = 0xFF
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0x00, memory[0x0010])
+        assertEquals(0x00.toUByte(),  memory[0x0010])
         assertEquals(0x00, mpu.regY)
         assertEquals(flags, mpu.regP.asInt())
     }
@@ -5917,7 +5917,7 @@ abstract class TestCommon6502 {
         memory[0x0010 + mpu.regX] = 0x00
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0xFF, memory[0x0010 + mpu.regX])
+        assertEquals(0xFF.toUByte(),  memory[0x0010 + mpu.regX])
         assertEquals(0xFF, mpu.regY)
         assertEquals(flags, mpu.regP.asInt())
     }
@@ -5933,7 +5933,7 @@ abstract class TestCommon6502 {
         memory[0x0010 + mpu.regX] = 0xFF
         mpu.step()
         assertEquals(0x0002, mpu.regPC)
-        assertEquals(0x00, memory[0x0010 + mpu.regX])
+        assertEquals(0x00.toUByte(),  memory[0x0010 + mpu.regX])
         assertEquals(0x00, mpu.regY)
         assertEquals(flags, mpu.regP.asInt())
     }

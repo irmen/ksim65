@@ -3,7 +3,6 @@ package razorvine.c64emu
 import razorvine.ksim65.components.Address
 import razorvine.ksim65.components.MemoryComponent
 import razorvine.ksim65.components.Rom
-import razorvine.ksim65.components.UByte
 import java.awt.*
 import java.awt.image.BufferedImage
 import java.awt.image.DataBufferInt
@@ -137,7 +136,7 @@ internal class Screen(private val chargen: Rom, val ram: MemoryComponent) : JPan
 
     private fun renderSprite(sprite: Int, spritePixels: IntArray, vicBank: Address) {
         // note: the sprite pixels must all have been cleared to transparency already
-        val sprptr = ram[vicBank+2040+sprite]*64
+        val sprptr = ram[vicBank+2040+sprite].toInt()*64
         val sprdata = ram.getBlock(sprptr, 21*3)
         val color = ScreenDefs.colorPalette[ram[0xd027+sprite]].rgb
         for (i in spritePixels.indices step 8) {

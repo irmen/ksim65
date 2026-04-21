@@ -17,7 +17,7 @@ class TestDisassembler {
         val result = disassembler.disassemble(memory.data, 0x1000..0x1221, 0)
         assertEquals(256, result.first.size)
         assertEquals(0x1222, result.second)
-        assertEquals($$"$1000  69 01       adc  #$01", result.first[0])
+        assertEquals("$1000  69 01       adc  #$01", result.first[0])
 
         val reference = javaClass.classLoader.getResource("disassem_ref_output.txt")?.readText()!!.trim().lines()
         assertEquals(256, reference.size)
@@ -38,7 +38,7 @@ class TestDisassembler {
         val disassem = disassembler.disassemble(memory.data, 0x0200..0x0250, 0)
         assertEquals(0x251, disassem.second)
         val result = disassem.first.joinToString("\n")
-        assertEquals($$"""$0200  07 12       rmb0  $12
+        assertEquals("""$0200  07 12       rmb0  $12
 $0202  17 12       rmb1  $12
 $0204  27 12       rmb2  $12
 $0206  37 12       rmb3  $12
@@ -85,7 +85,7 @@ $0250  00          brk""", result)
         val disassem = disassembler.disassemble(memory.data, 0x0200..0x0215, 0)
         assertEquals(0x216, disassem.second)
         val result = disassem.first.joinToString("\n")
-        assertEquals($$"""$0200  cb          wai
+        assertEquals("""$0200  cb          wai
 $0201  db          stp
 $0202  3a          dec  a
 $0203  1a          inc  a

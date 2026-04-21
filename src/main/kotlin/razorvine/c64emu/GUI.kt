@@ -3,7 +3,6 @@ package razorvine.c64emu
 import razorvine.ksim65.Cpu6502Core
 import razorvine.ksim65.components.MemoryComponent
 import razorvine.ksim65.components.Rom
-import razorvine.ksim65.components.UByte
 import java.awt.Color
 import java.awt.KeyboardFocusManager
 import java.awt.Point

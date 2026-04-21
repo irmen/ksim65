@@ -5,7 +5,6 @@ import razorvine.ksim65.*
 import razorvine.ksim65.components.Address
 import razorvine.ksim65.components.Ram
 import razorvine.ksim65.components.Rom
-import razorvine.ksim65.components.UByte
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.IOException
@@ -83,15 +82,15 @@ class C64Machine(title: String) : IVirtualMachine {
             val fnlen = ram[0xb7]   // file name length
             val fa = ram[0xba]      // device number
             val sa = ram[0xb9]      // secondary address
-            val txttab = ram[0x2b]+256*ram[0x2c]  // basic load address ($0801 usually)
-            val fnaddr = ram[0xbb]+256*ram[0xbc]  // file name address
-            return if (fnlen > 0) {
-                val filename = (0 until fnlen).map { ram[fnaddr+it].toInt().toChar() }.joinToString("")
+            val txttab = ram[0x2b].toInt() + 256 * ram[0x2c].toInt()  // basic load address ($0801 usually)
+            val fnaddr = ram[0xbb].toInt() + 256 * ram[0xbc].toInt()  // file name address
+            return if (fnlen.toInt() > 0) {
+                val filename = (0 until fnlen.toInt()).map { ram[fnaddr+it].toInt().toChar() }.joinToString("")
                 val loadEndAddress = searchAndLoadFile(filename, fa, sa, txttab)
                 if (loadEndAddress != null) {
-                    ram[0x90] = 0  // status OK
-                    ram[0xae] = (loadEndAddress and 0xff).toShort()
-                    ram[0xaf] = (loadEndAddress ushr 8).toShort()
+                    ram[0x90] = 0.toUByte()  // status OK
+                    ram[0xae] = (loadEndAddress and 0xff).toUByte()
+                    ram[0xaf] = (loadEndAddress ushr 8).toUByte()
                     Cpu6502Core.BreakpointResultAction(changePC = 0xf5a9)  // success!
                 } else Cpu6502Core.BreakpointResultAction(changePC = 0xf704)   // 'file not found'
             } else Cpu6502Core.BreakpointResultAction(changePC = 0xf710)  // 'missing file name'
@@ -102,19 +101,19 @@ class C64Machine(title: String) : IVirtualMachine {
         val fnlen = ram[0xb7]   // file name length
         //        val fa = ram[0xba]      // device number
         //        val sa = ram[0xb9]      // secondary address
-        val fnaddr = ram[0xbb]+256*ram[0xbc]  // file name address
-        return if (fnlen > 0) {
-            val fromAddr = ram[cpu.regA]+256*ram[cpu.regA+1]
+        val fnaddr = ram[0xbb].toInt() + 256 * ram[0xbc].toInt()  // file name address
+        return if (fnlen.toInt() > 0) {
+            val fromAddr = ram[cpu.regA].toInt() + 256 * ram[cpu.regA+1].toInt()
             val endAddr = cpu.regX+256*cpu.regY
             val data = (fromAddr..endAddr).map { ram[it].toByte() }.toByteArray()
-            var filename = (0 until fnlen).map { ram[fnaddr+it].toInt().toChar() }.joinToString("").lowercase()
+            var filename = (0 until fnlen.toInt()).map { ram[fnaddr+it].toInt().toChar() }.joinToString("").lowercase()
             if (!filename.endsWith(".prg")) filename += ".prg"
             File(filename).outputStream().use {
                 it.write(fromAddr and 0xff)
                 it.write(fromAddr ushr 8)
                 it.write(data)
             }
-            ram[0x90] = 0  // status OK
+            ram[0x90] = 0.toUByte()  // status OK
             Cpu6502Core.BreakpointResultAction(changePC = 0xf5a9)  // success!
         } else Cpu6502Core.BreakpointResultAction(changePC = 0xf710)  // 'missing file name'
     }
@@ -153,7 +152,7 @@ class C64Machine(title: String) : IVirtualMachine {
 
                 val hostFileName = findHostFile(filename) ?: findHostFile("$filename.PRG") ?: return null
                 return try {
-                    return if (secondary == 1.toShort()) {
+                    return if (secondary == 1.toUByte()) {
                         val (loadAddress, size) = ram.loadPrg(hostFileName, null)
                         loadAddress+size-1
                     } else {
@@ -174,12 +173,12 @@ class C64Machine(title: String) : IVirtualMachine {
         val listing = mutableListOf<UByte>()
         fun addLine(lineNumber: Int, line: String) {
             address += line.length+3
-            listing.add((address and 0xff).toShort())
-            listing.add((address ushr 8).toShort())
-            listing.add((lineNumber and 0xff).toShort())
-            listing.add((lineNumber ushr 8).toShort())
-            listing.addAll(line.map { it.code.toShort() })
-            listing.add(0)
+            listing.add((address and 0xff).toUByte())
+            listing.add((address ushr 8).toUByte())
+            listing.add((lineNumber and 0xff).toUByte())
+            listing.add((lineNumber ushr 8).toUByte())
+            listing.addAll(line.map { it.code.toUByte() })
+            listing.add(0.toUByte())
         }
         addLine(0, "\u0012\"${dirname.take(16).padEnd(16)}\" 00 2A")
         var totalBlocks = 0
@@ -192,8 +191,8 @@ class C64Machine(title: String) : IVirtualMachine {
             addLine(blocksize, "$padding1 \"$filename\" $padding2${it.key.second.take(3).padEnd(3)}")
         }
         addLine(kotlin.math.max(0, 664-totalBlocks), "BLOCKS FREE.")
-        listing.add(0)
-        listing.add(0)
+        listing.add(0.toUByte())
+        listing.add(0.toUByte())
         return listing.toTypedArray()
     }
 

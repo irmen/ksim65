@@ -2,7 +2,6 @@ package razorvine.ksim65
 
 import razorvine.ksim65.components.Address
 import razorvine.ksim65.components.BusComponent
-import razorvine.ksim65.components.UByte
 
 
 /**
@@ -121,7 +120,7 @@ sealed class Cpu6502Core : BusComponent() {
     @Synchronized
     fun snapshot(): State {
         val status = StatusRegister().also { it.fromInt(regP.asInt()) }
-        return State(regA.toShort(), regX.toShort(), regY.toShort(), regSP, status, regPC, totalCycles)
+        return State(regA.toUByte(), regX.toUByte(), regY.toUByte(), regSP, status, regPC, totalCycles)
     }
 
     // data byte from the instruction (only set when addr.mode is Accumulator, Immediate or Implied)
@@ -267,7 +266,7 @@ sealed class Cpu6502Core : BusComponent() {
 
     protected fun read(address: Address): Int = bus.read(address).toInt()
     protected fun readWord(address: Address): Int = bus.read(address).toInt() or (bus.read(address+1).toInt() shl 8)
-    protected fun write(address: Address, data: Int) = bus.write(address, data.toShort())
+    protected fun write(address: Address, data: Int) = bus.write(address, data.toUByte())
 
     // opcodes table from  http://www.oxyron.de/html/opcodes02.html
     open val instructions: Array<Instruction> = listOf(

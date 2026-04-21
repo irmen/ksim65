@@ -2,7 +2,6 @@ package razorvine.ksim65.components
 
 import razorvine.ksim65.Bus
 
-typealias UByte = Short
 typealias Address = Int
 
 
@@ -30,13 +29,15 @@ abstract class BusComponent {
 abstract class MemMappedComponent(val startAddress: Address, val endAddress: Address) : BusComponent() {
     abstract operator fun get(offset: Int): UByte
     abstract operator fun set(offset: Int, data: UByte)
+    operator fun set(offset: Int, data: Int) = set(offset, data.toUByte())
+    operator fun set(offset: Int, data: Long) = set(offset, data.toUByte())
 
     init {
         require(endAddress >= startAddress)
         require(startAddress >= 0 && endAddress <= 0xffff) { "can only have 16-bit address space" }
     }
 
-    fun hexDump(from: Address, to: Address, charmapper: ((Short) -> Char)? = null) {
+    fun hexDump(from: Address, to: Address, charmapper: ((UByte) -> Char)? = null) {
         (from..to).chunked(16).forEach {
             print("$${it.first().toString(16).padStart(4, '0')}  ")
             val bytes = it.map { address -> get(address - startAddress) }
@@ -45,7 +46,7 @@ abstract class MemMappedComponent(val startAddress: Address, val endAddress: Add
             }
             print("  ")
             val chars = if (charmapper != null) bytes.map { b -> charmapper(b) }
-            else bytes.map { b -> if (b in 32..255) b.toInt().toChar() else '.' }
+            else bytes.map { b -> if (b.toInt() in 32..255) b.toInt().toChar() else '.' }
             println(chars.joinToString(""))
         }
     }

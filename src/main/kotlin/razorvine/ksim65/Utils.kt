@@ -12,6 +12,6 @@ fun hexW(number: Int, allowSingleByte: Boolean = false) =
 
 fun hexB(number: Int) = number.toString(16).padStart(2, '0')
 
-fun hexB(number: Short) = hexB(number.toInt())
+fun hexB(number: UByte) = hexB(number.toInt())
 
 typealias BreakpointHandler = (cpu: Cpu6502Core, pc: Address) -> Cpu6502Core.BreakpointResultAction

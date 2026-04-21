@@ -34,26 +34,26 @@ class RealTimeClock(startAddress: Address) : MemMappedComponent(startAddress, st
         return when (offset) {
             0x00 -> {
                 val year = LocalDate.now().year
-                (year and 255).toShort()
+                (year and 255).toUByte()
             }
             0x01 -> {
                 val year = LocalDate.now().year
-                (year ushr 8).toShort()
+                (year ushr 8).toUByte()
             }
-            0x02 -> LocalDate.now().monthValue.toShort()
-            0x03 -> LocalDate.now().dayOfMonth.toShort()
-            0x04 -> LocalTime.now().hour.toShort()
-            0x05 -> LocalTime.now().minute.toShort()
-            0x06 -> LocalTime.now().second.toShort()
+            0x02 -> LocalDate.now().monthValue.toUByte()
+            0x03 -> LocalDate.now().dayOfMonth.toUByte()
+            0x04 -> LocalTime.now().hour.toUByte()
+            0x05 -> LocalTime.now().minute.toUByte()
+            0x06 -> LocalTime.now().second.toUByte()
             0x07 -> {
                 val ms = LocalTime.now().nano/1000000
-                (ms and 255).toShort()
+                (ms and 255).toUByte()
             }
             0x08 -> {
                 val ms = LocalTime.now().nano/1000000
-                (ms ushr 8).toShort()
+                (ms ushr 8).toUByte()
             }
-            else -> 0xff
+            else -> 0xff.toUByte()
         }
     }
 

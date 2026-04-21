@@ -26,8 +26,8 @@ class VirtualMachine(title: String) : IVirtualMachine {
     private var paused = false
 
     init {
-        ram[Cpu6502Core.RESET_VECTOR] = 0x00
-        ram[Cpu6502Core.RESET_VECTOR+1] = 0x10
+        ram[Cpu6502Core.RESET_VECTOR] = 0x00.toUByte()
+        ram[Cpu6502Core.RESET_VECTOR+1] = 0x10.toUByte()
         ram.loadPrg(javaClass.getResourceAsStream("/vmdemo.prg")!!, null)
 
         bus += rtc

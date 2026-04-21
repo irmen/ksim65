@@ -3,7 +3,6 @@ package razorvine.c64emu
 import razorvine.ksim65.Cpu6502Core
 import razorvine.ksim65.components.Address
 import razorvine.ksim65.components.MemMappedComponent
-import razorvine.ksim65.components.UByte
 
 /**
  * Minimal simulation of the VIC-II graphics chip
@@ -11,7 +10,7 @@ import razorvine.ksim65.components.UByte
  * This chip is the PAL version (50 Hz screen refresh, 312 vertical raster lines)
  */
 class VicII(startAddress: Address, endAddress: Address, val cpu: Cpu6502Core) : MemMappedComponent(startAddress, endAddress) {
-    private var ramBuffer = Array<UByte>(endAddress-startAddress+1) { 0xff }
+    private var ramBuffer = Array(endAddress-startAddress+1) { 0xff.toUByte() }
     private var rasterIrqLine = 0
     private var scanlineClocks = 0
     private var interruptStatusRegisterD019 = 0
@@ -26,7 +25,7 @@ class VicII(startAddress: Address, endAddress: Address, val cpu: Cpu6502Core) : 
 
     init {
         require(endAddress-startAddress+1 == 0x400) { "vic-II requires exactly 1024 memory bytes (64*16 mirrored)" }
-        ramBuffer[0x1a] = 0   // initially, disable IRQs
+        ramBuffer[0x1a] = 0.toUByte()   // initially, disable IRQs
     }
 
     override fun clock() {
@@ -52,11 +51,11 @@ class VicII(startAddress: Address, endAddress: Address, val cpu: Cpu6502Core) : 
 
     override operator fun get(offset: Int): UByte {
         return when (val register = offset and 63) {
-            0x11 -> (0b00011011 or ((currentRasterLine and 0b100000000) ushr 1)).toShort()
+            0x11 -> (0b00011011 or ((currentRasterLine and 0b100000000) ushr 1)).toUByte()
             0x12 -> {
-                (currentRasterLine and 255).toShort()
+                (currentRasterLine and 255).toUByte()
             }
-            0x19 -> interruptStatusRegisterD019.toShort()
+            0x19 -> interruptStatusRegisterD019.toUByte()
             else -> ramBuffer[register]
         }
     }

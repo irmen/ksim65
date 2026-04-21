@@ -95,7 +95,7 @@ class Assembler(cpu: Cpu6502Core, val memory: MemMappedComponent, initialStartAd
                 var instruction = instructions[Pair(mnemonic, Cpu6502Core.AddrMode.Imp)]
                 if (instruction == null) instruction = instructions[Pair(mnemonic, Cpu6502Core.AddrMode.Acc)]
                 if (instruction == null) return Result(false, "invalid instruction", this.startAddress, 0)
-                memory[startAddress+assembledSize] = instruction.toShort()
+                memory[startAddress+assembledSize] = instruction.toUByte()
             }
             2 -> {
                 val arg = args[1]
@@ -104,8 +104,8 @@ class Assembler(cpu: Cpu6502Core, val memory: MemMappedComponent, initialStartAd
                         // immediate
                         val instruction = instructions[Pair(mnemonic, Cpu6502Core.AddrMode.Imm)] ?: return Result(false, "invalid instruction",
                                                                                                               this.startAddress, 0)
-                        memory[startAddress+assembledSize] = instruction.toShort()
-                        memory[startAddress+assembledSize+1] = parseNumber(arg.substring(1), decimalFirst = true).toShort()
+                        memory[startAddress+assembledSize] = instruction.toUByte()
+                        memory[startAddress+assembledSize+1] = parseNumber(arg.substring(1), decimalFirst = true).toUByte()
                         instructionSize = 2
                     }
                     arg.startsWith("(") && arg.endsWith(",x)") -> {
@@ -117,8 +117,8 @@ class Assembler(cpu: Cpu6502Core, val memory: MemMappedComponent, initialStartAd
                         }
                         val instruction = instructions[Pair(mnemonic, Cpu6502Core.AddrMode.IzX)] ?: return Result(false, "invalid instruction",
                                                                                                               this.startAddress, 0)
-                        memory[startAddress+assembledSize] = instruction.toShort()
-                        memory[startAddress+assembledSize+1] = indAddress.toShort()
+                        memory[startAddress+assembledSize] = instruction.toUByte()
+                        memory[startAddress+assembledSize+1] = indAddress.toUByte()
                         instructionSize = 2
                     }
                     arg.startsWith("(") && arg.endsWith("),y") -> {
@@ -130,8 +130,8 @@ class Assembler(cpu: Cpu6502Core, val memory: MemMappedComponent, initialStartAd
                         }
                         val instruction = instructions[Pair(mnemonic, Cpu6502Core.AddrMode.IzY)] ?: return Result(false, "invalid instruction",
                                                                                                               this.startAddress, 0)
-                        memory[startAddress+assembledSize] = instruction.toShort()
-                        memory[startAddress+assembledSize+1] = indAddress.toShort()
+                        memory[startAddress+assembledSize] = instruction.toUByte()
+                        memory[startAddress+assembledSize+1] = indAddress.toUByte()
                         instructionSize = 2
                     }
                     arg.endsWith(",x") -> {
@@ -144,15 +144,15 @@ class Assembler(cpu: Cpu6502Core, val memory: MemMappedComponent, initialStartAd
                         instructionSize = if (indAddress <= 255) {
                             val instruction = instructions[Pair(mnemonic, Cpu6502Core.AddrMode.ZpX)] ?: return Result(false, "invalid instruction",
                                                                                                                   this.startAddress, 0)
-                            memory[startAddress+assembledSize] = instruction.toShort()
-                            memory[startAddress+assembledSize+1] = indAddress.toShort()
+                            memory[startAddress+assembledSize] = instruction.toUByte()
+                            memory[startAddress+assembledSize+1] = indAddress.toUByte()
                             2
                         } else {
                             val instruction = instructions[Pair(mnemonic, Cpu6502Core.AddrMode.AbsX)] ?: return Result(false, "invalid instruction",
                                                                                                                    this.startAddress, 0)
-                            memory[startAddress+assembledSize] = instruction.toShort()
-                            memory[startAddress+assembledSize+1] = (indAddress and 255).toShort()
-                            memory[startAddress+assembledSize+2] = (indAddress ushr 8).toShort()
+                            memory[startAddress+assembledSize] = instruction.toUByte()
+                            memory[startAddress+assembledSize+1] = (indAddress and 255).toUByte()
+                            memory[startAddress+assembledSize+2] = (indAddress ushr 8).toUByte()
                             3
                         }
                     }
@@ -166,15 +166,15 @@ class Assembler(cpu: Cpu6502Core, val memory: MemMappedComponent, initialStartAd
                         instructionSize = if (indAddress <= 255) {
                             val instruction = instructions[Pair(mnemonic, Cpu6502Core.AddrMode.ZpY)] ?: return Result(false, "invalid instruction",
                                                                                                                   this.startAddress, 0)
-                            memory[startAddress+assembledSize] = instruction.toShort()
-                            memory[startAddress+assembledSize+1] = indAddress.toShort()
+                            memory[startAddress+assembledSize] = instruction.toUByte()
+                            memory[startAddress+assembledSize+1] = indAddress.toUByte()
                             2
                         } else {
                             val instruction = instructions[Pair(mnemonic, Cpu6502Core.AddrMode.AbsY)] ?: return Result(false, "invalid instruction",
                                                                                                                    this.startAddress, 0)
-                            memory[startAddress+assembledSize] = instruction.toShort()
-                            memory[startAddress+assembledSize+1] = (indAddress and 255).toShort()
-                            memory[startAddress+assembledSize+2] = (indAddress ushr 8).toShort()
+                            memory[startAddress+assembledSize] = instruction.toUByte()
+                            memory[startAddress+assembledSize+1] = (indAddress and 255).toUByte()
+                            memory[startAddress+assembledSize+2] = (indAddress ushr 8).toUByte()
                             3
                         }
                     }
@@ -187,9 +187,9 @@ class Assembler(cpu: Cpu6502Core, val memory: MemMappedComponent, initialStartAd
                         }
                         val instruction = instructions[Pair(mnemonic, Cpu6502Core.AddrMode.Ind)]
                                           ?: return Result(false, "invalid instruction", this.startAddress, 0)
-                        memory[startAddress+assembledSize] = instruction.toShort()
-                        memory[startAddress+assembledSize+1] = (indAddress and 255).toShort()
-                        memory[startAddress+assembledSize+2] = (indAddress ushr 8).toShort()
+                        memory[startAddress+assembledSize] = instruction.toUByte()
+                        memory[startAddress+assembledSize+1] = (indAddress and 255).toUByte()
+                        memory[startAddress+assembledSize+2] = (indAddress ushr 8).toUByte()
                         instructionSize = 3
                     }
                     else -> {
@@ -201,8 +201,8 @@ class Assembler(cpu: Cpu6502Core, val memory: MemMappedComponent, initialStartAd
                             } catch (x: NumberFormatException) {
                                 return Result(false, "invalid numeral", this.startAddress, 0)
                             }
-                            memory[startAddress+assembledSize] = instr.toShort()
-                            memory[startAddress+assembledSize+1] = (rel-startAddress-2 and 255).toShort()
+                            memory[startAddress+assembledSize] = instr.toUByte()
+                            memory[startAddress+assembledSize+1] = (rel-startAddress-2 and 255).toUByte()
                             instructionSize = 2
                         } else {
                             // absolute or absZp
@@ -213,15 +213,15 @@ class Assembler(cpu: Cpu6502Core, val memory: MemMappedComponent, initialStartAd
                             }
                             val zpInstruction = instructions[Pair(mnemonic, Cpu6502Core.AddrMode.Zp)]
                             instructionSize = if (absAddress <= 255 && zpInstruction != null) {
-                                memory[startAddress+assembledSize] = zpInstruction.toShort()
-                                memory[startAddress+assembledSize+1] = absAddress.toShort()
+                                memory[startAddress+assembledSize] = zpInstruction.toUByte()
+                                memory[startAddress+assembledSize+1] = absAddress.toUByte()
                                 2
                             } else {
                                 val absInstr = instructions[Pair(mnemonic, Cpu6502Core.AddrMode.Abs)] ?: return Result(false, "invalid instruction",
                                                                                                                    this.startAddress, 0)
-                                memory[startAddress+assembledSize] = absInstr.toShort()
-                                memory[startAddress+assembledSize+1] = (absAddress and 255).toShort()
-                                memory[startAddress+assembledSize+2] = (absAddress ushr 8).toShort()
+                                memory[startAddress+assembledSize] = absInstr.toUByte()
+                                memory[startAddress+assembledSize+1] = (absAddress and 255).toUByte()
+                                memory[startAddress+assembledSize+2] = (absAddress ushr 8).toUByte()
                                 3
                             }
                         }

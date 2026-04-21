@@ -49,7 +49,7 @@ class Test6502CpuBasics {
         val ram = Ram(0x1000, 0x1fff)
         // load a simple program that loops a few instructions
         for(b in listOf(0xa9, 0x63, 0xaa, 0x86, 0x22, 0x8e, 0x22, 0x22, 0x91, 0x22, 0x6d, 0x33, 0x33, 0xcd, 0x55, 0x55, 0xd0, 0xee, 0xf0, 0xec).withIndex()) {
-            ram[b.index] = b.value.toShort()
+            ram[b.index] = b.value.toUByte()
         }
 
         val bus = Bus()
@@ -81,7 +81,7 @@ class Test6502CpuBasics {
         // load a simple program that loops a few instructions
         for(b in listOf(0xa9, 0x63, 0xaa, 0x86, 0x22, 0x8e, 0x22, 0x22, 0x91, 0x22, 0x6d, 0x33, 0x33, 0xcd, 0x55, 0x55,
             0xff, 0xff, 0x79, 0x9e, 0x56, 0x34, 0xd0, 0xe8, 0xf0, 0xe6).withIndex()) {
-            ram[0x1000+b.index] = b.value.toShort()
+            ram[0x1000+b.index] = b.value.toUByte()
         }
 
         val bus = Bus()
@@ -128,7 +128,7 @@ class Test6502CpuBasics {
             // do nothing
         }
 
-        if(ram[0x0400] ==0.toShort()) {
+        if(ram[0x0400] ==0.toUByte()) {
             println("BCD TEST for 6502: OK!")
         }
         else {
@@ -181,7 +181,7 @@ class Test6502CpuBasics {
         }
 
         assertEquals(0x0203, cpu.regPC, "test hangs: "+cpu.snapshot())
-        assertEquals(0, ram[0x84], "test failed- check the console output for diag message")
+        assertEquals(0.toUByte(), ram[0x84], "test failed- check the console output for diag message")
     }
 
     @Test
@@ -258,9 +258,9 @@ class Test6502CpuBasics {
 //            println("EMU: $disassem $spaces A:${hexB(tracingSnapshot.A)} X:${hexB(tracingSnapshot.X)} Y:${hexB(tracingSnapshot.Y)} P:${hexB(tracingSnapshot.P.asInt())} SP:${hexB(tracingSnapshot.SP)} PPU:  0,  0 CYC:${tracingSnapshot.cycles}")
 
             val nesRegsLog = logline.substring(48).split(':')
-            val nesA = nesRegsLog[1].substring(0, 2).toShort(16)
-            val nesX = nesRegsLog[2].substring(0, 2).toShort(16)
-            val nesY = nesRegsLog[3].substring(0, 2).toShort(16)
+            val nesA = nesRegsLog[1].substring(0, 2).toUByte(16)
+            val nesX = nesRegsLog[2].substring(0, 2).toUByte(16)
+            val nesY = nesRegsLog[3].substring(0, 2).toUByte(16)
             val nesP = nesRegsLog[4].substring(0, 2).toInt(16)
             val nesSP = nesRegsLog[5].substring(0, 2).toInt(16)
             val nesCycles = nesRegsLog[7].toLong()
@@ -274,6 +274,6 @@ class Test6502CpuBasics {
 
         val two = ram[0x02]
         val three = ram[0x03]
-        assertEquals(0, two, "test failed, code ${hexB(two)} ${hexB(three)}")
+        assertEquals(0.toUByte(), two, "test failed, code ${hexB(two)} ${hexB(three)}")
     }
 }

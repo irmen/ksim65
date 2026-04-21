@@ -24,6 +24,7 @@ open class Bus {
     operator fun plusAssign(component: BusComponent) = add(component)
     operator fun get(address: Address): UByte = read(address)
     operator fun set(address: Address, data: UByte) = write(address, data)
+    operator fun set(address: Address, data: Int) = write(address, data.toUByte())
 
 
     fun add(component: BusComponent) {
@@ -46,11 +47,10 @@ open class Bus {
         memComponents.forEach {
             if (address >= it.startAddress && address <= it.endAddress) {
                 val data = it[address - it.startAddress]
-                require(data in 0..255) { "data at address $address must be a byte 0..255, but is $data" }
                 return data
             }
         }
-        return 0xff
+        return 0xff.toUByte()
     }
 
     /**
@@ -58,7 +58,6 @@ open class Bus {
      * All memory mapped components that are mapped to the address, will receive the data.
      */
     open fun write(address: Address, data: UByte) {
-        require(data in 0..255) { "data written to address $address must be a byte 0..255" }
         memComponents.forEach {
             if (address >= it.startAddress && address <= it.endAddress)
                 it[address-it.startAddress] = data

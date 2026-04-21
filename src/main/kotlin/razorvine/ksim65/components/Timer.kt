@@ -50,12 +50,12 @@ class Timer(startAddress: Address, val cpu: Cpu6502Core) : MemMappedComponent(st
                 var data = 0
                 if (enabled) data = data or 0b00000001
                 if (nmi) data = data or 0b00000010
-                data.toShort()
+                data.toUByte()
             }
-            0x01 -> (counter and 0xff).toShort()
-            0x02 -> ((counter ushr 8) and 0xff).toShort()
-            0x03 -> ((counter ushr 16) and 0xff).toShort()
-            else -> 0xff
+            0x01 -> (counter and 0xff).toUByte()
+            0x02 -> ((counter ushr 8) and 0xff).toUByte()
+            0x03 -> ((counter ushr 16) and 0xff).toUByte()
+            else -> 0xff.toUByte()
         }
     }
 

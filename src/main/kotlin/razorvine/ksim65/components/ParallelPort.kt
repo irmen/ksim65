@@ -9,7 +9,7 @@ package razorvine.ksim65.components
  *  01    control latch (set bit 0 to write the data byte)
  */
 class ParallelPort(startAddress: Address, endAddress: Address) : MemMappedComponent(startAddress, endAddress) {
-    private var dataByte: UByte = 0
+    private var dataByte: UByte = 0.toUByte()
 
     init {
         require(endAddress-startAddress+1 == 2) { "parallel needs exactly 2 memory bytes (data + control)" }
@@ -20,7 +20,7 @@ class ParallelPort(startAddress: Address, endAddress: Address) : MemMappedCompon
 
     override operator fun get(offset: Int): UByte {
         return if (offset == 0) dataByte
-        else 0xff
+        else 0xff.toUByte()
     }
 
     override operator fun set(offset: Int, data: UByte) {
