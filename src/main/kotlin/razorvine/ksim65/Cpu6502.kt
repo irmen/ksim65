@@ -1416,10 +1416,11 @@ sealed class Cpu6502Core : BusComponent() {
     // or https://github.com/quietust/nintendulator/blob/master/src/CPU.cpp (search for LogBadOps)
     // or https://github.com/stardot/b-em/blob/master/src/6502.c
     // or https://github.com/wpmed92/MedNES/blob/master/NES/6502.cpp
-    // TODO: some of the instructions below may be implemented incorrectly / are not finished yet
+
+    // NOTE: some instructions below may be unimplemented due to cpu quirkyness
 
     private fun iAhx(): Boolean {
-        val addrHi = 0xff   // TODO get the correct byte from the instruction (=last byte read)
+        val addrHi = (fetchedAddress shr 8) and 0xff
         val value = regA and regX and (addrHi+1)
         write(fetchedAddress, value)
         return false
@@ -1506,13 +1507,13 @@ sealed class Cpu6502Core : BusComponent() {
     }
 
     private fun iShx(): Boolean {
-        val addrHi = 0xff   // TODO get the correct byte from the instruction (=last byte read)
+        val addrHi = (fetchedAddress shr 8) and 0xff
         write(fetchedAddress, regX and (addrHi+1))
         return false
     }
 
     private fun iShy(): Boolean {
-        val addrHi = 0xff   // TODO get the correct byte from the instruction (=last byte read)
+        val addrHi = (fetchedAddress shr 8) and 0xff
         write(fetchedAddress, regY and (addrHi+1))
         return false
     }
@@ -1531,7 +1532,7 @@ sealed class Cpu6502Core : BusComponent() {
 
     private fun iTas(): Boolean {
         regSP = regA and regX
-        val addrHi = 0xff   // TODO get the correct byte from the instruction (=last byte read)
+        val addrHi = (fetchedAddress shr 8) and 0xff
         write(fetchedAddress, regSP and addrHi)
         return false
     }

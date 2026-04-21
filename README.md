@@ -13,7 +13,7 @@ Properties of this simulator:
 - simulates various hardware components (bus, cpu, memory, i/o controllers)
 - IRQ and NMI
 - instruction cycle times are simulated (however the *internal* cpu behavior is not cycle-exact for simplicity reasons)
-- has all 6502 and 65c02 instructions, including many of the 'illegal' 6502 instructions (goal is 100% eventually)
+- simulates all 6502 and 65c02 instructions, including many of the 'illegal' 6502 instructions
 - correct BCD mode for adc/sbc instructions on both cpu types
 - passes several extensive unit test suites that verify instruction and cpu flags behavior
 - simple debugging machine monitor, which basic disassembler and assembler functions

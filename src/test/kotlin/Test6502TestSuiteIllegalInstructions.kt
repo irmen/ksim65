@@ -283,60 +283,56 @@ class Test6502TestSuiteIllegalInstructions: FunctionalTestsBase() {
     @Test
     @Disabled("this illegal instruction is probably not implemented correctly yet")
     fun testAlrb() {
-        runTest("alrb") // TODO fix?
+        runTest("alrb")
     }
 
     @Test
     @Disabled("this illegal instruction is probably not implemented correctly yet")
     fun testAneb() {
-        runTest("aneb") // TODO fix?
+        runTest("aneb")
     }
 
     @Test
     @Disabled("this illegal instruction is probably not implemented correctly yet")
     fun testArrb() {
-        runTest("arrb") // TODO fix?
+        runTest("arrb")
     }
 
     @Test
     @Disabled("this illegal instruction is probably not implemented correctly yet")
     fun testLxab() {
-        runTest("lxab")         // TODO fix something?
+        runTest("lxab")
     }
 
     @Test
     @Disabled("this illegal instruction is probably not implemented correctly yet")
     fun testSbxb() {
-        runTest("sbxb") // TODO fix?
+        runTest("sbxb")
     }
 
     @Test
-    @Disabled("this illegal instruction is probably not implemented correctly yet")
     fun testShaay() {
-        runTest("shaay")    // TODO fix?
+        runTest("shaay")
     }
 
     @Test
-    @Disabled("this illegal instruction is probably not implemented correctly yet")
     fun testShaiy() {
-        runTest("shaiy")    // TODO fix?
+        runTest("shaiy")
     }
 
     @Test
-    @Disabled("this illegal instruction is probably not implemented correctly yet")
+    @Disabled("this instruction has quirky behavior that varies between machines")
     fun testShsay() {
-        runTest("shsay")    // TODO fix?
+        runTest("shsay")
     }
 
     @Test
-    @Disabled("this illegal instruction is probably not implemented correctly yet")
     fun testShxay() {
-        runTest("shxay")    // TODO fix?
+        runTest("shxay")
     }
 
     @Test
-    @Disabled("this illegal instruction is probably not implemented correctly yet")
     fun testShyax() {
-        runTest("shyax")    // TODO fix?
+        runTest("shyax")
     }
 }
