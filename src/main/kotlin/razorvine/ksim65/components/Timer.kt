@@ -3,7 +3,8 @@ package razorvine.ksim65.components
 import razorvine.ksim65.Cpu6502Core
 
 /**
- * A programmable timer. Causes an IRQ or NMI at specified 24-bits clock cycle intervals.
+ * A programmable timer. 4 I/O registers.
+ * Causes an IRQ or NMI at specified 24-bits clock cycle intervals.
  *
  * reg.   value
  * ----   --------------
@@ -12,7 +13,7 @@ import razorvine.ksim65.Cpu6502Core
  *  02    24 bits interval value, bits 8-15 (mid)
  *  03    24 bits interval value, bits 16-23  (hi)
  */
-class Timer(startAddress: Address, endAddress: Address, val cpu: Cpu6502Core) : MemMappedComponent(startAddress, endAddress) {
+class Timer(startAddress: Address, val cpu: Cpu6502Core) : MemMappedComponent(startAddress, startAddress+3) {
     private var counter: Int = 0
     private var interval: Int = 0
     private var nmi = false
@@ -24,10 +25,6 @@ class Timer(startAddress: Address, endAddress: Address, val cpu: Cpu6502Core) : 
             }
             field = value
         }
-
-    init {
-        require(endAddress-startAddress+1 == 4) { "timer needs exactly 4 memory bytes" }
-    }
 
     override fun clock() {
         if (enabled && interval > 0) {

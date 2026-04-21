@@ -14,8 +14,8 @@ class VirtualMachine(title: String) : IVirtualMachine {
     override val bus = Bus()
     override val cpu = Cpu6502()
     val ram = Ram(0x0000, 0xffff)
-    private val rtc = RealTimeClock(0xd100, 0xd108)
-    private val timer = Timer(0xd200, 0xd203, cpu)
+    private val rtc = RealTimeClock(0xd100)
+    private val timer = Timer(0xd200, cpu)
 
     private val monitor = Monitor(bus, cpu)
     private val debugWindow = DebugWindow(this)
@@ -28,7 +28,7 @@ class VirtualMachine(title: String) : IVirtualMachine {
     init {
         ram[Cpu6502Core.RESET_VECTOR] = 0x00
         ram[Cpu6502Core.RESET_VECTOR+1] = 0x10
-        ram.loadPrg(javaClass.getResourceAsStream("/vmdemo.prg"), null)
+        ram.loadPrg(javaClass.getResourceAsStream("/vmdemo.prg")!!, null)
 
         bus += rtc
         bus += timer

@@ -5,7 +5,7 @@ import java.time.LocalTime
 
 
 /**
- * A real-time time of day clock.
+ * A real-time time of day clock. Takes 9 I/O registers.
  * (System timers are elsewhere)
  *
  * reg.   value
@@ -20,11 +20,7 @@ import java.time.LocalTime
  *  07    millisecond, 0-999 (lsb)
  *  08    millisecond, 0-999 (msb)
  */
-class RealTimeClock(startAddress: Address, endAddress: Address) : MemMappedComponent(startAddress, endAddress) {
-
-    init {
-        require(endAddress-startAddress+1 == 9) { "rtc needs exactly 9 memory bytes" }
-    }
+class RealTimeClock(startAddress: Address) : MemMappedComponent(startAddress, startAddress+8) {
 
     override fun clock() {
         /* not updated on clock pulse */
