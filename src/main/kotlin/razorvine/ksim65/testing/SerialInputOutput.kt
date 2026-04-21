@@ -7,21 +7,18 @@ import razorvine.ksim65.components.MemMappedComponent
  * Simple I/O device for testing.
  * Provides read from input callback and write to output callback.
  */
-class SerialInputOutputInterface(
+class SerialInputOutput(
         startAddress: Address,
-        val input: () -> UByte,
+        input: Sequence<UByte>,
         val output: (UByte) -> Unit
 ) : MemMappedComponent(startAddress, startAddress) {
 
-    companion object {
-        const val DEFAULT_ADDRESS = 0xf030
-    }
-
+    val inputSeq = input.iterator()
     override fun clock() {}
     override fun reset() {}
 
     override operator fun get(offset: Int): UByte {
-        return if (offset == 0x00) input() else 0.toUByte()
+        return if (offset == 0x00) inputSeq.next() else 0.toUByte()
     }
 
     override operator fun set(offset: Int, data: UByte) {

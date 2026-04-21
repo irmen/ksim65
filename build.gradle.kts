@@ -1,11 +1,13 @@
 import java.util.*
 import kotlin.math.max
+import org.gradle.api.publish.PublishingExtension
+import org.gradle.api.publish.maven.MavenPublication
 
 
 plugins {
     // Apply the Kotlin JVM plugin to add support for Kotlin on the JVM.
     kotlin("jvm") version "2.3.20"
-    // `maven-publish`
+    `maven-publish`
     application
     java
 }
@@ -101,14 +103,14 @@ val sourcesJar by tasks.registering(Jar::class) {
     from(sourceSets.main.get().allSource)
 }
 
-//publishing {
-//    repositories {
-//        mavenLocal()
-//    }
-//    publications {
-//        register("mavenJava", MavenPublication::class) {
-//            from(components["java"])
-//            artifact(sourcesJar.get())
-//        }
-//    }
-//}
+publishing {
+    repositories {
+        mavenLocal()
+    }
+    publications {
+        register("mavenJava", MavenPublication::class) {
+            from(components["java"])
+            artifact(sourcesJar.get())
+        }
+    }
+}

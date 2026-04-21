@@ -839,7 +839,7 @@ class Test65C02 : TestCommon6502() {
         assertEquals(0x0002, mpu.regPC)
         assertEquals(13L, mpu.totalCycles)
         val expected = 0b11111011.toUByte()
-        assertEquals(expected.toUByte(),  memory[0x0043])
+        assertEquals(expected, memory[0x0043])
 
     }
 
@@ -940,7 +940,7 @@ class Test65C02 : TestCommon6502() {
         assertEquals(0x0002, mpu.regPC)
         assertEquals(13L, mpu.totalCycles)
         val expected = 0b10111111.toUByte()
-        assertEquals(expected.toUByte(),  memory[0x0043])
+        assertEquals(expected, memory[0x0043])
     }
 
     @Test
@@ -1029,7 +1029,7 @@ class Test65C02 : TestCommon6502() {
         assertEquals(0x0002, mpu.regPC)
         assertEquals(13L, mpu.totalCycles)
         val expected = 0b00000001.toUByte()
-        assertEquals(expected.toUByte(),  memory[0x0043])
+        assertEquals(expected, memory[0x0043])
     }
 
     @Test
