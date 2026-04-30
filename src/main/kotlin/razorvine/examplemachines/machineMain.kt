@@ -100,5 +100,6 @@ class VirtualMachine(title: String) : IVirtualMachine {
 
 fun main() {
     val machine = VirtualMachine("KSim65 demo virtual machine - using ksim65 v${Version.version}")
+    println(Version.copyright)
     machine.start()
 }

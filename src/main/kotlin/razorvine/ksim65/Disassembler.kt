@@ -24,7 +24,10 @@ class Disassembler(cpu: Cpu6502Core) {
         val spacing3 = "  "
         val byte = memory[offset]
         val line = "$${hexW(offset+baseAddress)}  ${hexB(byte)} "
-        val opcode = instructions[byte.toInt()]
+        val opcode = instructions.getOrNull(byte.toInt())
+        if (opcode == null) {
+            return Pair(line+"$spacing1 ???", 1)
+        }
         return when (opcode.mode) {
             Cpu6502Core.AddrMode.Acc -> {
                 Pair(line+"$spacing1 ${opcode.mnemonic}  a", 1)

@@ -14,6 +14,8 @@ interface IVirtualMachine {
 
     fun executeMonitorCommand(command: String): MonitorCmdResult
 
+    fun getVersion(): String = Version.version
+
     val cpu: Cpu6502Core
     val bus: Bus
 }

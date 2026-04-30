@@ -274,6 +274,6 @@ fun expandUser(path: String): String {
 
 
 fun main() {
-    val machine = C64Machine("virtual Commodore-64 - using KSim65 v${Version.version}")
+    val machine = C64Machine("virtual Commodore-64 - using KSim65 ${Version.version}")
     machine.start()
 }

@@ -1,6 +1,7 @@
 package razorvine.ksim65
 
 import razorvine.ksim65.components.Address
+import razorvine.ksim65.testing.IHostSerialAndPowerIO
 
 /**
  * 65C02 cpu simulation (the CMOS version of the 6502).
@@ -13,6 +14,8 @@ class Cpu65C02 : Cpu6502Core() {
     }
 
     var waiting: Wait = Wait.Normal
+    var powerOffOnStp: Boolean = false
+    var hostSerialAndPower: IHostSerialAndPowerIO? = null
 
 
     /**
@@ -30,7 +33,9 @@ class Cpu65C02 : Cpu6502Core() {
                 }
             }
             Wait.Stopped -> {
-                if (nmiAsserted || irqAsserted) {
+                if (powerOffOnStp) {
+                    hostSerialAndPower?.poweroff()
+                } else if (nmiAsserted || irqAsserted) {
                     // jump to reset vector after hardware interrupt
                     regPC = readWord(RESET_VECTOR)
                 }

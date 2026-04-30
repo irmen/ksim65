@@ -20,6 +20,12 @@ allprojects {
     group = "net.razorvine"
     // base.archivesBaseName = "ksim65"
 
+    java {
+        toolchain {
+            languageVersion.set(JavaLanguageVersion.of(17))
+        }
+    }
+
     repositories {
         // You can declare any Maven/Ivy/file repository here.
         mavenLocal()
@@ -30,12 +36,12 @@ allprojects {
 
 dependencies {
     // Align versions of all Kotlin components
-    implementation(platform("org.jetbrains.kotlin:kotlin-bom"))
-    implementation("org.jetbrains.kotlin:kotlin-reflect")
+    implementation(platform("org.jetbrains.kotlin:kotlin-bom:2.3.20"))
+    implementation("org.jetbrains.kotlin:kotlin-reflect:2.3.20")
     // implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
 
     // Use the Kotlin JDK 8 standard library.
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.3.20")
 
     // Use the Kotlin test library.
     testImplementation("org.jetbrains.kotlin:kotlin-test")
@@ -56,6 +62,7 @@ tasks {
     named<Test>("test") {
         useJUnitPlatform()
         dependsOn("cleanTest")
+        dependsOn("assembleTestProgram")
         testLogging.events("failed")
 
         // parallel tests.
@@ -111,6 +118,20 @@ publishing {
         register("mavenJava", MavenPublication::class) {
             from(components["java"])
             artifact(sourcesJar.get())
+            groupId = "net.razorvine"
+            artifactId = "ksim65"
         }
     }
 }
+
+tasks.register<Exec>("assembleTestProgram") {
+    description = "Assembles the testprogram.asm into test.prg using 64tass"
+    group = "build"
+    workingDir = file("testprogram")
+    commandLine("64tass", "-o", "test.prg", "testprogram.asm")
+    // Define inputs/outputs for incremental build support
+    inputs.file(file("testprogram/testprogram.asm"))
+    outputs.file(file("testprogram/test.prg"))
+}
+
+
