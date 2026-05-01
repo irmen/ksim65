@@ -53,14 +53,14 @@ class Disassembler(cpu: Cpu6502Core) {
             Cpu6502Core.AddrMode.Izp -> {
                 // addressing mode used by the 65C02, put here for convenience rather than the subclass
                 val zpAddr = memory[offset+1]
-                Pair(line+"${hexB(zpAddr)} $spacing2 ${opcode.mnemonic}  $(${hexB(zpAddr)})", 2)
+                Pair(line+"${hexB(zpAddr)} $spacing2 ${opcode.mnemonic}  ($${hexB(zpAddr)})", 2)
             }
             Cpu6502Core.AddrMode.IaX -> {
                 // addressing mode used by the 65C02, put here for convenience rather than the subclass
                 val lo = memory[offset+1]
                 val hi = memory[offset+2]
                 val absAddr = lo.toInt() or (hi.toInt() shl 8)
-                Pair(line+"${hexB(lo)} ${hexB(hi)} $spacing3 ${opcode.mnemonic}  $(${hexW(absAddr)},x)", 3)
+                Pair(line+"${hexB(lo)} ${hexB(hi)} $spacing3 ${opcode.mnemonic}  ($${hexW(absAddr)},x)", 3)
             }
             Cpu6502Core.AddrMode.ZpX -> {
                 val zpAddr = memory[offset+1]
