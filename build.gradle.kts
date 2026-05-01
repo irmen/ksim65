@@ -1,13 +1,11 @@
 import java.util.*
 import kotlin.math.max
-import org.gradle.api.publish.PublishingExtension
-import org.gradle.api.publish.maven.MavenPublication
 
 
 plugins {
     // Apply the Kotlin JVM plugin to add support for Kotlin on the JVM.
+    id("maven-publish")
     kotlin("jvm") version "2.3.20"
-    `maven-publish`
     application
     java
 }
