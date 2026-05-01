@@ -23,7 +23,7 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("org.jetbrains.kotlin:kotlin-test")
-    implementation("net.razorvine:ksim65:2.0")
+    implementation("com.github.irmen:ksim65:v2.0")
 }
 
 tasks.test {

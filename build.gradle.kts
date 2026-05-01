@@ -35,7 +35,7 @@ allprojects {
 dependencies {
     // Align versions of all Kotlin components
     implementation(platform("org.jetbrains.kotlin:kotlin-bom:2.3.20"))
-    implementation("org.jetbrains.kotlin:kotlin-reflect:2.3.20")
+    // implementation("org.jetbrains.kotlin:kotlin-reflect:2.3.20")
     // implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
 
     // Use the Kotlin JDK 8 standard library.
